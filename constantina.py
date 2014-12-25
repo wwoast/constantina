@@ -1113,6 +1113,21 @@ class cw_song:
 
 
 
+def remove_future(dirlisting):
+   """For any files named after a Unix timestamp, don't include the
+   files in a directory listing if the timestamp-name is in the future.
+   Assumes the dirlisting is already sorted in reverse order!"""
+   for testpath in dirlisting:
+      date = datetime.fromtimestamp(int(testpath)).strftime("%s") 
+      current = datetime.strftime(datetime.now(), "%s")
+      if ( date > current ):
+         dirlisting.remove(testpath)
+      else:
+         break
+
+   return dirlisting
+
+
 def opendir(ctype):
    """Return either cached directory information or open a dir and
    list all the files therein. Used for both searching and for the
@@ -1139,6 +1154,10 @@ def opendir(ctype):
       # reversed array for newest-first utime files
       DIR_INDEX[ctype].sort()
       DIR_INDEX[ctype].reverse()
+
+      # For news items, remove any items newer than the current time
+      if ( ctype == "news" ):
+         DIR_INDEX[ctype] = remove_future(DIR_INDEX[ctype])
 
    return DIR_INDEX[ctype]
 
