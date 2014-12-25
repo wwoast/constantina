@@ -13,6 +13,11 @@ import magic
 import lxml.html
 
 
+# (Full path) Web resources and directories that Constantina reads from
+ROOT_DIR = "/var/www"
+
+# (Relative to RESOURCE DIR) Root of the Constantina files
+RESOURCE_DIR = "/cwdc"
 
 # Per-page global values are based on news items per page
 NEWSITEMS = 10
@@ -1335,7 +1340,7 @@ def create_textcard(card):
       output += """   </div>\n"""
 
    # And close the textcard
-   permanchor = "/cwdc/?s=x" + card.ctype[0] + anchor
+   permanchor = RESOURCE_DIR + "/?s=x" + card.ctype[0] + anchor
 
    if ( card.permalink == False ):
       output += """   <div class="cardFooter">\n"""
@@ -1439,7 +1444,7 @@ def application(env, start_response):
    generate a special randomized page just for that link,
    with an introduction, footers, an image, and more...
    """
-   os.chdir("/var/www/cwdc")
+   os.chdir(ROOT_DIR + RESOURCE_DIR)
    cgienv = FieldStorage(environ=env)
    prev_state = cgienv.getfirst('s')
    if ( prev_state == None ):
