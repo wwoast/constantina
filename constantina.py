@@ -175,6 +175,13 @@ class cw_page:
          self.__get_search_result_cards()
          self.__distribute_cards()
          
+         if ( len(self.cards) - self.cur_len > NEWSITEMS ): 
+            # Add a hidden card to trigger loading more data when reached
+            self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
+            # Finally, add the "next page" tombstone to load more content
+            self.cards.append(cw_card('heading', 'tombstone', grab_body=True))
+         else:
+            self.cards.append(cw_card('heading', 'bottom', grab_body=True))
 
       else:
          # Get new cards for an existing page, tracking what the
