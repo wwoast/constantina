@@ -278,10 +278,14 @@ class cw_page:
       of search results that we wanted, and make sure all result cards are expanded
       to their fully-readable size.
       """
+      pages = int(ceil(len(self.search_results.hits[ctype]) / CARD_COUNTS[ctype]))
+
       # Treat topics cards special. If there's an exact match between the name
       # of an encyclopedia entry and the search query, return that as the first
       # page of the results. TOPIC articles must be filenamed lowercase!!
-      if ( self.query_terms.lower() in opendir('topics') ):
+      # HOWEVER if we're beyond the first page of search results, don't add
+      # the encyclopedia page again!
+      if ( self.query_terms.lower() in opendir('topics') ) and ( pages <= 1 ):
          encyclopedia = cw_card('topics', self.query_terms.lower(), random=self.__get_random_seed, grab_body=True, search_result=True)
          self.cards.append(encyclopedia)
 
@@ -294,7 +298,6 @@ class cw_page:
 
          # Based on the number of search results and the number of cards per page,
          # determine how many pages we've shown thus far.
-         pages = int(ceil(len(self.search_results.hits[ctype]) / CARD_COUNTS[ctype]))
          if ( pages > most_inserts ):
             most_inserts = pages
 
