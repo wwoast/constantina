@@ -175,13 +175,13 @@ class cw_page:
          self.__get_search_result_cards()
          self.__distribute_cards()
          
-         if ( len(self.cards) - self.cur_len > NEWSITEMS ): 
+         # if ( len(self.cards) - self.cur_len > NEWSITEMS ): 
             # Add a hidden card to trigger loading more data when reached
-            self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
+            # self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
             # Finally, add the "next page" tombstone to load more content
-            self.cards.append(cw_card('heading', 'tombstone', grab_body=True))
-         else:
-            self.cards.append(cw_card('heading', 'bottom', grab_body=True))
+            # self.cards.append(cw_card('heading', 'tombstone', grab_body=True))
+         # else:
+            # self.cards.append(cw_card('heading', 'bottom', grab_body=True))
 
       else:
          # Get new cards for an existing page, tracking what the
@@ -278,7 +278,7 @@ class cw_page:
       of search results that we wanted, and make sure all result cards are expanded
       to their fully-readable size.
       """
-      pages = int(ceil(len(self.search_results.hits[ctype]) / CARD_COUNTS[ctype]))
+      pages = int(ceil(len(self.search_results.hits['news']) / CARD_COUNTS['news']))
 
       # Treat topics cards special. If there's an exact match between the name
       # of an encyclopedia entry and the search query, return that as the first
