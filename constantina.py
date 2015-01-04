@@ -1350,7 +1350,7 @@ def create_textcard(card):
       output += """   </div>\n"""
 
    # And close the textcard
-   permanchor = RESOURCE_DIR + "/?s=x" + card.ctype[0] + anchor
+   permanchor = RESOURCE_DIR + "/?x" + card.ctype[0] + anchor
 
    if ( card.permalink == False ):
       output += """   <div class="cardFooter">\n"""
