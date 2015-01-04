@@ -1455,8 +1455,7 @@ def application(env, start_response):
    with an introduction, footers, an image, and more...
    """
    os.chdir(ROOT_DIR + RESOURCE_DIR)
-   cgienv = FieldStorage(environ=env)
-   prev_state = cgienv.getfirst('s')
+   prev_state = os.environ.get('QUERY_STRING')
    if ( prev_state == None ):
       prev_state = ''
    else:   # Truncate state variable at 1024 characters
