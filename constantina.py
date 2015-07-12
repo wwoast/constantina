@@ -112,6 +112,10 @@ SEARCH_CARDS = [
 ]
 
 
+# Max search results to return in a query
+MAX_SEARCH_RESULTS = 200
+
+
 class cw_page:
    """
    Constantina Page Object.
@@ -253,10 +257,11 @@ class cw_page:
          # Grab the cnum of the last inserted thing of this type
          # and then open the next one
          start = 0
-         if ( stype in self.state ):
+         if ( stype in self.state ) and ( stype != 'n' ):
             start = int(self.state[stype][-2]) + 1 
          elif (( ctype == 'news' ) and ( self.state != {} )):
             # Image-count heuristic to calculate next news item
+            # TODO: use last news-item heuristic instead
             ccount = len(self.state['i'][0:-1])
             page_count = int(ccount / CARD_COUNTS['images'])
             start = page_count * CARD_COUNTS['news']
@@ -358,6 +363,12 @@ class cw_page:
       # Parse each colon-separated item that matches a state type
       last_parsed = []
       for token in self.prev_state.split(':'):
+         # News tokens are just a single number
+         if token[0] == 'n':
+            last_news = token[1:]
+            state_hash['n'] = []
+            state_hash['n'].append(last_news)
+
          # Single-character tokens typically have a "start, end, and spacing" 
          # value, so we only need three items.
          if token[0] in valid_tokens:
@@ -396,10 +407,6 @@ class cw_page:
          if ( token.isdigit() ):
             if ( int(token) >= 0 and int(token) <= 100000 ):
                self.__import_random_seed(token)
-
-         # Anything else is considered a search term. These search terms
-         # should always appear at the end of the other state information.
-         # TODO
 
       return state_hash
 
@@ -574,14 +581,14 @@ class cw_page:
          item_range = state_hash[stype][0] + "," + state_hash[stype][-2]
          item_range_dist = item_range + "," + state_hash[stype][-1]
          state_tokens.append(stype + item_range_dist)
-      this_state = ":".join(state_tokens) + ":" + str(seed)
+      this_state = ":".join(state_tokens) + ":" + "n" + str(news_last) + ":" + str(seed)
 
       # The up-to-10 search terms come after the primary state variable,
       # letting us know that the original query was a search attempt, and that
       # future data to insert into the page should be filtered by these 
       # provided terms.
       if ( self.query_terms != '' ):
-         this_state = this_state + ":" + "n" + str(news_last) + ":" + "xs" + self.query_terms
+         this_state = this_state + ":" + "xs" + self.query_terms
       return this_state
 
 
@@ -1095,7 +1102,7 @@ class cw_search:
             self.__add_file_to_index(fnmtime, filename, ctype)
 
 
-   def __search_index(self, count=200):
+   def __search_index(self, count=MAX_SEARCH_RESULTS):
       """Given a list of search paramters, look for any of them in the 
       indexes. For now don't return more than 200 hits"""
       self.parser = QueryParser("content", self.schema)
