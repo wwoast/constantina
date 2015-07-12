@@ -1511,3 +1511,9 @@ def application(env, start_response):
 
    else: 
       pass
+
+
+if __name__ == "__main__":
+   stub = lambda a, b: a.strip()
+   html = application(True, stub)
+   print html
