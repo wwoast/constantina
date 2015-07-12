@@ -42,7 +42,8 @@ CARD_PATHS = {
 
 # Both describes how many cards per page, and serves as
 # the canonical list of card types designed to be
-# randomly distributed on each page
+# randomly distributed on each page. TWO KEYS IN THIS
+# HASH MAY NOT START WITH THE SAME FIRST LETTER!
 CARD_COUNTS = {
     'news': NEWSITEMS,
   'images': int(ceil(NEWSITEMS / 3)),
@@ -195,7 +196,7 @@ class cw_state:
       """Given a state variable string grabbed from the page, parse a
          parse into an object full of card-list properties. This will 
          be used to define which cards should be obtained for the page."""
-      valid_tokens = []
+      valid_tokens = {}
       last_parsed = []
 
       # No prior state? Nothing to worry about
@@ -204,11 +205,11 @@ class cw_state:
 
       # State types are the same as the first letter of each card type
       for ctype in CARD_COUNTS:
-         valid_tokens.append(ctype[0])
+         valid_tokens[ctype[0]] = ctype
 
       # Special two-letter states may be processed as well
-      for spctype in SPECIAL_STATES:
-         valid_tokens.append(spctype)
+      for spctype, spcfield in SPECIAL_STATES:
+         valid_tokens[spctype] = spcfield
 
       # Parse each colon-separated item that matches a state type
       for token in state_string.split(':'):
@@ -220,6 +221,8 @@ class cw_state:
          # Single-character tokens typically have a "start, end, and spacing" 
          # value, so we only need three items.
          elif token[0] in valid_tokens and token[0] not in last_parsed:
+            # Determine ctype from introspection
+            ctype = valid_tokens[token[0]]  
             item_range_dist = token[1:].split(',')[0:3]
             try:
                getattr(self, ctype).distance = int(item_range_dist.pop())
@@ -575,7 +578,7 @@ class cw_page:
          Achieve the proper estimate of the previously displayed
          contents by distributing news articles such that the
          card-type distances are properly represented."""
-      news_items = self.state.news.end
+      news_items = int(self.state.news.end)
 
       # Then add the appropriate page count's worth of news
       for n in xrange(0, news_items):
