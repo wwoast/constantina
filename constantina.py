@@ -130,6 +130,9 @@ class cw_cardtype:
            in each card-type data directory
       - The distance from the last-displayed item of this type to the end
         of the displayed page
+
+   Through introspection of the CARD_COUNTS settings, we create one of these
+   objects named for each card type (ctype).
    """
    def __init__(self, count, distance, spacing, start, end):
       self.count = count
@@ -137,7 +140,8 @@ class cw_cardtype:
       self.spacing = spacing
       self.start = start
       self.end = end
-      # TODO: do we need a range here?
+      self.clist = []   # List of card indexes that appeared of this type
+      
 
 
 class cw_state:
@@ -157,10 +161,11 @@ class cw_state:
    It is also a cleaner interface to grab at the global configuration
    variables defined in the top of this file.
    """
-   def __init__(self, state_string=''):
-      self.random = None	# The Random Seed for the page
+   def __init__(self, state_string):
+      self.in_state = state_string   # Track the original state string
+      self.random = None	     # The Random Seed for the page
 
-      # For the card types in CARD_PATHS, create variables, i.e.
+      # For the card types in CARD_COUNTS, create variables, i.e.
       #   state.news.distance, state.topics.spacing
       for ctype in CARD_COUNTS:
          setattr(self, ctype, cw_cardtype(
@@ -191,7 +196,7 @@ class cw_state:
       last_parsed = []
 
       # No prior state? Nothing to worry about
-      if ( self.state_string == '' ):
+      if ( self.state_string == None ):
          return
 
       # State types are the same as the first letter of each card type
@@ -247,30 +252,28 @@ class cw_state:
             pass
 
 
-   def __export_state(self):
+   # TODO: move update_state portions to their own function?
+   # TODO: most of the update-state stuff is calculating distance
+   def export_state(self):
       """Once all cards are read, calculate a new state variable to
          embed in the more-contents page link."""
-      seed = self.__export_random_seed()
+      all_ctypes = []
 
-
-      # Populate the state_hash, which we'll later build the
+      # Populate the state object, which we'll later build the
       # state_string from. Don't deal with news items yet
       for card in self.cards:
          # Do not proces news items in the state variable
          if ((card.ctype == 'news') or (card.ctype == 'heading')):
             continue
-         stype = card.ctype[0]
-         # For conversion to a string later, make card.num
-         # a string as well. 
-         state_hash[stype].append(str(card.num))
-
-      # Sort all output, so we get contiguous ranges
-      # for stype in state_hash.keys():
-      #    state_hash[stype] = sorted(state_hash[stype], key=int)
+         # For adding into a string later, make card.num a string too
+         getattr(self.state, ctype).clist.append(str(card.num))
+         all_ctypes.append(card.ctype)
 
       # Add distance values to the end of each state_hash
       # array, as is the standard for these state tokens.
       done_distance = []
+      all_ctypes.sort()
+
 
       # Terminate the loop if we either get to the bottom of the
       # array, or whether we've calculated distances for all
@@ -278,9 +281,11 @@ class cw_state:
       hidden_cards = 0   # Account for each hidden card in the distance
                          # between here and the end of the page
       news_last = 0      # Last news card seen, by index
+
+      # Traversing backwards, find the last card of each type shown
       for i in xrange(len(self.cards) - 1, -1, -1):
          card = self.cards[i]
-         if (card.ctype == 'news'):
+         if (card.ctype == 'news') and ( news_last != 0 ):
             news_last = card.num
             continue
          if (card.ctype == 'heading' ):
@@ -288,42 +293,50 @@ class cw_state:
             # Subtract one from the distance of "shown cards"
             hidden_cards = hidden_cards + 1
             continue
-         stype = card.ctype[0]
-         if ( stype in done_distance ):
+         if ( card.ctype in done_distance ):
             continue
+
          # We've now tracked this card type
-         done_distance.append(stype)
+         done_distance.append(ctype)
          done_distance.sort()
+
          dist = len(self.cards) - hidden_cards - i
          # print "=> %s dist: %d i: %d card-len: %d  eff-len: %d" % ( card.ctype, dist, i, len(self.cards), len(self.cards) - hidden_cards)
-         state_hash[stype].append(str(dist))
-         if ( done_distance == all_stypes ):
+         getattr(self.state, card.ctype).distance = str(dist)
+         # Early break once we've seen all the card types
+         if ( done_distance == all_ctypes ):
             break
 
+
       # Finally, construct the state string for the next page
-      this_state = ''
-      state_types = state_hash.keys()
-      state_types.sort()
+      seed = self.__export_random_seed()
+      export_string = ''
       state_tokens = []
-      for stype in state_types:
+
+      for ctype in all_ctypes:
          # If no cards for this state, do not track
-         if (( ",".join(state_hash[stype]) == str(0)) or 
-             ( ",".join(state_hash[stype]) == '')):
+         if ( getattr(self.state, ctype).clist == [] ):
             continue
 
          # Track just the range of values, not the intermediaries
-         item_range = state_hash[stype][0] + "," + state_hash[stype][-2]
-         item_range_dist = item_range + "," + state_hash[stype][-1]
+         # TODO TODO: this is why items repeat state. You need to track the last N actual
+         # appearance items so that there's at least N entries between duplicates.
+         stype = ctype[0]
+         crange = getattr(self.state, ctype).clist
+         cdist = getattr(self.state, ctype).distance
+         crange.sort()
+
+         item_range_dist = crange[0] + "," + crange[-1] + "," + cdist
          state_tokens.append(stype + item_range_dist)
-      this_state = ":".join(state_tokens) + ":" + "n" + str(news_last) + ":" + str(seed)
+      export_string = ":".join(state_tokens) + ":" + "n" + str(news_last) + ":" + str(seed)
 
       # The up-to-10 search terms come after the primary state variable,
       # letting us know that the original query was a search attempt, and that
       # future data to insert into the page should be filtered by these 
       # provided terms.
       if ( self.query_terms != '' ):
-         this_state = this_state + ":" + "xs" + self.query_terms
-      return this_state
+         export_string = export_state + ":" + "xs" + self.query_terms
+      return export_string
 
 
    def __set_random_seed(self):
@@ -333,7 +346,7 @@ class cw_state:
 
 
    # Since shuffle needs a function
-   def __get_random_seed(self):
+   def get_random_seed(self):
       """Since shuffle needs a function to return a random seed, even if we
       actually just want to use a pre-computed value, here it is."""
       return self.random
@@ -364,7 +377,7 @@ class cw_page:
    inserted content is not a duplicate that was previously shown. 
    """ 
 
-   def __init__(self, in_state=''):
+   def __init__(self, in_state=None):
       """If there was a previous state, construct array of cards for
          the state without loading any files from disk. Then, load a
          new set of cards for addition to the page, and write a new
@@ -372,14 +385,13 @@ class cw_page:
       self.cur_len = 0
       self.cards = []
       self.random = 0
-      self.prev_state = cw_state(in_state)
-      self.state = self.prev_state
+      self.state = cw_state(in_state)
       self.out_state = ''
 
       self.search_results = ''
       self.query_terms = ''   # Use this locally, in case we happen not to create a search object
 
-      if ( self.state == {} ):
+      if ( self.state.in_state == None ):
          # Create a new page of randomly-assorted images and quotes,
          # along with reverse-time-order News items
          self.__get_cards()
@@ -394,21 +406,21 @@ class cw_page:
          else:
             self.cards.append(cw_card('heading', 'bottom', grab_body=True))
 
-      elif (( 'xn' in self.state ) or 
-            ( 'xf' in self.state ) or 
-            ( 'xt' in self.state )):
+      elif (( self.state.news_permalink != None ) or 
+            ( self.state.feature_permalink != None ) or 
+            ( self.state.topics_permalink != None )):
          # This is a permalink page request. For these, use a
          # special footer card (just a header card placed at 
          # the bottom of the page).
          self.__get_permalink_card()
          self.cards.append(cw_card('heading', 'footer', grab_body=True, permalink=True))
 
-      elif ( 'xs' in self.state ):
+      elif ( self.state.search != None ):
          # Return search results based on the subsequent comma-separated list,
          # parsed by __import_state into self.state.search.
          # TODO: Tokenize all search parameters and remove non-alphanum characters
          # other than plus. All input-commas become pluses
-         self.search_results = cw_search(self.state['xs'])
+         self.search_results = cw_search(self.state.search)
          self.query_terms = self.search_results.query_string
          # Now generate the cards for the current page from search results
          # self.__get_prior_searched_cards()
@@ -441,12 +453,10 @@ class cw_page:
 
       # Once we've constructed the new card list, update the page
       # state for insertion, for the "next_page" link.
-      self.out_state = self.__export_state()
+      self.out_state = self.state.export_state()
       # print self.state
       # print self.out_state
       
-
-
 
    def __get_cards(self):
       """
@@ -460,28 +470,25 @@ class cw_page:
       # Anything with rules for cards per page, start adding them.
       # Do not grab full data for all but the most recent cards!
       # For older cards, just track their metadata
-      for ctype in CARD_COUNTS.keys():
+      for ctype in CARD_COUNTS:
          # No topic cards unless they're search results
          if ( CARD_COUNTS[ctype] == 0 ):
             continue
 
-         stype = ctype[0]
          # Grab the cnum of the last inserted thing of this type
          # and then open the next one
-         start = 0
-         if ( stype in self.state ) and ( stype != 'n' ):
-            start = int(self.state[stype][-2]) + 1 
-         elif (( ctype == 'news' ) and ( self.state != {} )):
-            # Image-count heuristic to calculate next news item
-            # TODO: use last news-item heuristic instead
-            ccount = len(self.state['i'][0:-1])
-            page_count = int(ccount / CARD_COUNTS['images'])
-            start = page_count * CARD_COUNTS['news']
-         else: 
-            pass
+         start = int(getattr(self.state, ctype).end) + 1
+
+         # If we didn't open anyting last time, start at the beginning
+         if ( self.state.in_state == None )):
+            start = 0
+
+         # If these are previous news items, calculate how many were on previous pages
+         if ( ctype == 'news' ) and ( self.state.in_state != None )):
+            start = self.state.news.end + 1
 
          for i in xrange(start, start + CARD_COUNTS[ctype]):
-            card = cw_card(ctype, i, random=self.__get_random_seed, grab_body=True)
+            card = cw_card(ctype, i, random=self.state.get_random_seed, grab_body=True)
             # Don't include cards that failed to load content
             if ( card.topics != [] ):
                self.cards.append(card)
@@ -513,7 +520,7 @@ class cw_page:
       # HOWEVER if we're beyond the first page of search results, don't add
       # the encyclopedia page again! Use image count as a heuristic for page count.
       if ( self.query_terms.lower() in opendir('topics') ) and ( count_hash['i'] == 0 ):
-         encyclopedia = cw_card('topics', self.query_terms.lower(), random=self.__get_random_seed, grab_body=True, search_result=True)
+         encyclopedia = cw_card('topics', self.query_terms.lower(), random=self.state.get_random_seed, grab_body=True, search_result=True)
          self.cards.append(encyclopedia)
 
       # Other types of search results come afterwards
@@ -541,11 +548,11 @@ class cw_page:
             start = len(self.search_results.hits[ctype]) - CARD_COUNTS[ctype]
             # Add cards to the state for purpose of tracking, without loading context
             for i in xrange (0, CARD_COUNTS[ctype] - start - 1 ):
-               card = cw_card(ctype, self.search_results.hits[ctype][i], random=self.__get_random_seed, grab_body=False)
+               card = cw_card(ctype, self.search_results.hits[ctype][i], random=self.state.get_random_seed, grab_body=False)
                self.cards.append(card)
 
          for j in xrange(start, start + end_dist):
-            card = cw_card(ctype, self.search_results.hits[ctype][j], random=self.__get_random_seed, grab_body=True, search_result=True)
+            card = cw_card(ctype, self.search_results.hits[ctype][j], random=self.state.get_random_seed, grab_body=True, search_result=True)
             # News articles without topic strings won't load. Other card types that
             # don't have embedded topics will load just fine.
             if ( card.topics != [] ) or ( ctype == 'quotes' ) or ( ctype == 'topics' ):
@@ -1521,64 +1528,59 @@ def application(env, start_response):
    with an introduction, footers, an image, and more...
    """
    os.chdir(ROOT_DIR + RESOURCE_DIR)
-   prev_state = os.environ.get('QUERY_STRING')
-   if ( prev_state == None ):
-      prev_state = ''
-   else:   # Truncate state variable at 1024 characters
-      prev_state = prev_state[0:1024]
+   in_state = os.environ.get('QUERY_STRING')
+   if ( in_state != None ):
+      # Truncate state variable at 1024 characters
+      in_state = in_state[0:1024]
 
    substitute = '<!-- Contents go here -->'
+
+   # Instantiating all objects
+   page = cw_page(in_state)
 
    # Three types of states:
    # 1) Normal page creation (randomized elements)
    # 2) A permalink page (state variable has an x in it)
       # One news or feature, footer, link to the main page)
    # 3) Easter eggs
-   stypes = []
-   for ctype in CARD_COUNTS.keys():
-      stypes.append(ctype[0])
 
-   # Fresh new HTML
-   page = cw_page(prev_state)
-   if ( page.state == {} ):
+   # Fresh new HTML, no previous state provided
+   if ( page.state.in_state == None ):
       base = open('base.html', 'r')
       html = base.read()
       html = html.replace(substitute, create_page(page))
       start_response('200 OK', [('Content-Type','text/html')])
-      return html
 
-   # Permalink page, search results, many other things
-   elif (( 'xn' in page.state ) or
-         ( 'xf' in page.state ) or 
-         ( 'xt' in page.state )): 
+   # Permalink page of some kind
+   elif (( page.state.news_permalink != None ) or
+         ( page.state.feature_permalink != None ) or 
+         ( page.state.topics_permalink != None )): 
       base = open('base.html', 'r')
       html = base.read()
       html = html.replace(substitute, create_page(page))
       start_response('200 OK', [('Content-Type','text/html')])
-      return html
 
    # Doing a search
-   elif ( 'xs' in page.state ): 
-      if ( page.state['xs'] == [''] ):
+   elif ( page.state.search != None ): 
+      if ( page.state.search == [''] ):
          # No search query given -- just regenerate the page
-         page = cw_page('')
+         page = cw_page()
 
       start_response('200 OK', [('Content-Type','text/html')])
       html = create_page(page)
-      # Load html contents into the page with javascript
-      return html
 
-   # First-letter heuristic for previous states. Return partial HTML
-   elif ( prev_state[0] in page.state ):
+   # Otherwise, there is state, but no special headers.
+   else:
       start_response('200 OK', [('Content-Type','text/html')])
       html = create_page(page)
-      # Load html contents into the page with javascript
-      return html
 
-   else: 
-      pass
+   # Load html contents into the page with javascript
+   return html
 
 
+
+# Allows CLI testing when QUERY_STRING is in the environment
+# TODO: pass QUERY_STRING as a CLI argument
 if __name__ == "__main__":
    stub = lambda a, b: a.strip()
    html = application(True, stub)
