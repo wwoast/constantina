@@ -172,6 +172,7 @@ class cw_page:
          self.search_results = cw_search(self.state['xs'])
          self.query_terms = self.search_results.query_string
          # Now generate the cards for the current page from search results
+         # self.__get_prior_searched_cards()
          self.__get_search_result_cards()
          self.__distribute_cards()
          
@@ -188,8 +189,6 @@ class cw_page:
          # previous page's state variable was in creating the list 
          # of cards to display.
          self.__get_prior_cards()
-         # TODO: If there are search terms, create the page from search_results
-         # instead of the normal get_prior_cards !!!
          self.__get_cards()
          self.__distribute_cards()
 
@@ -278,14 +277,25 @@ class cw_page:
       of search results that we wanted, and make sure all result cards are expanded
       to their fully-readable size.
       """
+      state_hash = self.state
+      # How many images/quotes/etc have been displayed so far?
+      # TODO: for searching, we need the exact news items that have been shown :(
+      count_hash = {}
+      for ctype in CARD_COUNTS.keys():
+         stype = ctype[0]
+         if ( stype not in state_hash.keys()):
+            count_hash[stype] = 0
+            continue
+         count_hash[stype] = state_hash[stype].split(':')[1]
+
       pages = int(ceil(len(self.search_results.hits['news']) / CARD_COUNTS['news']))
 
       # Treat topics cards special. If there's an exact match between the name
       # of an encyclopedia entry and the search query, return that as the first
       # page of the results. TOPIC articles must be filenamed lowercase!!
       # HOWEVER if we're beyond the first page of search results, don't add
-      # the encyclopedia page again!
-      if ( self.query_terms.lower() in opendir('topics') ) and ( pages <= 1 ):
+      # the encyclopedia page again! Use image count as a heuristic for page count.
+      if ( self.query_terms.lower() in opendir('topics') ) and ( count_hash['i'] == 0 ):
          encyclopedia = cw_card('topics', self.query_terms.lower(), random=self.__get_random_seed, grab_body=True, search_result=True)
          self.cards.append(encyclopedia)
 
@@ -303,6 +313,10 @@ class cw_page:
 
          start = 0
          end_dist = len(self.search_results.hits[ctype])
+         # No results for this search type
+         if ( end_dist == 0 ):
+            continue
+
          if ( end_dist > CARD_COUNTS[ctype] ):
             end_dist = CARD_COUNTS[ctype]
 
@@ -478,14 +492,6 @@ class cw_page:
       self.cur_len = len(self.cards)
 
 
-   def __get_prior_searched_cards(self):
-      """Populate the state index with all the cards we loaded from last time,
-      being considerate of the search results from previous page loads."""
-      # TODO: Write this
-      # for ctype in SEARCH_CARDS:
-      pass
-
-
    def __write_state(self):
       """Once all cards are read, calculate a new state variable to
          embed in the more-contents page link."""
@@ -501,7 +507,7 @@ class cw_page:
          all_stypes.append(stype)
          state_hash[stype] = []
 
-      # No news items should be recorded in the state
+      # No news items should be recorded in the state aside from the last one
       state_hash.pop('n')
       all_stypes.remove('n')
 
@@ -530,9 +536,11 @@ class cw_page:
       # possible state types
       hidden_cards = 0   # Account for each hidden card in the distance
                          # between here and the end of the page
+      news_last = 0      # Last news card seen, by index
       for i in xrange(len(self.cards) - 1, -1, -1):
          card = self.cards[i]
          if (card.ctype == 'news'):
+            news_last = card.num
             continue
          if (card.ctype == 'heading' ):
             # Either a tombstone card or a "now loading" card
@@ -573,7 +581,7 @@ class cw_page:
       # future data to insert into the page should be filtered by these 
       # provided terms.
       if ( self.query_terms != '' ):
-         this_state = this_state + ":" + "xs" + self.query_terms
+         this_state = this_state + ":" + "n" + str(news_last) + ":" + "xs" + self.query_terms
       return this_state
 
 
