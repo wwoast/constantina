@@ -57,9 +57,12 @@ CARD_COUNTS = {
 
 # Some state tokens represent special queries to our
 # script, and shouldn't represent specific card types.
+# These are permalink types, and the permalink fields
+# must be underscore_delimited versions of the CARD_COUNTS
+# fields should new ones be defined.
 SPECIAL_STATES = {
        'xn': 'news_permalink',
-       'xf': 'feature_permalink',
+       'xf': 'features_permalink',
        'xt': 'topics_permalink',
        'xs': 'search'
 }
@@ -407,7 +410,7 @@ class cw_page:
             self.cards.append(cw_card('heading', 'bottom', grab_body=True))
 
       elif (( self.state.news_permalink != None ) or 
-            ( self.state.feature_permalink != None ) or 
+            ( self.state.features_permalink != None ) or 
             ( self.state.topics_permalink != None )):
          # This is a permalink page request. For these, use a
          # special footer card (just a header card placed at 
@@ -501,17 +504,6 @@ class cw_page:
       of search results that we wanted, and make sure all result cards are expanded
       to their fully-readable size.
       """
-      state_hash = self.state
-      # How many images/quotes/etc have been displayed so far?
-      # TODO: for searching, we need the exact news items that have been shown :(
-      count_hash = {}
-      for ctype in CARD_COUNTS.keys():
-         stype = ctype[0]
-         if ( stype not in state_hash.keys()):
-            count_hash[stype] = 0
-            continue
-         count_hash[stype] = state_hash[stype].split(':')[1]
-
       pages = int(ceil(len(self.search_results.hits['news']) / CARD_COUNTS['news']))
 
       # Treat topics cards special. If there's an exact match between the name
@@ -519,7 +511,7 @@ class cw_page:
       # page of the results. TOPIC articles must be filenamed lowercase!!
       # HOWEVER if we're beyond the first page of search results, don't add
       # the encyclopedia page again! Use image count as a heuristic for page count.
-      if ( self.query_terms.lower() in opendir('topics') ) and ( count_hash['i'] == 0 ):
+      if ( self.query_terms.lower() in opendir('topics') ) and ( self.state.topics.end == 0 ):
          encyclopedia = cw_card('topics', self.query_terms.lower(), random=self.state.get_random_seed, grab_body=True, search_result=True)
          self.cards.append(encyclopedia)
 
@@ -560,27 +552,19 @@ class cw_page:
                # print "%s %s %s" % ( len(self.cards), ctype, self.cards[-1].title )
 
 
-
-
    def __get_permalink_card(self):
       """Given a utime or card filename, return a pre-constructed
          permalink page of that type."""
-      # Dealing with a special state? Its second letter will
-      # tell us what kind of special state it is. For perma-
-      # link cards, xn=permalink news, xf=permalink feature,
-      # and so on.
-      state_hash = self.state
-
-      for ctype in CARD_COUNTS.keys():
-         stype = "x" + ctype[0]
-         if ((stype in SPECIAL_STATES.keys()) and (stype in state_hash.keys())):
-            cnum = str(state_hash[stype][0])
+      for stype, spcfield in SPECIAL_STATES:
+         if ( getattr(self.state, spcfield) != None ):
+            cnum = str(getattr(self.state, spcfield)[0])
             # Insert a card after the first heading
+            ctype = spcfield.split("_")[0]
             self.cards.append(cw_card(ctype, cnum, grab_body=True, permalink=True))
       
 
    def __get_prior_cards(self):
-      """Describe all prior cards based on the state variable
+      """Describe all prior cards based on the state object
          without opening any files for contents. This is used to
          guarantee that new random selections are not repeats of
          earlier pages. 
@@ -588,46 +572,20 @@ class cw_page:
          Since the previous state variable omits description of
          precise card ordering, the cardlist we construct only
          needs to represent what would have been shown. However,
-         the FINAL comma-separated state number describes the
-         distance from the current page for that card type.
+         the FINAL state.ctype describes the distance from the
+         current page for that card type.
 
          Achieve the proper estimate of the previously displayed
          contents by distributing news articles such that the
          card-type distances are properly represented."""
-      # Unroll the prev_state string into something iterable
-      state_hash = self.state
-
-      # Count the number of cards per card-type, and determine 
-      # if the previous state variable is valid. All card types
-      # should agree on what page we're on, but in a pinch the
-      # images type should always be valid because images will
-      # be repeated if they need to be.
-      page_count = {}
-      type_dist = {}
-      for ctype in CARD_COUNTS.keys():
-         stype = ctype[0]
-         if ( stype not in state_hash.keys()):
-            continue
-
-         # Ex: the last image was 3 back from the start of the
-         # current page. We track this distance for each type
-         type_dist[stype] = state_hash[stype][-1]
-
-         ccount = len(state_hash[stype][0:-1])
-         # For debugging, calculating page_type by prev cards
-         # should always agree, unless we ran out of content
-         # for that particular card type
-         page_count[stype] = int(ccount / CARD_COUNTS[ctype])
- 
-      # Previous pages heuristic based on number of images
-      news_items = page_count['i'] * CARD_COUNTS['news']
+      news_items = self.state.news.end
 
       # Then add the appropriate page count's worth of news
       for n in xrange(0, news_items):
          self.cards.append(cw_card('news', n, grab_body=False))
 
-      # Now, for each card type, go back type_dist[ctype] 
-      # distance and insert the entire run of that card type.
+      # Now, for each card type, go back state.ctype.distance 
+      # and insert the run of that card type.
       # Guarantees the previous number of items on the page is
       # accurate, while not caring about where on the previous
       # pages those images might have been. It also preserves
@@ -635,13 +593,12 @@ class cw_page:
       # page, which is important for once we've generated all
       # of this page's content and need to write a new state
       # variable based on the current list of cards.
-      for ctype in CARD_COUNTS.keys():
-         stype = ctype[0]
-         if ( stype not in state_hash.keys()):
+      for ctype in CARD_COUNTS:
+         if ( len(getattr(self.state, ctype).clist) == 0 ):
             continue
-         dist = type_dist[stype]
+         dist = getattr(self.state, ctype).distance
          put = len(self.cards) - 1 - int(dist)
-         for cnum in state_hash[stype][0:-1]:
+         for cnum in getattr(self.state, ctype).clist:
             self.cards.insert(put, cw_card(ctype, cnum, grab_body=False))
 
       # Current length should properly track the starting point
@@ -657,8 +614,8 @@ class cw_page:
       # If this is the first page, there's no distance to
       # items on the last page. 
       last_dist = {}
-      if ( self.state == {} ):
-         for ctype in CARD_SPACING.keys():
+      if ( self.state.in_state == None ):
+         for ctype in CARD_SPACING:
             last_dist[ctype] = 0
          return last_dist
 
@@ -695,7 +652,7 @@ class cw_page:
       # non-redist set (news articles)
       c_nodist = {}      
 
-      for ctype in CARD_SPACING.keys():
+      for ctype in CARD_SPACING:
          # Spacing rules from the last page. Subtract the distance from
          # the end of the previous page. For all other cards, follow the
          # strict CARD_SPACING rules, plus jitter
@@ -752,45 +709,9 @@ class cw_page:
             max_dist = norm_dist
             norm_dist = max_dist - 1
 
-# TODO: Degrade by subtracting cards instead?         
-#         while ( max_dist < norm_dist ):
-#            if ( max_dist == norm_dist + 1):
-#               break
-#            # Delete a random card of this type, since we don't have enough space
-#            del_index = randint(0, len(c_redist[ctype]) - 1)
-#            c_redist[ctype].pop(del_index)
-#            total = total - 1
-#            p_dist = total - lstop
-#	    effective_pdist = p_dist - c_dist[ctype]
-#            max_dist = floor(effective_pdist / CARD_COUNTS[ctype])
-
-         # print "--------- ctype %s   norm_dist %d   max_dist %d   c_dist %d" % ( ctype, norm_dist, max_dist, c_dist[ctype] )
-
-# TODO
-         # Now make sure we donn't add the same type of ctype card two times in 
-         # a row. In other words, mix things up well enough that we don't see the
-         # same exact quote twice in a row.
-#         last_card = self.cards[c_lastcard[ctype]]
-#         comp_card = c_redist[ctype][0]
-#         # Check if the "last_card" actually occurred on a previous page
-#         if (( last_card.num == comp_card.num ) and 
-#             ( c_lastcard[ctype] not in xrange(lstop, total))):
-#            # Choose a random replacement index greater than halfway through
-#            # the array of results
-#            new_index = randint(len(c_redist[ctype])/2, len(c_redist[ctype]) - 1)
-#            temp = c_redist[ctype][new_index]
-#            c_redist[new_index] = c_redist[ctype][0]
-#            c_redist[ctype][0] = temp
-
          # Take the cards for this type and re-add them to the cards list
          # jitter = randint(c_dist[ctype], norm_dist)
          seen_type = {}
-
-#         start_jrange = norm_dist
-#         end_jrange = max_dist 
-#         if ( len(self.cards) < 2*NEWSITEMS ):   # First page? Throw stuff up sooner
-#            start_jrange = 0
-#            end_jrange = norm_dist
 
          # Start with an initial shorter distance for shuffling
          start_jrange = c_dist[ctype]
@@ -1553,7 +1474,7 @@ def application(env, start_response):
 
    # Permalink page of some kind
    elif (( page.state.news_permalink != None ) or
-         ( page.state.feature_permalink != None ) or 
+         ( page.state.features_permalink != None ) or 
          ( page.state.topics_permalink != None )): 
       base = open('base.html', 'r')
       html = base.read()
