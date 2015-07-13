@@ -11,6 +11,7 @@ import os
 import re
 import magic
 import lxml.html
+from urllib import unquote_plus
 
 
 # (Full path) Web resources and directories that Constantina reads from
@@ -238,7 +239,8 @@ class cw_state:
          # the first ten.
          elif token[0:2] in valid_tokens and token[0:2] not in last_parsed:
             try:
-               items = token[2:].split(',')[0:MAX_STATE_PARAMETERS]
+               item_str = unquote_plus(token[2:])
+               items = item_str.split(',')[0:MAX_STATE_PARAMETERS]
             except:
                continue
 
@@ -498,7 +500,7 @@ class cw_page:
 
    def __get_search_result_cards(self):
       """
-      Get a page's worth of search updates. Include only the sorted, arranged list
+      Get all available search updates. Include only the sorted, arranged list
       of search results that we wanted, and make sure all result cards are expanded
       to their fully-readable size.
       """
