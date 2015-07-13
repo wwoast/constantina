@@ -215,7 +215,7 @@ class cw_state:
       for token in state_string.split(':'):
          # News tokens are just a single number for the last item loaded
          if token[0] == 'n' and token[0] not in last_parsed:
-            getattr(self, 'news').end = token[1:]
+            getattr(self, 'news').end = int(token[1:])
             last_parsed.append(token[0])   # Add to the parsed stack
 
          # Single-character tokens typically have a "start, end, and spacing" 
@@ -263,7 +263,7 @@ class cw_state:
    def export_state(self, cards, query_terms):
       """Once all cards are read, calculate a new state variable to
          embed in the more-contents page link."""
-      all_ctypes = []
+      all_ctypes = CARD_COUNTS.keys()
 
       # Populate the state object, which we'll later build the
       # state_string from. Don't deal with news items yet
@@ -291,7 +291,7 @@ class cw_state:
       # Traversing backwards, find the last card of each type shown
       for i in xrange(len(cards) - 1, -1, -1):
          card = cards[i]
-         if (card.ctype == 'news') and ( news_last != 0 ):
+         if (card.ctype == 'news') and ( news_last == 0 ):
             news_last = card.num
             continue
          if (card.ctype == 'heading' ):
@@ -477,8 +477,12 @@ class cw_page:
       # Do not grab full data for all but the most recent cards!
       # For older cards, just track their metadata
       for ctype in CARD_COUNTS:
-         # No topic cards unless they're search results
+         # No topic cards unless they're search results, and no card types
+         # that have no historical values in the last page
          if ( CARD_COUNTS[ctype] == 0 ):
+            continue
+         # No data and it's not the first page? Skip this type
+         if ( getattr(self.state, ctype).end == None ) and ( self.state.in_state != None ):
             continue
 
          # Grab the cnum of the last inserted thing of this type
