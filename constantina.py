@@ -208,7 +208,7 @@ class cw_state:
          valid_tokens[ctype[0]] = ctype
 
       # Special two-letter states may be processed as well
-      for spctype, spcfield in SPECIAL_STATES:
+      for spctype, spcfield in SPECIAL_STATES.iteritems():
          valid_tokens[spctype] = spcfield
 
       # Parse each colon-separated item that matches a state type
