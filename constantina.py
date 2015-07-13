@@ -428,17 +428,11 @@ class cw_page:
          # other than plus. All input-commas become pluses
          self.search_results = cw_search(self.state.search)
          self.query_terms = self.search_results.query_string
-         # Now generate the cards for the current page from search results
-         # self.__get_prior_searched_cards()
          self.__get_search_result_cards()
          self.__distribute_cards()
-         
-         if ( len(self.cards) - self.cur_len > NEWSITEMS ): 
-            # Add a hidden card to trigger loading more data when reached
-            self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
-            # Finally, add the "next page" tombstone to load more content
-            self.cards.append(cw_card('heading', 'tombstone', grab_body=True))
-         else:
+        
+         # TODO: Implement search result paging
+         if ( len(self.cards) > 0 ):
             self.cards.append(cw_card('heading', 'bottom', grab_body=True))
 
       else:
@@ -508,28 +502,20 @@ class cw_page:
       of search results that we wanted, and make sure all result cards are expanded
       to their fully-readable size.
       """
-      pages = int(ceil(len(self.search_results.hits['news']) / CARD_COUNTS['news']))
-
       # Treat topics cards special. If there's an exact match between the name
       # of an encyclopedia entry and the search query, return that as the first
       # page of the results. TOPIC articles must be filenamed lowercase!!
       # HOWEVER if we're beyond the first page of search results, don't add
       # the encyclopedia page again! Use image count as a heuristic for page count.
-      if ( self.query_terms.lower() in opendir('topics') ) and ( self.state.topics.end == 0 ):
+      if ( self.query_terms.lower() in opendir('topics')):
          encyclopedia = cw_card('topics', self.query_terms.lower(), random=self.state.get_random_seed, grab_body=True, search_result=True)
          self.cards.append(encyclopedia)
 
       # Other types of search results come afterwards
-      most_inserts = 0
       for ctype in SEARCH_CARDS:
          # Manage the encyclopedia cards separately
          if ( ctype == 'topics' ):
             continue
-
-         # Based on the number of search results and the number of cards per page,
-         # determine how many pages we've shown thus far.
-         if ( pages > most_inserts ):
-            most_inserts = pages
 
          start = 0
          end_dist = len(self.search_results.hits[ctype])
@@ -537,17 +523,7 @@ class cw_page:
          if ( end_dist == 0 ):
             continue
 
-         if ( end_dist > CARD_COUNTS[ctype] ):
-            end_dist = CARD_COUNTS[ctype]
-
-         if ( pages > 1 ):
-            start = len(self.search_results.hits[ctype]) - CARD_COUNTS[ctype]
-            # Add cards to the state for purpose of tracking, without loading context
-            for i in xrange (0, CARD_COUNTS[ctype] - start - 1 ):
-               card = cw_card(ctype, self.search_results.hits[ctype][i], random=self.state.get_random_seed, grab_body=False)
-               self.cards.append(card)
-
-         for j in xrange(start, start + end_dist):
+         for j in xrange(start, end_dist):
             card = cw_card(ctype, self.search_results.hits[ctype][j], random=self.state.get_random_seed, grab_body=True, search_result=True)
             # News articles without topic strings won't load. Other card types that
             # don't have embedded topics will load just fine.
