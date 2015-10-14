@@ -1,5 +1,5 @@
 from math import ceil, floor
-from random import random, randint, shuffle
+from random import random, Random, randint
 from cgi import FieldStorage
 from PIL import Image
 from mad import MadFile
@@ -767,9 +767,13 @@ class cw_card:
       # we've cycled through all the images or quotes we have.
       # To prevent this strategy having overlap, have plenty of 
       # content for images and quotes. :)
+      # 
+      # Also, referencing the Random hidden object and using a
+      # single instance, doesn't pollute the other global random
+      # integer or selection functions like shuffle(type, seed) does
       if ((( self.ctype == 'images' ) or ( self.ctype == 'quotes' )) and
            ( self.num == 0 )):
-         shuffle(type_files, self.random)
+         Random(self.random).shuffle(type_files)
 
       # Find the utime value in the array if the 
       # number given isn't an array index
