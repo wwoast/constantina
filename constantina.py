@@ -12,6 +12,10 @@ import re
 import magic
 import lxml.html
 from urllib import unquote_plus
+import syslog
+
+
+syslog.openlog(ident='constantina')
 
 
 # (Full path) Web resources and directories that Constantina reads from
@@ -456,8 +460,8 @@ class cw_page:
       # Once we've constructed the new card list, update the page
       # state for insertion, for the "next_page" link.
       self.out_state = self.state.export_state(self.cards, self.query_terms)
-      # print self.state
-      # print self.out_state
+      syslog(message=self.state)
+      syslog(message=self.out_state)
       
 
    def __get_cards(self):
