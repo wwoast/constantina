@@ -279,7 +279,8 @@ class cw_state:
             continue
          # For adding into a string later, make card.num a string too
          getattr(self, card.ctype).clist.append(str(card.num))
-         all_ctypes.append(card.ctype)
+         if ( card.ctype not in all_ctypes ):
+            all_ctypes.append(card.ctype)
 
       # Add distance values to the end of each state_hash
       # array, as is the standard for these state tokens.
