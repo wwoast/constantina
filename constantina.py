@@ -460,8 +460,8 @@ class cw_page:
       # Once we've constructed the new card list, update the page
       # state for insertion, for the "next_page" link.
       self.out_state = self.state.export_state(self.cards, self.query_terms)
-      syslog(message=self.state)
-      syslog(message=self.out_state)
+      syslog.syslog(str(self.state.in_state))
+      syslog.syslog(str(self.out_state))
       
 
    def __get_cards(self):
