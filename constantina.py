@@ -206,7 +206,7 @@ class cw_state:
       # Calculate consistent shuffled arrays of filetypes for the real state
       # indexes to make reference to in card selection
       for ctype in RANDOMIZE_CARDS:
-         self.__shuffle_files(self, ctype)
+         self.__shuffle_files(ctype)
 
 
    def __import_state(self, state_string):
@@ -517,7 +517,7 @@ class cw_page:
             start = int(getattr(self.state, ctype).end) + 1
 
          for i in xrange(start, start + CARD_COUNTS[ctype]):
-            card = cw_card(ctype, i, random=self.state.get_random_seed, grab_body=True)
+            card = cw_card(ctype, i, state=self.state, grab_body=True)
             # Don't include cards that failed to load content
             if ( card.topics != [] ):
                self.cards.append(card)
@@ -536,7 +536,7 @@ class cw_page:
       # HOWEVER if we're beyond the first page of search results, don't add
       # the encyclopedia page again! Use image count as a heuristic for page count.
       if ( self.query_terms.lower() in opendir('topics')):
-         encyclopedia = cw_card('topics', self.query_terms.lower(), random=self.state.get_random_seed, grab_body=True, search_result=True)
+         encyclopedia = cw_card('topics', self.query_terms.lower(), state=self.state, grab_body=True, search_result=True)
          self.cards.append(encyclopedia)
 
       # Other types of search results come afterwards
@@ -552,7 +552,7 @@ class cw_page:
             continue
 
          for j in xrange(start, end_dist):
-            card = cw_card(ctype, self.search_results.hits[ctype][j], random=self.state.get_random_seed, grab_body=True, search_result=True)
+            card = cw_card(ctype, self.search_results.hits[ctype][j], state=self.state, grab_body=True, search_result=True)
             # News articles without topic strings won't load. Other card types that
             # don't have embedded topics will load just fine.
             if ( card.topics != [] ) or ( ctype == 'quotes' ) or ( ctype == 'topics' ):
@@ -761,15 +761,15 @@ class cw_card:
    the card, as well as what its page index and type are.
    """
 
-   def __init__(self, ctype, num, random=0, grab_body=True, permalink=False, search_result=False):
+   def __init__(self, ctype, num, state=False, grab_body=True, permalink=False, search_result=False):
       self.title = DEFAULT['title']
       self.topics = []
       self.body = DEFAULT['body']
       self.ctype = ctype
       # Request either the Nth entry of this type, or a specific utime/date
       self.num = num
-      # If we need to shuffle the dir reading, get cw_page's random seed
-      self.random = random
+      # If we need to access data from the state object, for card shuffling
+      self.state = state
       self.songs = []
       self.cfile = DEFAULT['file']
       self.cdate = DEFAULT['date']
@@ -786,8 +786,10 @@ class cw_card:
          populate the object, and return the name of the opened file"""
       type_files = opendir(self.ctype)
 
-      # Find the utime value in the array if the number given isn't an array index
-      if ( self.ctype in RANDOMIZE_CARDS ):
+      # Find the utime value in the array if the number given isn't an array index.
+      # If we're inserting cards into an active page, the state variable will be
+      # given, and should be represented by a shuffled value.
+      if ( self.ctype in RANDOMIZE_CARDS ) and ( self.state != False ):
          which_file = getattr(self.state, self.ctype + "_shuffle")[self.num]
       else:
          which_file = self.num
