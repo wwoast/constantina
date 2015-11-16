@@ -207,9 +207,9 @@ class cw_state:
       # indexes to make reference to in card selection
       for ctype in RANDOMIZE_CARDS:
          self.__shuffle_files(ctype)
-         syslog.syslog("Random " + ctype + ": " + str(self.shuffled[ctype]))
+         # syslog.syslog("Random " + ctype + ": " + str(self.shuffled[ctype]))
 
-      syslog.syslog("Random seed: " + str(self.random))
+      # syslog.syslog("Random seed: " + str(self.random))
 
 
    def __import_state(self, state_string):
@@ -485,8 +485,8 @@ class cw_page:
       # Once we've constructed the new card list, update the page
       # state for insertion, for the "next_page" link.
       self.out_state = self.state.export_state(self.cards, self.query_terms)
-      syslog.syslog("Initial state: " + str(self.state.in_state))
-      syslog.syslog("To-load state: " + str(self.out_state))
+      # syslog.syslog("Initial state: " + str(self.state.in_state))
+      # syslog.syslog("To-load state: " + str(self.out_state))
       
 
    def __get_cards(self):
