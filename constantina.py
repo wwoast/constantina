@@ -156,8 +156,7 @@ class cw_cardtype:
       self.spacing = spacing
       self.start = start
       self.end = end
-      self.clist = []   # List of card indexes that appeared of this type
-      
+      self.clist = []      # List of card indexes that appeared of this type
 
 
 class cw_state:
@@ -180,6 +179,7 @@ class cw_state:
    def __init__(self, state_string=None):
       self.in_state = state_string   # Track the original state string
       self.random = None	     # The Random Seed for the page
+      self.shuffled = {}             # Arrays of shuffled index lists
 
       # For the card types in CARD_COUNTS, create variables, i.e.
       #   state.news.distance, state.topics.spacing
@@ -207,6 +207,9 @@ class cw_state:
       # indexes to make reference to in card selection
       for ctype in RANDOMIZE_CARDS:
          self.__shuffle_files(ctype)
+         syslog.syslog("Random " + ctype + ": " + str(self.shuffled[ctype]))
+
+      syslog.syslog("Random seed: " + str(self.random))
 
 
    def __import_state(self, state_string):
@@ -394,8 +397,8 @@ class cw_state:
       normal page-state numbering, using those page-state values as indexes
       into a shuffled list of files."""
       file_count = len(opendir(ctype))
-      file_ids = range(0, file_count + 1)
-      setattr(self, ctype + "_shuffle", shuffle(file_ids, self.get_random_seed))     
+      self.shuffled[ctype] = range(0, file_count)
+      shuffle(self.shuffled[ctype], self.get_random_seed)
 
 
 
@@ -790,7 +793,8 @@ class cw_card:
       # If we're inserting cards into an active page, the state variable will be
       # given, and should be represented by a shuffled value.
       if ( self.ctype in RANDOMIZE_CARDS ) and ( self.state != False ):
-         which_file = getattr(self.state, self.ctype + "_shuffle")[self.num]
+         cycle = len(self.state.shuffled[self.ctype])
+         which_file = self.state.shuffled[self.ctype][self.num % cycle]
       else:
          which_file = self.num
 
