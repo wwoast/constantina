@@ -121,6 +121,13 @@ SEARCH_CARDS = [
 ]
 
 
+# Types of cards we randomize in the output pages
+RANDOMIZE_CARDS = [
+   'images',
+   'quotes',
+]
+
+
 # Max search results to return in a query
 MAX_SEARCH_RESULTS = 200
 # Max number of comma-separated values for a parameter
@@ -195,6 +202,11 @@ class cw_state:
       # If there wasn't a random seed, we better generate one :)
       if (self.random == None):
          self.__set_random_seed()
+
+      # Calculate consistent shuffled arrays of filetypes for the real state
+      # indexes to make reference to in card selection
+      for ctype in RANDOMIZE_CARDS:
+         self.__shuffle_files(self, ctype)
 
 
    def __import_state(self, state_string):
@@ -377,6 +389,15 @@ class cw_state:
       return int(self.random * 10000)
 
 
+   def __shuffle_files(self, ctype):
+      """Take a card type, and create a shuffle array where we can preserve
+      normal page-state numbering, using those page-state values as indexes
+      into a shuffled list of files."""
+      file_count = len(opendir(ctype))
+      file_ids = range(0, file_count + 1)
+      setattr(self, ctype + "_shuffle", shuffle(file_ids, self.get_random_seed))     
+
+
 
 class cw_page:
    """
@@ -461,8 +482,8 @@ class cw_page:
       # Once we've constructed the new card list, update the page
       # state for insertion, for the "next_page" link.
       self.out_state = self.state.export_state(self.cards, self.query_terms)
-      syslog.syslog(str(self.state.in_state))
-      syslog.syslog(str(self.out_state))
+      syslog.syslog("Initial state: " + str(self.state.in_state))
+      syslog.syslog("To-load state: " + str(self.out_state))
       
 
    def __get_cards(self):
@@ -765,26 +786,17 @@ class cw_card:
          populate the object, and return the name of the opened file"""
       type_files = opendir(self.ctype)
 
-      # For images and quotes and other things that can be random,
-      # shuffle the dirlisting to guarantee whatever files that 
-      # get chosen are nicely randomized. Only shuffle upon the 
-      # very first page load where the seed is obtained, or once 
-      # we've cycled through all the images or quotes we have.
-      # To prevent this strategy having overlap, have plenty of 
-      # content for images and quotes. :)
-      if ((( self.ctype == 'images' ) or ( self.ctype == 'quotes' )) and
-           ( self.num == 0 )):
-         shuffle(type_files, self.random)
-
-      # Find the utime value in the array if the 
-      # number given isn't an array index
-      which_file = self.num
+      # Find the utime value in the array if the number given isn't an array index
+      if ( self.ctype in RANDOMIZE_CARDS ):
+         which_file = getattr(self.state, self.ctype + "_shuffle")[self.num]
+      else:
+         which_file = self.num
 
       if which_file >= len(type_files):
          if ( self.num in type_files ):
             which_file = type_files.index(self.num)
             self.num = which_file   # Don't save the filename as the number
-         elif (( self.ctype == 'images' ) or ( self.ctype == 'quotes' )):
+         elif ( self.ctype in RANDOMIZE_CARDS ): 
             # Some types should support looping over the available
             # content. Add those to this clause. To make the monotonic
             # content appearances more evenly distributed and less
