@@ -128,13 +128,6 @@ RANDOMIZE_CARDS = [
 ]
 
 
-# Number representing the count of possible random numbers
-# we'll accept as random seeds. This should be some factor
-# of ten, since it's used to multiply out the floating point
-# numbers into something resembling an integer.
-RANDOM_SPACE = 100000000
-
-
 # Max search results to return in a query
 MAX_SEARCH_RESULTS = 200
 # Max number of comma-separated values for a parameter
@@ -276,11 +269,10 @@ class cw_state:
                getattr(self, spcfield).append(i)
             last_parsed.append(token[0:2])   # Add to the parsed stack
 
-         # If the token is just a five-digit number,
-         # this is our random seed for shuffling
+         # If the token can be interpreted as a float when putting 0. in front,
+         # this will become our random seed for shuffling
          elif ( token.isdigit() ):
-            if ( int(token) >= 0 and int(token) <= RANDOM_SPACE ):
-               self.__import_random_seed(token)
+            self.__import_random_seed(token)
 
          else:
             pass
@@ -377,7 +369,7 @@ class cw_state:
    def __set_random_seed(self):
       """Return a consistent random number for the shuffle function, so that
       between page loads we can utilize the same initial random shuffle."""
-      self.random = round(random(), 9)
+      self.random = round(random(), 14)
 
 
    # Since shuffle needs a function
@@ -391,12 +383,12 @@ class cw_state:
       """Set the return seed based on a 5-digit integer from the prior_state.
       For shuffle, this has to be a float between zero and one, but for the
       state variable it should be a N-digit number."""
-      self.random = float(num) / RANDOM_SPACE
+      self.random = float(str("0." + num))
 
 
    def __export_random_seed(self):
       """Export the random seed for adding to the state variable"""
-      return int(self.random * RANDOM_SPACE)
+      return str(self.random).replace("0.", "")
 
 
    def __shuffle_files(self, ctype):
