@@ -272,7 +272,6 @@ class cw_state:
          # this will become our random seed for shuffling
          elif ( token.isdigit() ):
             self.__import_random_seed(token)
-            seed(self.seed)
 
          else:
             pass
@@ -373,18 +372,12 @@ class cw_state:
       seed(self.seed)
       
 
-   # Since shuffle needs a function
-   def get_random_seed(self):
-      """Since shuffle needs a function to return a random seed, even if we
-      actually just want to use a pre-computed value, here it is."""
-      return self.seed
-
-
    def __import_random_seed(self, num):
       """Set the return seed based on a 5-digit integer from the prior_state.
       For shuffle, this has to be a float between zero and one, but for the
       state variable it should be a N-digit number."""
       self.seed = float(str("0." + num))
+      seed(self.seed)
 
 
    def __export_random_seed(self):
