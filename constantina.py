@@ -1,5 +1,5 @@
 from math import ceil, floor
-from random import random, randint, shuffle
+from random import random, randint, seed, shuffle
 from cgi import FieldStorage
 from PIL import Image
 from mad import MadFile
@@ -202,6 +202,7 @@ class cw_state:
       # If there wasn't a random seed, we better generate one :)
       if (self.seed == None):
          self.__set_random_seed()
+         seed(self.seed)
 
       # Calculate consistent shuffled arrays of filetypes for the real state
       # indexes to make reference to in card selection
@@ -272,6 +273,7 @@ class cw_state:
          # this will become our random seed for shuffling
          elif ( token.isdigit() ):
             self.__import_random_seed(token)
+            random.seed(self.seed)
 
          else:
             pass
@@ -369,7 +371,7 @@ class cw_state:
       """Return a consistent random seed for the shuffle function, so that
       between page loads we can utilize the same initial random shuffle."""
       self.seed = round(random(), 14)
-
+      
 
    # Since shuffle needs a function
    def get_random_seed(self):
@@ -397,7 +399,7 @@ class cw_state:
       file_count = len(opendir(ctype))
       self.shuffled[ctype] = range(0, file_count)
       syslog.syslog("Unshuffled " + ctype + ": " + str(self.shuffled[ctype]))
-      shuffle(self.shuffled[ctype], self.get_random_seed)
+      shuffle(self.shuffled[ctype])
       syslog.syslog("    Random " + ctype + ": " + str(self.shuffled[ctype]))
 
 
