@@ -178,7 +178,7 @@ class cw_state:
    """
    def __init__(self, state_string=None):
       self.in_state = state_string   # Track the original state string
-      self.random = None	     # The Random Seed for the page
+      self.seed = None		     # The Random Seed for the page
       self.shuffled = {}             # Arrays of shuffled index lists
 
       # For the card types in CARD_COUNTS, create variables, i.e.
@@ -200,16 +200,15 @@ class cw_state:
       self.__import_state(state_string)
 
       # If there wasn't a random seed, we better generate one :)
-      if (self.random == None):
+      if (self.seed == None):
          self.__set_random_seed()
 
       # Calculate consistent shuffled arrays of filetypes for the real state
       # indexes to make reference to in card selection
       for ctype in RANDOMIZE_CARDS:
          self.__shuffle_files(ctype)
-         syslog.syslog("Random " + ctype + ": " + str(self.shuffled[ctype]))
 
-      syslog.syslog("Random seed: " + str(self.random))
+      syslog.syslog("Random seed: " + str(self.seed))
 
 
    def __import_state(self, state_string):
@@ -367,28 +366,28 @@ class cw_state:
 
 
    def __set_random_seed(self):
-      """Return a consistent random number for the shuffle function, so that
+      """Return a consistent random seed for the shuffle function, so that
       between page loads we can utilize the same initial random shuffle."""
-      self.random = round(random(), 14)
+      self.seed = round(random(), 14)
 
 
    # Since shuffle needs a function
    def get_random_seed(self):
       """Since shuffle needs a function to return a random seed, even if we
       actually just want to use a pre-computed value, here it is."""
-      return self.random
+      return self.seed
 
 
    def __import_random_seed(self, num):
       """Set the return seed based on a 5-digit integer from the prior_state.
       For shuffle, this has to be a float between zero and one, but for the
       state variable it should be a N-digit number."""
-      self.random = float(str("0." + num))
+      self.seed = float(str("0." + num))
 
 
    def __export_random_seed(self):
       """Export the random seed for adding to the state variable"""
-      return str(self.random).replace("0.", "")
+      return str(self.seed).replace("0.", "")
 
 
    def __shuffle_files(self, ctype):
@@ -397,7 +396,9 @@ class cw_state:
       into a shuffled list of files."""
       file_count = len(opendir(ctype))
       self.shuffled[ctype] = range(0, file_count)
+      syslog.syslog("Unshuffled " + ctype + ": " + str(self.shuffled[ctype]))
       shuffle(self.shuffled[ctype], self.get_random_seed)
+      syslog.syslog("    Random " + ctype + ": " + str(self.shuffled[ctype]))
 
 
 
@@ -420,7 +421,6 @@ class cw_page:
          state variable for the next AJAX load"""
       self.cur_len = 0
       self.cards = []
-      self.random = 0
       self.state = cw_state(in_state)
       self.out_state = ''
 
