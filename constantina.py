@@ -202,7 +202,6 @@ class cw_state:
       # If there wasn't a random seed, we better generate one :)
       if (self.seed == None):
          self.__set_random_seed()
-         seed(self.seed)
 
       # Calculate consistent shuffled arrays of filetypes for the real state
       # indexes to make reference to in card selection
@@ -273,7 +272,7 @@ class cw_state:
          # this will become our random seed for shuffling
          elif ( token.isdigit() ):
             self.__import_random_seed(token)
-            random.seed(self.seed)
+            seed(self.seed)
 
          else:
             pass
@@ -371,6 +370,7 @@ class cw_state:
       """Return a consistent random seed for the shuffle function, so that
       between page loads we can utilize the same initial random shuffle."""
       self.seed = round(random(), 14)
+      seed(self.seed)
       
 
    # Since shuffle needs a function
