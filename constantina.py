@@ -552,15 +552,11 @@ class cw_page:
             grab_file = self.search_results.hits[ctype][j]
             # If the hits[ctype][j] is a file name, figure out which Nth file this is
             if ( grab_file.isdigit() == False ):
-               # Most dirlists are in reverse-time order. If files aren't datenames,
-               # put this in normal order.
-               DIR_INDEX[ctype].reverse()
                for k in xrange(0, len(DIR_INDEX[ctype])):
                   syslog.syslog("compare:" + grab_file + "==" + DIR_INDEX[ctype][k])
                   if DIR_INDEX[ctype][k] == grab_file:
                      grab_file = k
                      break
-               DIR_INDEX[ctype].reverse()   # Put the list back the way it was
 
             card = cw_card(ctype, grab_file, state=self.state, grab_body=True, search_result=True)
             # News articles without topic strings won't load. Other card types that
@@ -799,7 +795,7 @@ class cw_card:
       # Find the utime value in the array if the number given isn't an array index.
       # If we're inserting cards into an active page, the state variable will be
       # given, and should be represented by a shuffled value.
-      if ( self.ctype in RANDOMIZE_CARDS ) and ( self.state != False ):
+      if ( self.ctype in RANDOMIZE_CARDS ) and ( self.state != False ) and ( self.search_result == False ):
          cycle = len(self.state.shuffled[self.ctype])
          syslog.syslog("open file: " + str(self.num) + "/" + str(cycle))
          which_file = self.state.shuffled[self.ctype][self.num % cycle]
