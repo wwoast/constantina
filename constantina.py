@@ -549,7 +549,20 @@ class cw_page:
             continue
 
          for j in xrange(start, end_dist):
-            card = cw_card(ctype, self.search_results.hits[ctype][j], state=self.state, grab_body=True, search_result=True)
+            grab_file = self.search_results.hits[ctype][j]
+            # If the hits[ctype][j] is a file name, figure out which Nth file this is
+            if ( grab_file.isdigit() == False ):
+               # Most dirlists are in reverse-time order. If files aren't datenames,
+               # put this in normal order.
+               DIR_INDEX[ctype].reverse()
+               for k in xrange(0, len(DIR_INDEX[ctype])):
+                  syslog.syslog("compare:" + grab_file + "==" + DIR_INDEX[ctype][k])
+                  if DIR_INDEX[ctype][k] == grab_file:
+                     grab_file = k
+                     break
+               DIR_INDEX[ctype].reverse()   # Put the list back the way it was
+
+            card = cw_card(ctype, grab_file, state=self.state, grab_body=True, search_result=True)
             # News articles without topic strings won't load. Other card types that
             # don't have embedded topics will load just fine.
             if ( card.topics != [] ) or ( ctype == 'quotes' ) or ( ctype == 'topics' ):
@@ -788,6 +801,7 @@ class cw_card:
       # given, and should be represented by a shuffled value.
       if ( self.ctype in RANDOMIZE_CARDS ) and ( self.state != False ):
          cycle = len(self.state.shuffled[self.ctype])
+         syslog.syslog("open file: " + str(self.num) + "/" + str(cycle))
          which_file = self.state.shuffled[self.ctype][self.num % cycle]
       else:
          which_file = self.num
