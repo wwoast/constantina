@@ -345,7 +345,7 @@ class cw_state:
             continue
 
          # Track just the range of values, not the intermediaries
-         # TODO TODO: this is why items repeat state. You need to track the last N actual
+         # TODO TODO IMPORTANT: this is why items repeat. You need to track the last N actual
          # appearance items so that there's at least N entries between duplicates.
          stype = ctype[0]
          crange = getattr(self, ctype).clist
@@ -450,7 +450,7 @@ class cw_page:
          # Return search results based on the subsequent comma-separated list,
          # parsed by __import_state into self.state.search.
          # TODO: Tokenize all search parameters and remove non-alphanum characters
-         # other than plus. All input-commas become pluses
+         # other than plus and whoosh wildcard characters. All input-commas become pluses
          self.search_results = cw_search(self.state.search)
          self.query_terms = self.search_results.query_string
          self.__get_search_result_cards()
@@ -529,7 +529,7 @@ class cw_page:
       """
       # Treat topics cards special. If there's an exact match between the name
       # of an encyclopedia entry and the search query, return that as the first
-      # page of the results. TOPIC articles must be filenamed lowercase!!
+      # card of the results. TOPIC articles must be filenamed lowercase!!
       # HOWEVER if we're beyond the first page of search results, don't add
       # the encyclopedia page again! Use image count as a heuristic for page count.
       if ( self.query_terms.lower() in opendir('topics')):
