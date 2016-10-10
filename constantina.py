@@ -64,19 +64,6 @@ SPECIAL_STATES = {
 DIR_INDEX = {}
 
 
-# Default card values, occasionally used for checking
-# to see if something has been set or not. In case of
-# an error, these values will not look too obvious as 
-# default-values on a public webpage.
-DEFAULT = {
-     'body': 'Zen-like calm.',
-    'title': 'Empty Card',
-     'file': 'No filename grabbed.',
-     'date': 'Insert date here',
-'tombstone': 'Next-page Tombstone'
-}
-
-
 # Directory and parameters for the search indexing
 SEARCH_INDEX = {
            'dir': "./index/",
@@ -743,17 +730,17 @@ class cw_card:
    """
 
    def __init__(self, ctype, num, state=False, grab_body=True, permalink=False, search_result=False):
-      self.title = DEFAULT['title']
+      self.title = CONFIG.get("card_defaults", "title")
       self.topics = []
-      self.body = DEFAULT['body']
+      self.body = CONFIG.get("card_defaults", "body")
       self.ctype = ctype
       # Request either the Nth entry of this type, or a specific utime/date
       self.num = num
       # If we need to access data from the state object, for card shuffling
       self.state = state
       self.songs = []
-      self.cfile = DEFAULT['file']
-      self.cdate = DEFAULT['date']
+      self.cfile = CONFIG.get("card_defaults", "file")
+      self.cdate = CONFIG.get("card_defaults", "date")
       self.permalink = permalink
       self.search_result = search_result
       # Don't hit the filesystem if we're just tracking which cards have
@@ -875,7 +862,7 @@ class cw_card:
          file.close(cfile)
 
       except:   # File got moved in between dirlist caching and us reading it
-         return DEFAULT['file']
+         return CONFIG.get("card_defaults", "file")
 
       return CARD_PATHS[self.ctype] + thisfile
 
@@ -1219,7 +1206,8 @@ def create_simplecard(card, next_state):
       output += line + "\n"
 
    # For special tombstone cards, insert the state as non-visible text
-   if ( card.title == DEFAULT['tombstone'] ):
+   default_string = CONFIG.get("card_defaults", "tombstone")
+   if ( card.title == default_string ):
       output += """\n<p id="state">%s</p>""" % next_state
 
    output += """</div>\n"""
