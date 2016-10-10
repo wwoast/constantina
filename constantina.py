@@ -13,19 +13,20 @@ import magic
 import lxml.html
 from urllib import unquote_plus
 import syslog
-
+import ConfigParser
 
 syslog.openlog(ident='constantina')
+config = ConfigParser.SafeConfigParser()
 
 
 # (Full path) Web resources and directories that Constantina reads from
-ROOT_DIR = "/var/www"
+ROOT_DIR = config.get("paths", "root")
 
 # (Relative to RESOURCE DIR) Root of the Constantina files
-RESOURCE_DIR = "/cwdc"
+RESOURCE_DIR = config.get("paths", "resource")
 
 # Per-page global values are based on news items per page
-NEWSITEMS = 10
+NEWSITEMS = config.get("card_counts", "news")
 
 
 # Card types, and where their data lives. 
