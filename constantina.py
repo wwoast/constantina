@@ -76,20 +76,6 @@ SPECIAL_STATES = {
 }
 
 
-# How many cards in between each card of this type. 0 means
-# we can have cards right next to each other.
-CARD_SPACING = {
-    'news': 0,
-  'images': int(floor(NEWSITEMS / 3)),
-   'songs': int(floor(NEWSITEMS / 1.5)),
-  'quotes': int(floor(NEWSITEMS / 4)),
-     'ads': int(floor(NEWSITEMS / 1.5)),
-   'media': int(ceil(NEWSITEMS / 2)),
-'features': int(ceil(NEWSITEMS / 2)),
-  'topics': 0
-}
-
-
 # Only do opendir once per directory
 DIR_INDEX = {}
 
@@ -183,7 +169,7 @@ class cw_state:
       self.seed = None		     # The Random Seed for the page
       self.shuffled = {}             # Arrays of shuffled index lists
 
-      # For the card types in CARD_COUNTS, create variables, i.e.
+      # For the card types in the card_counts config, create variables, i.e.
       #   state.news.distance, state.topics.spacing
       for ctype, card_count in CONFIG.items('card_counts'):
          setattr(self, ctype, cw_cardtype(
@@ -284,7 +270,7 @@ class cw_state:
    def export_state(self, cards, query_terms):
       """Once all cards are read, calculate a new state variable to
          embed in the more-contents page link."""
-      all_ctypes = CARD_COUNTS.keys()
+      all_ctypes = CONFIG.options("card_counts")
 
       # Populate the state object, which we'll later build the
       # state_string from. Don't deal with news items yet
@@ -497,10 +483,11 @@ class cw_page:
       # Anything with rules for cards per page, start adding them.
       # Do not grab full data for all but the most recent cards!
       # For older cards, just track their metadata
-      for ctype in CARD_COUNTS:
+      for ctype, count in CONFIG.items("card_counts"):
+         card_count = int(count)
          # No topic cards unless they're search results, and no card types
          # that have no historical values in the last page
-         if ( CARD_COUNTS[ctype] == 0 ):
+         if ( card_count == 0 ):
             continue
          # No data and it's not the first page? Skip this type
          if ( getattr(self.state, ctype).end == None ) and ( self.state.in_state != None ):
@@ -515,7 +502,7 @@ class cw_page:
          else:
             start = int(getattr(self.state, ctype).end) + 1
 
-         for i in xrange(start, start + CARD_COUNTS[ctype]):
+         for i in xrange(start, start + card_count):
             card = cw_card(ctype, i, state=self.state, grab_body=True)
             # Don't include cards that failed to load content
             if ( card.topics != [] ):
@@ -631,19 +618,19 @@ class cw_page:
       # items on the last page. 
       last_dist = {}
       if ( self.state.in_state == None ):
-         for ctype in CARD_SPACING:
+         for ctype in CONFIG.options("card_spacing"):
             last_dist[ctype] = 0
          return last_dist
 
       # Otherwise go back in our cardlist and determine
       # the distances between current cards and the last
       # card of each type.
-      lb = self.cur_len - max(CARD_SPACING.values())
+      lb = self.cur_len - max([int(space) for (ctype,space) in CONFIG.items("card_spacing")])
       for card in self.cards[lb::]:
          last_dist[card.ctype] = self.cur_len - lb
 
       # If no cards of a particular type, set dist to zero
-      for ctype in CARD_SPACING.keys():
+      for ctype in CONFIG.options("card_spacing"):
          if ctype not in last_dist:
             last_dist[ctype] = 0
 
@@ -671,7 +658,7 @@ class cw_page:
       for ctype, space in CONFIG.items("card_spacing"):
          # Spacing rules from the last page. Subtract the distance from
          # the end of the previous page. For all other cards, follow the
-         # strict CARD_SPACING rules, plus jitter
+         # strict card spacing rules from the config file, plus jitter
          card_spacing = int(space)
          if ( lstop - c_lastcard[ctype] >= card_spacing ):
             c_dist[ctype] = 0
@@ -679,7 +666,7 @@ class cw_page:
             c_dist[ctype] = 0
          else:
             c_dist[ctype] = card_spacing - (lstop - c_lastcard[ctype])
-         # print "------ ctype %s   spacing %d   c_dist %d   c_lsatcard %d   lstop %d" % ( ctype, CARD_SPACING[ctype], c_dist[ctype], c_lastcard[ctype], lstop)
+         # print "------ ctype %s   spacing %d   c_dist %d   c_lsatcard %d   lstop %d" % ( ctype, card_spacing, c_dist[ctype], c_lastcard[ctype], lstop)
          c_redist[ctype] = []
          c_nodist[ctype] = []
 
