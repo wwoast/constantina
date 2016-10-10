@@ -64,14 +64,6 @@ SPECIAL_STATES = {
 DIR_INDEX = {}
 
 
-# Directory and parameters for the search indexing
-SEARCH_INDEX = {
-           'dir': "./index/",
-  'ignore-words': "./index/ignore-words",
-'ignore-symbols': "./index/ignore-symbols"
-}
-
-
 # Types of cards that we both index and search for
 SEARCH_CARDS = [
      'news',
