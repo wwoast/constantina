@@ -911,6 +911,11 @@ class cw_search:
       self.searcher = ''
       self.results = ''
 
+      # File paths for loading things
+      self.index_dir = CONFIG.get('search', 'index_dir')
+      self.words_file = CONFIG.get('search', 'ignore_words')
+      self.symobls_file = CONFIG.get('search', 'ignore_symbols')
+
       # Define the indexing schema. Include the mtime to track updated 
       # content in the backend, ctype so that we can manage the distribution
       # of returned search results similar to the normal pages, and the 
@@ -918,11 +923,11 @@ class cw_search:
       self.schema = Schema(file=ID(stored=True, unique=True), ctype=ID(stored=True), mtime=ID(stored=True), content=TEXT)
 
       # If index doesn't exist, create it
-      if ( index.exists_in(SEARCH_INDEX['dir'])):
-         self.index = index.open_dir(SEARCH_INDEX['dir'])
+      if ( index.exists_in(self.index_dir)):
+         self.index = index.open_dir(self.index_dir)
          # print "Index exists"
       else:
-         self.index = index.create_in(SEARCH_INDEX['dir'], schema=self.schema)
+         self.index = index.create_in(self.index_dir, schema=self.schema)
          # print "Index not found -- creating one"
       # Prepare for query searching (mtime update, search strings)
       self.searcher = self.index.searcher()
@@ -967,7 +972,7 @@ class cw_search:
       """
       # Make a or-regex of all the words in the wordlist
       if ( self.ignore_words == '' ):
-         with open(SEARCH_INDEX['ignore-words'], 'r') as wfile:
+         with open(self.words_file, 'r') as wfile:
             words = wfile.read().splitlines()
             remove = '|'.join(words)
             self.ignore_words = re.compile(r'\b('+remove+r')\b', flags=re.IGNORECASE)
@@ -982,7 +987,7 @@ class cw_search:
       # double-quote characters &ldquo; and &rdquo;, as well as other
       # lxml.html converted &-escaped HTML characters
       if ( self.ignore_symbols == '' ):
-         with open(SEARCH_INDEX['ignore-symbols'], 'r') as sfile:
+         with open(self.symbols_file, 'r') as sfile:
             for character in sfile.read().splitlines():
                self.ignore_symbols.push(character)
                safe_input = safe_input.replace(character, " ")               
