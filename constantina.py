@@ -17,6 +17,7 @@ import ConfigParser
 
 syslog.openlog(ident='constantina')
 config = ConfigParser.SafeConfigParser()
+config.read('constantina.ini')
 
 
 # (Full path) Web resources and directories that Constantina reads from
@@ -26,7 +27,7 @@ ROOT_DIR = config.get("paths", "root")
 RESOURCE_DIR = config.get("paths", "resource")
 
 # Per-page global values are based on news items per page
-NEWSITEMS = config.get("card_counts", "news")
+NEWSITEMS = int(config.get("card_counts", "news"))
 
 
 # Card types, and where their data lives. 
