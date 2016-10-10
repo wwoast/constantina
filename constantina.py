@@ -47,27 +47,11 @@ CARD_PATHS = {
 }
 
 
-# Both describes how many cards per page, and serves as
-# the canonical list of card types designed to be
-# randomly distributed on each page. TWO KEYS IN THIS
-# HASH MAY NOT START WITH THE SAME FIRST LETTER!
-CARD_COUNTS = {
-    'news': NEWSITEMS,
-  'images': int(ceil(NEWSITEMS / 3)),
-   'songs': int(ceil(NEWSITEMS / 10)),
-  'quotes': int(ceil(NEWSITEMS / 3)),
-     'ads': int(ceil(NEWSITEMS / 10)),
-   'media': int(ceil(NEWSITEMS / 8)),
-'features': int(ceil(NEWSITEMS / 10)),
-  'topics': 0
-}
-
-
 # Some state tokens represent special queries to our
 # script, and shouldn't represent specific card types.
 # These are permalink types, and the permalink fields
-# must be underscore_delimited versions of the CARD_COUNTS
-# fields should new ones be defined.
+# must be underscore_delimited versions of the 
+# CONFIG("card_counts") fields should new ones be defined.
 SPECIAL_STATES = {
        'xn': 'news_permalink',
        'xf': 'features_permalink',
@@ -135,7 +119,7 @@ class cw_cardtype:
       - The distance from the last-displayed item of this type to the end
         of the displayed page
 
-   Through introspection of the CARD_COUNTS settings, we create one of these
+   Through checking the configured card_counts, we create one of these
    objects named for each card type (ctype).
    """
    def __init__(self, count, distance, spacing, start, end):
@@ -211,7 +195,7 @@ class cw_state:
          return
 
       # State types are the same as the first letter of each card type
-      for ctype in CARD_COUNTS:
+      for ctype in CONFIG.options("card_counts"):
          valid_tokens[ctype[0]] = ctype
 
       # Special two-letter states may be processed as well
@@ -804,12 +788,13 @@ class cw_card:
             # obviously in sequence, jitter the next image count in
             # a consistent positive direction.
             rand_travel = 1
+            card_count = CONFIG.getint("card_counts", self.ctype)
             while (( rand_travel < 2 ) and 
-                   ( CARD_COUNTS[self.ctype] % rand_travel == 0 ) and 
-                   ( CARD_COUNTS[self.ctype] > 3 )):
+                   ( card_count % rand_travel == 0 ) and 
+                   ( card_count > 3 )):
                # Without looping, try to cycle the array of possible inserts
                # in a unique way on every page load
-               rand_travel = randint(2, CARD_COUNTS[self.ctype])
+               rand_travel = randint(2, card_count)
             which_file = ( self.num + rand_travel ) % len(type_files)
          else:
             return "nofile"
