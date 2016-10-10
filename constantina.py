@@ -16,18 +16,18 @@ import syslog
 import ConfigParser
 
 syslog.openlog(ident='constantina')
-config = ConfigParser.SafeConfigParser()
-config.read('constantina.ini')
+CONFIG = ConfigParser.SafeConfigParser()
+CONFIG.read('constantina.ini')
 
 
 # (Full path) Web resources and directories that Constantina reads from
-ROOT_DIR = config.get("paths", "root")
+ROOT_DIR = CONFIG.get("paths", "root")
 
 # (Relative to RESOURCE DIR) Root of the Constantina files
-RESOURCE_DIR = config.get("paths", "resource")
+RESOURCE_DIR = CONFIG.get("paths", "resource")
 
 # Per-page global values are based on news items per page
-NEWSITEMS = int(config.get("card_counts", "news"))
+NEWSITEMS = CONFIG.getint("card_counts", "news")
 
 
 # Card types, and where their data lives. 
@@ -185,11 +185,11 @@ class cw_state:
 
       # For the card types in CARD_COUNTS, create variables, i.e.
       #   state.news.distance, state.topics.spacing
-      for ctype in CARD_COUNTS:
+      for ctype, card_count in CONFIG.items('card_counts'):
          setattr(self, ctype, cw_cardtype(
-            count=CARD_COUNTS[ctype],
+            count=int(card_count),
             distance=None,
-            spacing=CARD_SPACING[ctype],
+            spacing=CONFIG.getint('card_spacing', ctype),
             start=None,
             end=None))
 
@@ -609,7 +609,7 @@ class cw_page:
       # page, which is important for once we've generated all
       # of this page's content and need to write a new state
       # variable based on the current list of cards.
-      for ctype in CARD_COUNTS:
+      for ctype, card_count in CONFIG.items("card_counts"):
          if ( len(getattr(self.state, ctype).clist) == 0 ):
             continue
          dist = getattr(self.state, ctype).distance
@@ -668,16 +668,17 @@ class cw_page:
       # non-redist set (news articles)
       c_nodist = {}      
 
-      for ctype in CARD_SPACING:
+      for ctype, space in CONFIG.items("card_spacing"):
          # Spacing rules from the last page. Subtract the distance from
          # the end of the previous page. For all other cards, follow the
          # strict CARD_SPACING rules, plus jitter
-         if ( lstop - c_lastcard[ctype] >= CARD_SPACING[ctype] ):
+         card_spacing = int(space)
+         if ( lstop - c_lastcard[ctype] >= card_spacing ):
             c_dist[ctype] = 0
          elif (( lstop == 0 ) and ( c_lastcard[ctype] == 0 )):
             c_dist[ctype] = 0
          else:
-            c_dist[ctype] = CARD_SPACING[ctype] - (lstop - c_lastcard[ctype])
+            c_dist[ctype] = card_spacing - (lstop - c_lastcard[ctype])
          # print "------ ctype %s   spacing %d   c_dist %d   c_lsatcard %d   lstop %d" % ( ctype, CARD_SPACING[ctype], c_dist[ctype], c_lastcard[ctype], lstop)
          c_redist[ctype] = []
          c_nodist[ctype] = []
@@ -711,14 +712,15 @@ class cw_page:
             continue   # Empty
 
          # Max distance between cards of this type on a page
-         norm_dist = CARD_SPACING[ctype]
+         norm_dist = CONFIG.getint("card_spacing", ctype)
+         card_count = CONFIG.getint("card_counts", ctype)
          # For spacing purposes, page starts at the earliest page we can
          # put a card on this page, w/o being too close to a same-type
          # card on the previous page. This shortens the effective page dist
 	 effective_pdist = p_dist - c_dist[ctype]
          max_dist = effective_pdist
-         if ( CARD_COUNTS[ctype] >= 1 ):
-            max_dist = floor(effective_pdist / CARD_COUNTS[ctype])
+         if ( card_count >= 1 ):
+            max_dist = floor(effective_pdist / card_count)
 
          # If less cards on the page then expected, degrade
          if ( max_dist < norm_dist ):
