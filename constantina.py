@@ -62,11 +62,6 @@ RANDOMIZE_CARDS = [
 ]
 
 
-# Max number of comma-separated values for a parameter
-# This is also the max number of search terms (TODO?)
-MAX_STATE_PARAMETERS = 10
-
-
 class cw_cardtype:
    """
    Constantina Card Type State Tracking.
