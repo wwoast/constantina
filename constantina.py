@@ -784,7 +784,7 @@ class cw_card:
    def __songfiles(self):
       """Create an array of song objects for this card"""
       for songpath in self.body.splitlines():
-         songpath = CARD_PATHS['songs'] + songpath
+         songpath = CONFIG.get("paths", "songs") + "/" + songpath
          self.songs.append(cw_song(songpath))
 
 
