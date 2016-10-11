@@ -30,23 +30,6 @@ RESOURCE_DIR = CONFIG.get("paths", "resource")
 NEWSITEMS = CONFIG.getint("card_counts", "news")
 
 
-# Card types, and where their data lives. 
-# All card types MUST start with a unique letter of the
-# alphabet, since state variables come from the first
-# letter of each card type. 
-CARD_PATHS = {
-    'news': './news/',
-  'images': './pictures/',
-   'songs': './songs/',
-  'quotes': './interjections/',
-     'ads': './gracias/',
-   'media': './embedded/',
-'features': './features/',
- 'heading': './headers/',
-  'topics': './encyclopedia/'
-}
-
-
 # Some state tokens represent special queries to our
 # script, and shouldn't represent specific card types.
 # These are permalink types, and the permalink fields
@@ -1007,8 +990,9 @@ class cw_search:
       # Enable writing to our chosen index
       # TODO: Should we only open the writer once, in a different scope?
       writer = self.index.writer()
+      card_path = CONFIG.get("paths", ctype)
 
-      with open(CARD_PATHS[ctype] + filename, 'r') as indexfh:
+      with open(card_path + "/" + filename, 'r') as indexfh:
          body = ""
          lines = indexfh.read().splitlines()
          unrolled = unroll_newlines(lines)
@@ -1031,10 +1015,11 @@ class cw_search:
       body contents to the index."""
       # Make sure the DIR_INDEX is populated
       opendir(ctype)
+      card_path = CONFIG.get("paths", ctype)
 
       for filename in DIR_INDEX[ctype]:
          try:
-            fnmtime = int(os.path.getmtime(CARD_PATHS[ctype] + filename))
+            fnmtime = int(os.path.getmtime(card_path + "/" + filename))
          except:
             return   # File has been removed, nothing to index
 
@@ -1110,7 +1095,7 @@ def opendir(ctype):
    """Return either cached directory information or open a dir and
    list all the files therein. Used for both searching and for the
    card reading functions, so we manage it outside those."""
-   directory = CARD_PATHS[ctype]
+   directory = CONFIG.get("paths", ctype)
 
    # If the directory wasn't previously cached
    if ( ctype not in DIR_INDEX.keys() ):
