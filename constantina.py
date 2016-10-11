@@ -42,13 +42,6 @@ SEARCH_CARDS = [
 ]
 
 
-# Types of cards we randomize in the output pages
-RANDOMIZE_CARDS = [
-   'images',
-   'quotes',
-]
-
-
 class cw_cardtype:
    """
    Constantina Card Type State Tracking.
@@ -119,7 +112,8 @@ class cw_state:
 
       # Calculate consistent shuffled arrays of filetypes for the real state
       # indexes to make reference to in card selection
-      for ctype in RANDOMIZE_CARDS:
+      random_types = CONFIG.get("card_properties", "randomize").replace(" ","").split(",")
+      for ctype in random_types:
          self.__shuffle_files(ctype)
 
       syslog.syslog("Random seed: " + str(self.seed))
@@ -713,7 +707,8 @@ class cw_card:
       # Find the utime value in the array if the number given isn't an array index.
       # If we're inserting cards into an active page, the state variable will be
       # given, and should be represented by a shuffled value.
-      if ( self.ctype in RANDOMIZE_CARDS ) and ( self.state != False ) and ( self.search_result == False ):
+      random_types = CONFIG.get("card_properties", "randomize").replace(" ","").split(",")
+      if ( self.ctype in random_types ) and ( self.state != False ) and ( self.search_result == False ):
          cycle = len(self.state.shuffled[self.ctype])
          syslog.syslog("open file: " + str(self.num) + "/" + str(cycle))
          which_file = self.state.shuffled[self.ctype][self.num % cycle]
@@ -724,7 +719,7 @@ class cw_card:
          if ( self.num in type_files ):
             which_file = type_files.index(self.num)
             self.num = which_file   # Don't save the filename as the number
-         elif ( self.ctype in RANDOMIZE_CARDS ): 
+         elif ( self.ctype in random_types ): 
             # Some types should support looping over the available
             # content. Add those to this clause. To make the monotonic
             # content appearances more evenly distributed and less
