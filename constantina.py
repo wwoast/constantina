@@ -62,8 +62,6 @@ RANDOMIZE_CARDS = [
 ]
 
 
-# Max search results to return in a query
-MAX_SEARCH_RESULTS = 200
 # Max number of comma-separated values for a parameter
 # This is also the max number of search terms (TODO?)
 MAX_STATE_PARAMETERS = 10
@@ -1035,7 +1033,7 @@ class cw_search:
             self.__add_file_to_index(fnmtime, filename, ctype)
 
 
-   def __search_index(self, count=MAX_SEARCH_RESULTS):
+   def __search_index(self, count=CONFIG.get("search", "max_results")):
       """Given a list of search paramters, look for any of them in the 
       indexes. For now don't return more than 200 hits"""
       self.parser = QueryParser("content", self.schema)
