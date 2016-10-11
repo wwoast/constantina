@@ -190,7 +190,8 @@ class cw_state:
          elif token[0:2] in valid_tokens and token[0:2] not in last_parsed:
             try:
                item_str = unquote_plus(token[2:])
-               items = item_str.split(',')[0:MAX_STATE_PARAMETERS]
+               max_params = CONFIG.get("miscellaneous", "max_state_parameters") 
+               items = item_str.split(',')[0:max_params]
             except:
                continue
 
