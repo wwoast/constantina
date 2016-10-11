@@ -26,10 +26,6 @@ ROOT_DIR = CONFIG.get("paths", "root")
 # (Relative to RESOURCE DIR) Root of the Constantina files
 RESOURCE_DIR = CONFIG.get("paths", "resource")
 
-# Per-page global values are based on news items per page
-NEWSITEMS = CONFIG.getint("card_counts", "news")
-
-
 # Only do opendir once per directory
 DIR_INDEX = {}
 
@@ -323,6 +319,8 @@ class cw_page:
       self.search_results = ''
       self.query_terms = ''   # Use this locally, in case we happen not to create a search object
 
+      news_items = CONFIG.getint("card_counts", "news")
+
       if ( self.state.in_state == None ):
          # Create a new page of randomly-assorted images and quotes,
          # along with reverse-time-order News items
@@ -330,7 +328,7 @@ class cw_page:
          self.__distribute_cards()
          self.cards.insert(0, cw_card('heading', 'basic', grab_body=True))
 
-         if ( len(self.cards) - self.cur_len > NEWSITEMS ):
+         if ( len(self.cards) - self.cur_len > news_items ):
             # Add a hidden card to trigger loading more data when reached
             self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
             # Finally, add the "next page" tombstone to load more content
@@ -369,7 +367,7 @@ class cw_page:
          self.__get_cards()
          self.__distribute_cards()
 
-         if ( len(self.cards) - self.cur_len > NEWSITEMS ): 
+         if ( len(self.cards) - self.cur_len > news_items ): 
             # Add a hidden card to trigger loading more data when reached
             self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
             # Finally, add the "next page" tombstone to load more content
