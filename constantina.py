@@ -30,19 +30,6 @@ RESOURCE_DIR = CONFIG.get("paths", "resource")
 NEWSITEMS = CONFIG.getint("card_counts", "news")
 
 
-# Some state tokens represent special queries to our
-# script, and shouldn't represent specific card types.
-# These are permalink types, and the permalink fields
-# must be underscore_delimited versions of the 
-# CONFIG("card_counts") fields should new ones be defined.
-SPECIAL_STATES = {
-       'xn': 'news_permalink',
-       'xf': 'features_permalink',
-       'xt': 'topics_permalink',
-       'xs': 'search'
-}
-
-
 # Only do opendir once per directory
 DIR_INDEX = {}
 
@@ -120,7 +107,7 @@ class cw_state:
 
       # For permalink settings or search strings, define object fields as well
       #    Examples: self.search, self.news_permalink
-      for spctype, spcfield in SPECIAL_STATES.iteritems():
+      for spctype, spcfield in CONFIG.items("special_states"):
          setattr(self, spcfield, None)
 
       # Was there an initial state string? Read it if there is
@@ -154,7 +141,7 @@ class cw_state:
          valid_tokens[ctype[0]] = ctype
 
       # Special two-letter states may be processed as well
-      for spctype, spcfield in SPECIAL_STATES.iteritems():
+      for spctype, spcfield in CONFIG.items("special_states"):
          valid_tokens[spctype] = spcfield
 
       # Parse each colon-separated item that matches a state type
@@ -190,7 +177,7 @@ class cw_state:
             except:
                continue
 
-            spcfield = SPECIAL_STATES[token[0:2]]
+            spcfield = CONFIG.get("special_states", token[0:2])
             setattr(self, spcfield, [])
             for i in items:
                getattr(self, spcfield).append(i)
@@ -498,7 +485,7 @@ class cw_page:
    def __get_permalink_card(self):
       """Given a utime or card filename, return a pre-constructed
          permalink page of that type."""
-      for spctype, spcfield in SPECIAL_STATES.iteritems():
+      for spctype, spcfield in CONFIG.items("special_states"):
          if ( getattr(self.state, spcfield) != None ):
             cnum = str(getattr(self.state, spcfield)[0])
             # Insert a card after the first heading
