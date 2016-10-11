@@ -20,12 +20,6 @@ CONFIG = ConfigParser.SafeConfigParser()
 CONFIG.read('constantina.ini')
 
 
-# (Full path) Web resources and directories that Constantina reads from
-ROOT_DIR = CONFIG.get("paths", "root")
-
-# (Relative to RESOURCE DIR) Root of the Constantina files
-RESOURCE_DIR = CONFIG.get("paths", "resource")
-
 # Only do opendir once per directory
 DIR_INDEX = {}
 
@@ -1267,7 +1261,8 @@ def create_textcard(card):
       output += """   </div>\n"""
 
    # And close the textcard
-   permanchor = RESOURCE_DIR + "/?x" + card.ctype[0] + anchor
+   resource_dir = CONFIG.get("paths", "resource")
+   permanchor = "/" + resource_dir + "/?x" + card.ctype[0] + anchor
 
    if ( card.permalink == False ):
       output += """   <div class="cardFooter">\n"""
@@ -1371,7 +1366,10 @@ def application(env, start_response):
    generate a special randomized page just for that link,
    with an introduction, footers, an image, and more...
    """
-   os.chdir(ROOT_DIR + RESOURCE_DIR)
+   root_dir = CONFIG.get("paths", "root")
+   resource_dir = CONFIG.get("paths", "resource")
+
+   os.chdir(root_dir + "/" + resource_dir)
    in_state = os.environ.get('QUERY_STRING')
    if ( in_state != None ) and ( in_state != '' ):
       # Truncate state variable at 1024 characters
