@@ -801,18 +801,18 @@ class cw_card:
       that doesn't pass muster returns "wrongtype".
       """
       magi = magic.Magic(mime=True)
-      fpath = CARD_PATHS[self.ctype] + thisfile
+      fpath = CONFIG.get("paths", self.ctype) + "/" + thisfile
 
       try:
          with open(fpath, 'r') as cfile:
             ftype = magi.from_file(fpath)
             # News entries or features are processed the same way
             if (( "text" in ftype ) and 
-                (( CARD_PATHS['news'] in cfile.name ) or
-                 ( CARD_PATHS['heading'] in cfile.name ) or 
-                 ( CARD_PATHS['quotes'] in cfile.name ) or 
-                 ( CARD_PATHS['topics'] in cfile.name ) or 
-                 ( CARD_PATHS['features'] in cfile.name ))):
+                (( CONFIG.get("paths", "news") in cfile.name ) or
+                 ( CONFIG.get("paths", "heading") in cfile.name ) or 
+                 ( CONFIG.get("paths", "quotes") in cfile.name ) or 
+                 ( CONFIG.get("paths", "topics") in cfile.name ) or 
+                 ( CONFIG.get("paths", "features") in cfile.name ))):
                self.title = cfile.readline().replace("\n", "")
                rawtopics = cfile.readline().replace("\n", "")
                for item in rawtopics.split(', '):
@@ -821,7 +821,7 @@ class cw_card:
    
             # Multiple-song playlists
             if (( "text" in ftype ) and
-                ( CARD_PATHS['songs'] in cfile.name )):
+                ( CONFIG.get("paths", "songs") in cfile.name )):
                self.title = fpath
                self.topics.append("Song Playlist")
                self.body = cfile.read()
@@ -829,7 +829,7 @@ class cw_card:
    
             # Single-image cards
             if ((( "jpeg" in ftype ) or ( "png" in ftype)) and 
-                 ( CARD_PATHS['images'] in cfile.name )):
+                 ( CONFIG.get("paths", "images") in cfile.name )):
                # TODO: alt/img metadata
                self.title = fpath
                self.topics.append("Images")
@@ -837,7 +837,7 @@ class cw_card:
    
             # Single-song orphan cards
             if ((( "mpeg" in ftype ) and ( "layer iii" in ftype)) and
-                 ( CARD_PATHS['songs'] in cfile.name )):
+                 ( CONFIG.get("paths", "songs") in cfile.name )):
                self.title = fpath      # TODO: filename from title
                self.topics.append("Songs")   # TODO: include the album
                self.body = fpath
@@ -856,7 +856,7 @@ class cw_card:
       except:   # File got moved in between dirlist caching and us reading it
          return CONFIG.get("card_defaults", "file")
 
-      return CARD_PATHS[self.ctype] + thisfile
+      return CONFIG.get("paths", self.ctype) + "/" + thisfile
 
 
 
@@ -1333,9 +1333,9 @@ def create_imagecard(card):
    3 per page of news items. Duplicates of images are OK, as long
    as we need to keep adding eye candy to the page.
    """
-   anchor = card.cfile.split('/')[2]
+   anchor = card.cfile.split('/')[1]
    # Get URI absolute path out of a Python relative path
-   uripath = "/" + "/".join(card.cfile.split('/')[1:])
+   uripath = "/" + "/".join(card.cfile.split('/')[0:])
 
    output = ""
    output += """<div class="imageCard" id="%s">\n""" % anchor
