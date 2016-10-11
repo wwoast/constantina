@@ -34,14 +34,6 @@ NEWSITEMS = CONFIG.getint("card_counts", "news")
 DIR_INDEX = {}
 
 
-# Types of cards that we both index and search for
-SEARCH_CARDS = [
-     'news',
- 'features',
-   'quotes',
-]
-
-
 class cw_cardtype:
    """
    Constantina Card Type State Tracking.
@@ -447,7 +439,8 @@ class cw_page:
          self.cards.append(encyclopedia)
 
       # Other types of search results come afterwards
-      for ctype in SEARCH_CARDS:
+      search_types = CONFIG.get("card_properties", "search").replace(" ","").split(",")
+      for ctype in search_types:
          # Manage the encyclopedia cards separately
          if ( ctype == 'topics' ):
             continue
@@ -866,6 +859,7 @@ class cw_search:
       self.index_dir = CONFIG.get('search', 'index_dir')
       self.words_file = CONFIG.get('search', 'ignore_words')
       self.symobls_file = CONFIG.get('search', 'ignore_symbols')
+      self.search_types = CONFIG.get("card_properties", "search").replace(" ","").split(",")
 
       # Define the indexing schema. Include the mtime to track updated 
       # content in the backend, ctype so that we can manage the distribution
@@ -883,7 +877,7 @@ class cw_search:
       # Prepare for query searching (mtime update, search strings)
       self.searcher = self.index.searcher()
 
-      for ctype in SEARCH_CARDS:
+      for ctype in self.search_types:
          # Prior to processing input, prepare the results arrays.
          # Other functions will expect this to exist regardless.
          self.hits[ctype] = []
@@ -894,7 +888,7 @@ class cw_search:
       if not ( self.__process_input(' '.join(unsafe_query_terms))):
          return
 
-      for ctype in SEARCH_CARDS:
+      for ctype in self.search_types:
          # Now we have good safe input, but we don't know if our index is 
          # up-to-date or not. If have changed since their last-modified date, 
          # reindex all the modified files
@@ -1029,7 +1023,7 @@ class cw_search:
    def __sort_search_results(self):
       """Sort the search results in reverse-time order. For the randomly-
       shuffled elements, reverse-lexicographic sorting shouldn't matter"""
-      for ctype in SEARCH_CARDS:
+      for ctype in self.search_types:
          self.hits[ctype].sort()
          self.hits[ctype].reverse()
 
