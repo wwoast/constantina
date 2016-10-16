@@ -1239,7 +1239,7 @@ def create_textcard(card):
                ( card.search_result == False )):
             # First <p> is OK, but follow it with a (Read More) link, and a 
             # div with showExtend that hides all the other elements
-            read_more = """ <a href="#%s" class="showShort" onclick="cardToggle('%s');">(Read More...)</a>""" % ( anchor, anchor )
+            read_more = """ <a href="#%s" class="showShort" onclick="cardToggle('%s');">(Read&nbsp;More...)</a>""" % ( anchor, anchor )
             prep = lxml.html.tostring(e)
             output += prep.replace('</p>', read_more + '</p>')
             output += """<div class="divExpand">\n"""
