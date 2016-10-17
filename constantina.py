@@ -39,12 +39,10 @@ class cw_cardtype:
    Through checking the configured card_counts, we create one of these
    objects named for each card type (ctype).
    """
-   def __init__(self, count, distance, spacing, start, end):
+   def __init__(self, count, distance, spacing):
       self.count = count
       self.distance = distance
       self.spacing = spacing
-      self.start = start
-      self.end = end
       self.clist = []      # List of card indexes that appeared of this type
       self.shuffled = []   # TODO: consolidate this and clist after export/import is rewritten
 
@@ -76,9 +74,7 @@ class cw_state:
          setattr(self, ctype, cw_cardtype(
             count=int(card_count),
             distance=None,
-            spacing=CONFIG.getint('card_spacing', ctype),
-            start=None,
-            end=None))
+            spacing=CONFIG.getint('card_spacing', ctype)))
 
       # For permalink settings or search strings, define object fields as well
       #    Examples: self.search, self.news_permalink
@@ -122,24 +118,11 @@ class cw_state:
 
       # Parse each colon-separated item that matches a state type
       for token in state_string.split(':'):
-         # News tokens are just a single number for the last item loaded
+         # Non-special tokens just track the distance (in cards looking back)
+         # to last card of that type on the previous page
          if token[0] == 'n' and token[0] not in last_parsed:
-            getattr(self, 'news').end = int(token[1:])
-            last_parsed.append(token[0])   # Add to the parsed stack
-
-         # Single-character tokens typically have a "start, end, and spacing" 
-         # value, so we only need three items.
-         elif token[0] in valid_tokens and token[0] not in last_parsed:
-            # Determine ctype from introspection
             ctype = valid_tokens[token[0]]  
-            item_range_dist = token[1:].split(',')[0:3]
-            try:
-               getattr(self, ctype).distance = int(item_range_dist.pop())
-               getattr(self, ctype).start = int(item_range_dist[0])
-               getattr(self, ctype).end = int(item_range_dist[1])
-            except:
-               continue
-
+            getattr(self, ctype).distance = int(token[1:])
             last_parsed.append(token[0])   # Add to the parsed stack
 
          # Special two-character tokens don't denote typical state
@@ -235,16 +218,10 @@ class cw_state:
          if ( getattr(self, ctype).clist == [] ):
             continue
 
-         # Track just the range of values, not the intermediaries
-         # TODO TODO: this is why items repeat state. You need to track the last N actual
-         # appearance items so that there's at least N entries between duplicates.
+         # Track the distance to the last-printed card in each state variable
          stype = ctype[0]
-         crange = getattr(self, ctype).clist
          cdist = getattr(self, ctype).distance
-         crange.sort()
-
-         item_range_dist = crange[0] + "," + crange[-1] + "," + cdist
-         state_tokens.append(stype + item_range_dist)
+         state_tokens.append(stype + cdist)
       export_string = ":".join(state_tokens) + ":" + "n" + str(news_last) + ":" + str(seed)
 
       # The up-to-10 search terms come after the primary state variable,
@@ -487,7 +464,7 @@ class cw_page:
          Achieve the proper estimate of the previously displayed
          contents by distributing news articles such that the
          card-type distances are properly represented."""
-      news_items = int(self.state.news.end)
+      news_items = int(self.state.news.distance)   # TODO: track separately
 
       # Then add the appropriate page count's worth of news
       for n in xrange(0, news_items):
