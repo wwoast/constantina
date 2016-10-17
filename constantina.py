@@ -46,6 +46,7 @@ class cw_cardtype:
       self.start = start
       self.end = end
       self.clist = []      # List of card indexes that appeared of this type
+      self.shuffled = []   # TODO: consolidate this and clist after export/import is rewritten
 
 
 class cw_state:
@@ -68,7 +69,6 @@ class cw_state:
    def __init__(self, state_string=None):
       self.in_state = state_string   # Track the original state string
       self.seed = None		     # The Random Seed for the page
-      self.shuffled = {}             # Arrays of shuffled index lists
 
       # For the card types in the card_counts config, create variables, i.e.
       #   state.news.distance, state.topics.spacing
@@ -281,10 +281,10 @@ class cw_state:
       normal page-state numbering, using those page-state values as indexes
       into a shuffled list of files."""
       file_count = len(opendir(ctype))
-      self.shuffled[ctype] = range(0, file_count)
-      syslog.syslog("Unshuffled " + ctype + ": " + str(self.shuffled[ctype]))
-      shuffle(self.shuffled[ctype])
-      syslog.syslog("    Random " + ctype + ": " + str(self.shuffled[ctype]))
+      shuffled = range(0, file_count)
+      shuffle(shuffled)
+      getattr(self, ctype).shuffled = shuffled
+      syslog.syslog("Shuffled list of " + ctype + ": " + str(getattr(self, ctype).shuffled))
 
 
 
@@ -685,8 +685,11 @@ class cw_card:
 
 
    def __openfile(self):
-      """Either open the Nth file or the utime-named file in the dir,
-         populate the object, and return the name of the opened file"""
+      """Open a file in a folder by "number", and populate the cw_card object.
+         For most files, this will be an integer (card number) that represents 
+         the Nth file in a directory.
+         For news files, the filename itself is a Unix timestamp number, and
+         can be specified directly."""
       type_files = opendir(self.ctype)
 
       # Find the utime value in the array if the number given isn't an array index.
@@ -694,16 +697,18 @@ class cw_card:
       # given, and should be represented by a shuffled value.
       random_types = CONFIG.get("card_properties", "randomize").replace(" ","").split(",")
       if ( self.ctype in random_types ) and ( self.state != False ) and ( self.search_result == False ):
-         cycle = len(self.state.shuffled[self.ctype])
+         cycle = len(getattr(self.state, self.ctype).shuffled)
          syslog.syslog("open file: " + str(self.num) + "/" + str(cycle))
-         which_file = self.state.shuffled[self.ctype][self.num % cycle]
+         which_file = getattr(self.state, self.ctype).shuffled[self.num % cycle]
       else:
          which_file = self.num
 
       if which_file >= len(type_files):
+         # News files: convert utime filename to the "Nth" item in the folder
          if ( self.num in type_files ):
             which_file = type_files.index(self.num)
-            self.num = which_file   # Don't save the filename as the number
+            self.num = which_file
+
          elif ( self.ctype in random_types ): 
             # Some types should support looping over the available
             # content. Add those to this clause. To make the monotonic
