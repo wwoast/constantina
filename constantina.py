@@ -44,7 +44,6 @@ class cw_cardtype:
       self.distance = distance
       self.spacing = spacing
       self.clist = []      # List of card indexes that appeared of this type
-      self.shuffled = []   # TODO: consolidate this and clist after export/import is rewritten
 
 
 class cw_state:
@@ -67,6 +66,7 @@ class cw_state:
    def __init__(self, state_string=None):
       self.in_state = state_string   # Track the original state string
       self.seed = None		     # The Random Seed for the page
+      self.page = 0
 
       # For the card types in the card_counts config, create variables, i.e.
       #   state.news.distance, state.topics.spacing
@@ -87,6 +87,11 @@ class cw_state:
       # If there wasn't a random seed, we better generate one :)
       if (self.seed == None):
          self.__set_random_seed()
+
+      # Determine our page number from the news article index reported
+      # TODO: for news articles, it's not a distance value! Its a news[] index
+      if ( self.news.distance != None ):
+         self.page = ( int(self.news.distance) + 1 ) / CONFIG.getint('card_counts', 'news')
 
       # Calculate consistent shuffled arrays of filetypes for the real state
       # indexes to make reference to in card selection
@@ -120,7 +125,7 @@ class cw_state:
       for token in state_string.split(':'):
          # Non-special tokens just track the distance (in cards looking back)
          # to last card of that type on the previous page
-         if token[0] == 'n' and token[0] not in last_parsed:
+         if token[0] in valid_tokens and token[0] not in last_parsed:
             ctype = valid_tokens[token[0]]  
             getattr(self, ctype).distance = int(token[1:])
             last_parsed.append(token[0])   # Add to the parsed stack
@@ -222,6 +227,8 @@ class cw_state:
          stype = ctype[0]
          cdist = getattr(self, ctype).distance
          state_tokens.append(stype + cdist)
+
+      # Track page number for the next state variable by adding one to the current
       export_string = ":".join(state_tokens) + ":" + "n" + str(news_last) + ":" + str(seed)
 
       # The up-to-10 search terms come after the primary state variable,
@@ -258,10 +265,10 @@ class cw_state:
       normal page-state numbering, using those page-state values as indexes
       into a shuffled list of files."""
       file_count = len(opendir(ctype))
-      shuffled = range(0, file_count)
-      shuffle(shuffled)
-      getattr(self, ctype).shuffled = shuffled
-      syslog.syslog("Shuffled list of " + ctype + ": " + str(getattr(self, ctype).shuffled))
+      clist = range(0, file_count)
+      shuffle(clist)
+      getattr(self, ctype).clist = clist
+      syslog.syslog("Shuffled list of " + ctype + ": " + str(getattr(self, ctype).clist))
 
 
 
@@ -372,7 +379,7 @@ class cw_page:
          if ( card_count == 0 ):
             continue
          # No data and it's not the first page? Skip this type
-         if ( getattr(self.state, ctype).end == None ) and ( self.state.in_state != None ):
+         if ( getattr(self.state, ctype).clist == None ) and ( self.state.in_state != None ):
             continue
 
          # Grab the cnum of the last inserted thing of this type
@@ -382,7 +389,7 @@ class cw_page:
             start = 0
          # If these are previous items, calculate how many were on previous pages
          else:
-            start = int(getattr(self.state, ctype).end) + 1
+            start = int(self.state.page * card_count) + 1
 
          for i in xrange(start, start + card_count):
             card = cw_card(ctype, i, state=self.state, grab_body=True)
@@ -483,6 +490,7 @@ class cw_page:
          if ( len(getattr(self.state, ctype).clist) == 0 ):
             continue
          dist = getattr(self.state, ctype).distance
+         syslog.syslog("ctype, len, and dist: " + str(ctype) + " " + str(len(self.cards)) + " " + str(dist))
          put = len(self.cards) - 1 - int(dist)
          for cnum in getattr(self.state, ctype).clist:
             self.cards.insert(put, cw_card(ctype, cnum, grab_body=False))
@@ -674,9 +682,9 @@ class cw_card:
       # given, and should be represented by a shuffled value.
       random_types = CONFIG.get("card_properties", "randomize").replace(" ","").split(",")
       if ( self.ctype in random_types ) and ( self.state != False ) and ( self.search_result == False ):
-         cycle = len(getattr(self.state, self.ctype).shuffled)
+         cycle = len(getattr(self.state, self.ctype).clist)
          syslog.syslog("open file: " + str(self.num) + "/" + str(cycle))
-         which_file = getattr(self.state, self.ctype).shuffled[self.num % cycle]
+         which_file = getattr(self.state, self.ctype).clist[self.num % cycle]
       else:
          which_file = self.num
 
