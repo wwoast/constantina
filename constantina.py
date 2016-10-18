@@ -39,11 +39,27 @@ class cw_cardtype:
    Through checking the configured card_counts, we create one of these
    objects named for each card type (ctype).
    """
-   def __init__(self, count, distance, spacing):
+   def __init__(self, ctype, count, distance, spacing):
+      self.ctype = ctype
       self.count = count
       self.distance = distance
       self.spacing = spacing
       self.clist = []      # List of card indexes that appeared of this type
+
+      # Calculate consistent shuffled arrays of filetypes for the real state
+      # indexes to make reference to in card selection
+      if ( ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(",")):
+         self.__shuffle_files()
+
+
+   def __shuffle_files(self):
+      """Take a card type, and create a shuffle array where we can preserve
+      normal page-state numbering, using those page-state values as indexes
+      into a shuffled list of files."""
+      file_count = len(opendir(self.ctype))
+      self.clist = range(0, file_count)
+      shuffle(self.clist)
+      syslog.syslog("Shuffled list of " + self.ctype + ": " + str(self.clist))
 
 
 class cw_state:
@@ -72,6 +88,7 @@ class cw_state:
       #   state.news.distance, state.topics.spacing
       for ctype, card_count in CONFIG.items('card_counts'):
          setattr(self, ctype, cw_cardtype(
+            ctype=ctype,
             count=int(card_count),
             distance=None,
             spacing=CONFIG.getint('card_spacing', ctype)))
@@ -92,12 +109,6 @@ class cw_state:
       # TODO: for news articles, it's not a distance value! Its a news[] index
       if ( self.news.distance != None ):
          self.page = ( int(self.news.distance) + 1 ) / CONFIG.getint('card_counts', 'news')
-
-      # Calculate consistent shuffled arrays of filetypes for the real state
-      # indexes to make reference to in card selection
-      random_types = CONFIG.get("card_properties", "randomize").replace(" ","").split(",")
-      for ctype in random_types:
-         self.__shuffle_files(ctype)
 
       syslog.syslog("Random seed: " + str(self.seed))
 
@@ -260,15 +271,6 @@ class cw_state:
       return str(self.seed).replace("0.", "")
 
 
-   def __shuffle_files(self, ctype):
-      """Take a card type, and create a shuffle array where we can preserve
-      normal page-state numbering, using those page-state values as indexes
-      into a shuffled list of files."""
-      file_count = len(opendir(ctype))
-      clist = range(0, file_count)
-      shuffle(clist)
-      getattr(self, ctype).clist = clist
-      syslog.syslog("Shuffled list of " + ctype + ": " + str(getattr(self, ctype).clist))
 
 
 
