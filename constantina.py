@@ -136,7 +136,7 @@ class cw_state:
          elif token[0:2] in valid_tokens and token[0:2] not in last_parsed:
             try:
                item_str = unquote_plus(token[2:])
-               max_params = CONFIG.get("miscellaneous", "max_state_parameters") 
+               max_params = CONFIG.getint("miscellaneous", "max_state_parameters") 
                items = item_str.split(',')[0:max_params]
             except:
                continue
@@ -471,7 +471,10 @@ class cw_page:
          Achieve the proper estimate of the previously displayed
          contents by distributing news articles such that the
          card-type distances are properly represented."""
-      news_items = int(self.state.news.distance)   # TODO: track separately
+      if ( self.state.news.distance != None ):
+         news_items = int(self.state.news.distance)   # TODO: track separately
+      else:
+         news_items = 0
 
       # Then add the appropriate page count's worth of news
       for n in xrange(0, news_items):
@@ -487,9 +490,9 @@ class cw_page:
       # of this page's content and need to write a new state
       # variable based on the current list of cards.
       for ctype, card_count in CONFIG.items("card_counts"):
-         if ( len(getattr(self.state, ctype).clist) == 0 ):
-            continue
          dist = getattr(self.state, ctype).distance
+         if (( len(getattr(self.state, ctype).clist) == 0 ) or ( dist == None )):
+            continue
          syslog.syslog("ctype, len, and dist: " + str(ctype) + " " + str(len(self.cards)) + " " + str(dist))
          put = len(self.cards) - 1 - int(dist)
          for cnum in getattr(self.state, ctype).clist:
