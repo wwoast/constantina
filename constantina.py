@@ -220,7 +220,7 @@ class cw_state:
 
       for ctype in all_ctypes:
          # If no cards for this state, do not track
-         if ( getattr(self, ctype).clist == [] ):
+         if (( getattr(self, ctype).clist == [] ) or ( getattr(self, ctype).distance == None )):
             continue
 
          # Track the distance to the last-printed card in each state variable
