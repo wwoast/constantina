@@ -50,6 +50,8 @@ class cw_cardtype:
       # indexes to make reference to in card selection
       if ( self.ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(",")):
          self.__shuffle_files()
+         self.__scan_and_remove()
+         syslog.syslog("Processed list of " + self.ctype + ": " + str(self.clist))
 
 
    def __shuffle_files(self):
@@ -60,7 +62,34 @@ class cw_cardtype:
       file_count = len(opendir(self.ctype))
       self.clist = range(0, file_count)*10
       shuffle(self.clist)
-      syslog.syslog("Shuffled list of " + self.ctype + ": " + str(self.clist))
+
+
+   def __scan_and_remove(self):
+      """Look across a clist and remove any cards that would appear on the next
+         Nth page, which duplicate a card you've seen on this page. The array is made
+         large enough that just outright removing items should be ok. The N distance
+         between pages is a function of the number of possible elements."""
+      file_count = len(opendir(self.ctype))
+      per_page = CONFIG.getint("card_counts", self.ctype)
+      page_distance = file_count*2 / per_page
+
+      for i in range(0, len(self.clist)):
+         if ( self.clist[i] == 'x' ):
+            continue
+
+         part_end = i + page_distance
+         if ( i + part_end > len(self.clist)):
+            part_end = len(self.clist)
+            if ( i == len(self.clist)):
+               break
+
+         # Mark array items for removal
+         for j in range(i+1, part_end):
+            if ( self.clist[i] == self.clist[j] ):
+               self.clist[j] = 'x'
+
+      # Finished with the search, sweep up any items to remove
+      self.clist = [val for val in self.clist if val != 'x']
 
 
    def __jitter(self, cnum):
