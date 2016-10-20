@@ -706,11 +706,12 @@ class cw_card:
          which_file = self.num
 
       # News files: convert utime filename to the "Nth" item in the folder
-      if (( which_file >= len(type_files)) and ( self.num in type_files)):
-         which_file = type_files.index(self.num)
-         self.num = which_file
-      else:
-         return "nofile"
+      if ( which_file >= len(type_files)): 
+         if ( self.num in type_files):
+            which_file = type_files.index(self.num)
+            self.num = which_file
+         else:
+            return "nofile"
 
       return self.__interpretfile(type_files[which_file])
 
