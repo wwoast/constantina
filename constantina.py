@@ -55,9 +55,10 @@ class cw_cardtype:
    def __shuffle_files(self):
       """Take a card type, and create a shuffle array where we can preserve
          normal page-state numbering, using those page-state values as indexes
-         into a shuffled list of files."""
+         into a shuffled list of files. The shuffled array is extended, but
+         adjusted so that repeat rules across pages will be respected"""
       file_count = len(opendir(self.ctype))
-      self.clist = range(0, file_count)
+      self.clist = range(0, file_count)*10
       shuffle(self.clist)
       syslog.syslog("Shuffled list of " + self.ctype + ": " + str(self.clist))
 
