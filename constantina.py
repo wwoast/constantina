@@ -48,18 +48,33 @@ class cw_cardtype:
 
       # Calculate consistent shuffled arrays of filetypes for the real state
       # indexes to make reference to in card selection
-      if ( ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(",")):
+      if ( self.ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(",")):
          self.__shuffle_files()
 
 
    def __shuffle_files(self):
       """Take a card type, and create a shuffle array where we can preserve
-      normal page-state numbering, using those page-state values as indexes
-      into a shuffled list of files."""
+         normal page-state numbering, using those page-state values as indexes
+         into a shuffled list of files."""
       file_count = len(opendir(self.ctype))
       self.clist = range(0, file_count)
       shuffle(self.clist)
       syslog.syslog("Shuffled list of " + self.ctype + ": " + str(self.clist))
+
+
+   def __jitter(self, cnum):
+      """Take a card number, and jitter the number forward by a random amount,
+         to make looping content appearances less obviously in a sequence. The
+         goal is to make every page load appear different, though it's unclear
+         if this function is still necessary."""
+      rand_travel = 1
+      card_count = CONFIG.getint("card_counts", self.ctype)
+      while (( rand_travel < 2 ) and 
+             ( card_count % rand_travel == 0 ) and 
+             ( card_count > 3 )):
+         rand_travel = randint(2, card_count)
+      cnew = ( cnum + rand_travel ) % len(type_files)
+      return cnew
 
 
 class cw_state:
@@ -269,9 +284,6 @@ class cw_state:
    def __export_random_seed(self):
       """Export the random seed for adding to the state variable"""
       return str(self.seed).replace("0.", "")
-
-
-
 
 
 class cw_page:
@@ -495,7 +507,7 @@ class cw_page:
          dist = getattr(self.state, ctype).distance
          if (( len(getattr(self.state, ctype).clist) == 0 ) or ( dist == None )):
             continue
-         syslog.syslog("ctype, len, and dist: " + str(ctype) + " " + str(len(self.cards)) + " " + str(dist))
+         # syslog.syslog("ctype, len, and dist: " + str(ctype) + " " + str(len(self.cards)) + " " + str(dist))
          put = len(self.cards) - 1 - int(dist)
          for cnum in getattr(self.state, ctype).clist:
             self.cards.insert(put, cw_card(ctype, cnum, grab_body=False))
@@ -693,29 +705,12 @@ class cw_card:
       else:
          which_file = self.num
 
-      if which_file >= len(type_files):
-         # News files: convert utime filename to the "Nth" item in the folder
-         if ( self.num in type_files ):
-            which_file = type_files.index(self.num)
-            self.num = which_file
-
-         elif ( self.ctype in random_types ): 
-            # Some types should support looping over the available
-            # content. Add those to this clause. To make the monotonic
-            # content appearances more evenly distributed and less
-            # obviously in sequence, jitter the next image count in
-            # a consistent positive direction.
-            rand_travel = 1
-            card_count = CONFIG.getint("card_counts", self.ctype)
-            while (( rand_travel < 2 ) and 
-                   ( card_count % rand_travel == 0 ) and 
-                   ( card_count > 3 )):
-               # Without looping, try to cycle the array of possible inserts
-               # in a unique way on every page load
-               rand_travel = randint(2, card_count)
-            which_file = ( self.num + rand_travel ) % len(type_files)
-         else:
-            return "nofile"
+      # News files: convert utime filename to the "Nth" item in the folder
+      if (( which_file >= len(type_files)) and ( self.num in type_files)):
+         which_file = type_files.index(self.num)
+         self.num = which_file
+      else:
+         return "nofile"
 
       return self.__interpretfile(type_files[which_file])
 
