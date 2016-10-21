@@ -427,7 +427,8 @@ class cw_page:
          self.__distribute_cards()
 
          syslog.syslog("self.cards len: " + str(len(self.cards)) + ", self.cur_len: " + str(self.cur_len) + ", news_items: " + str(news_items))
-         if ( len(self.cards) - self.cur_len > news_items ): 
+         # TODO: news dist
+         if ( self.state.news.distance + self.state.news.per_page <= self.state.news.file_count ): 
             # Add a hidden card to trigger loading more data when reached
             self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
             # Finally, add the "next page" tombstone to load more content
