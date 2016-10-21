@@ -53,7 +53,10 @@ class cw_cardtype:
       # How many ctype cards should we see before the same card
       # appears again in the randomized view? This is a function
       # of the number of available cards
-      self.page_distance = self.file_count*2 / self.per_page
+      if ( self.per_page == 0 ):
+         self.page_distance = 0;
+      else: 
+         self.page_distance = self.file_count*2 / self.per_page
 
       # Calculate consistent shuffled arrays of filetypes for the real state
       # indexes to make reference to in card selection
@@ -64,7 +67,6 @@ class cw_cardtype:
          syslog.syslog("Marked list of " + self.ctype + ": " + str(self.clist))
          self.__replace_marked()
          syslog.syslog("Replaced list of " + self.ctype + ": " + str(self.clist))
-         
 
 
    def __shuffle_files(self):
@@ -72,8 +74,12 @@ class cw_cardtype:
          normal page-state numbering, using those page-state values as indexes
          into a shuffled list of files. The shuffled array is extended, but
          adjusted so that repeat rules across pages will be respected"""
+      total_pages = int(floor(len(opendir("news")) / CONFIG.getint("card_counts", "news")))
+      total_ctype = total_pages * self.per_page
+
       self.clist = range(0, self.file_count)*10
       shuffle(self.clist)
+      self.clist = self.clist[0:total_ctype]
 
 
    def __mark_uneven_distribution(self):
@@ -116,8 +122,9 @@ class cw_cardtype:
                self.clist[i] = k
                break
 
-   
-   def __remove_marked(self)
+
+   # TODO: replace with hidden items :) 
+   def __remove_marked(self):
       """Remove any 'x' marked values in the clist array"""
       self.clist == filter(lambda a: a == 'x', self.clist) 
             
