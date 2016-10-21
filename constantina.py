@@ -58,15 +58,16 @@ class cw_cardtype:
       else: 
          self.page_distance = self.file_count*2 / self.per_page
 
-      # Calculate consistent shuffled arrays of filetypes for the real state
-      # indexes to make reference to in card selection
-      if ( self.ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(",")):
-         self.__shuffle_files()
-         syslog.syslog("Shuffled list of " + self.ctype + ": " + str(self.clist))
-         self.__mark_uneven_distribution()
-         syslog.syslog("Marked list of " + self.ctype + ": " + str(self.clist))
-         self.__replace_marked()
-         syslog.syslog("Replaced list of " + self.ctype + ": " + str(self.clist))
+
+   def shuffle(self):
+      """Once a fixed seed is set in the state object, run the shuffle method
+         to get the shuffled file listing for this ctype created."""
+      self.__shuffle_files()
+      syslog.syslog("Shuffled list of " + self.ctype + ": " + str(self.clist))
+      self.__mark_uneven_distribution()
+      syslog.syslog("Marked list of " + self.ctype + ": " + str(self.clist))
+      self.__replace_marked()
+      syslog.syslog("Replaced list of " + self.ctype + ": " + str(self.clist))
 
 
    def __shuffle_files(self):
@@ -135,12 +136,11 @@ class cw_cardtype:
          goal is to make every page load appear different, though it's unclear
          if this function is still necessary."""
       rand_travel = 1
-      card_count = CONFIG.getint("card_counts", self.ctype)
       while (( rand_travel < 2 ) and 
-             ( card_count % rand_travel == 0 ) and 
-             ( card_count > 3 )):
-         rand_travel = randint(2, card_count)
-      cnew = ( cnum + rand_travel ) % len(type_files)
+             ( self.per_page % rand_travel == 0 ) and 
+             ( self.per_page > 3 )):
+         rand_travel = randint(2, self.per_page)
+      cnew = ( cnum + rand_travel ) % self.file_count
       return cnew
 
 
@@ -180,12 +180,17 @@ class cw_state:
       for spctype, spcfield in CONFIG.items("special_states"):
          setattr(self, spcfield, None)
 
-      # Was there an initial state string? Read it if there is
+      # Was there an initial state string? Read it if there is. Then shuffle
+      # each ctype that we care about :)
       self.__import_state(state_string)
 
       # If there wasn't a random seed, we better generate one :)
       if (self.seed == None):
          self.__set_random_seed()
+
+      # For any card types we want to shuffle, do the shuffle dance
+      for ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(","):
+         getattr(self, ctype).shuffle()
 
       # Determine our page number from the news article index reported
       # TODO: for news articles, it's not a distance value! Its a news[] index
@@ -426,8 +431,7 @@ class cw_page:
          self.__get_cards()
          self.__distribute_cards()
 
-         syslog.syslog("self.cards len: " + str(len(self.cards)) + ", self.cur_len: " + str(self.cur_len) + ", news_items: " + str(news_items))
-         # TODO: news dist
+         # TODO: news dist isn't dist!
          if ( self.state.news.distance + self.state.news.per_page <= self.state.news.file_count ): 
             # Add a hidden card to trigger loading more data when reached
             self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
