@@ -44,14 +44,27 @@ class cw_cardtype:
       self.count = count
       self.distance = distance
       self.spacing = spacing
+
       self.clist = []      # List of card indexes that appeared of this type
+      # Number of files of this type
+      self.file_count = len(opendir(self.ctype))	
+      # Files per page of this type
+      self.per_page = CONFIG.getint("card_counts", self.ctype)
+      # How many ctype cards should we see before the same card
+      # appears again in the randomized view? This is a function
+      # of the number of available cards
+      self.page_distance = self.file_count*2 / self.per_page
 
       # Calculate consistent shuffled arrays of filetypes for the real state
       # indexes to make reference to in card selection
       if ( self.ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(",")):
          self.__shuffle_files()
-         self.__scan_and_remove()
-         syslog.syslog("Processed list of " + self.ctype + ": " + str(self.clist))
+         syslog.syslog("Shuffled list of " + self.ctype + ": " + str(self.clist))
+         self.__mark_uneven_distribution()
+         syslog.syslog("Marked list of " + self.ctype + ": " + str(self.clist))
+         self.__replace_marked()
+         syslog.syslog("Replaced list of " + self.ctype + ": " + str(self.clist))
+         
 
 
    def __shuffle_files(self):
@@ -59,38 +72,55 @@ class cw_cardtype:
          normal page-state numbering, using those page-state values as indexes
          into a shuffled list of files. The shuffled array is extended, but
          adjusted so that repeat rules across pages will be respected"""
-      file_count = len(opendir(self.ctype))
-      self.clist = range(0, file_count)*10
+      self.clist = range(0, self.file_count)*10
       shuffle(self.clist)
 
 
-   def __scan_and_remove(self):
+   def __mark_uneven_distribution(self):
       """Look across a clist and remove any cards that would appear on the next
          Nth page, which duplicate a card you've seen on this page. The array is made
          large enough that just outright removing items should be ok. The N distance
          between pages is a function of the number of possible elements."""
-      file_count = len(opendir(self.ctype))
-      per_page = CONFIG.getint("card_counts", self.ctype)
-      page_distance = file_count*2 / per_page
-
       for i in range(0, len(self.clist)):
          if ( self.clist[i] == 'x' ):
             continue
 
-         part_end = i + page_distance
+         part_end = i + self.page_distance
          if ( i + part_end > len(self.clist)):
             part_end = len(self.clist)
-            if ( i == len(self.clist)):
-               break
 
          # Mark array items for removal
          for j in range(i+1, part_end):
             if ( self.clist[i] == self.clist[j] ):
                self.clist[j] = 'x'
 
-      # Finished with the search, sweep up any items to remove
-      self.clist = [val for val in self.clist if val != 'x']
+   
+   def __replace_marked(self):
+      """Given 'x' marked indexes from __mark_even_distribution, determine good 
+         replacement values."""
+      for i in range(0, len(self.clist)):
+         if ( self.clist[i] != 'x' ):
+            continue
 
+         part_start = i - self.page_distance
+         if ( i - part_start < 0 ):
+            part_start = 0;
+         part_end = i + self.page_distance
+         if ( i + part_end > len(self.clist)):
+            part_end = len(self.clist)
+
+         choices = range(0, self.file_count)
+         shuffle(choices)
+         for k in choices:
+            if ( k not in self.clist[part_start:part_end] ):
+               self.clist[i] = k
+               break
+
+   
+   def __remove_marked(self)
+      """Remove any 'x' marked values in the clist array"""
+      self.clist == filter(lambda a: a == 'x', self.clist) 
+            
 
    def __jitter(self, cnum):
       """Take a card number, and jitter the number forward by a random amount,
@@ -389,6 +419,7 @@ class cw_page:
          self.__get_cards()
          self.__distribute_cards()
 
+         syslog.syslog("self.cards len: " + str(len(self.cards)) + ", self.cur_len: " + str(self.cur_len) + ", news_items: " + str(news_items))
          if ( len(self.cards) - self.cur_len > news_items ): 
             # Add a hidden card to trigger loading more data when reached
             self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
