@@ -35,6 +35,7 @@ class cw_cardtype:
            in each card-type data directory
       - The distance from the last-displayed item of this type to the end
         of the displayed page
+      - The spacing per page of news cards
 
    Through checking the configured card_counts, we create one of these
    objects named for each card type (ctype).
@@ -68,6 +69,20 @@ class cw_cardtype:
       syslog.syslog("Marked list of " + self.ctype + ": " + str(self.clist))
       self.__replace_marked()
       syslog.syslog("Replaced list of " + self.ctype + ": " + str(self.clist))
+            
+
+   def jitter(self, cnum):
+      """Take a card number, and jitter the number forward by a random amount,
+         to make looping content appearances less obviously in a sequence. The
+         goal is to make every page load appear different, though it's unclear
+         if this function is still necessary."""
+      rand_travel = 1
+      while (( rand_travel < 2 ) and 
+             ( self.per_page % rand_travel == 0 ) and 
+             ( self.per_page > 3 )):
+         rand_travel = randint(2, self.per_page)
+      cnew = ( cnum + rand_travel ) % self.file_count
+      return cnew
 
 
    def __shuffle_files(self):
@@ -128,20 +143,6 @@ class cw_cardtype:
    def __remove_marked(self):
       """Remove any 'x' marked values in the clist array"""
       self.clist == filter(lambda a: a == 'x', self.clist) 
-            
-
-   def __jitter(self, cnum):
-      """Take a card number, and jitter the number forward by a random amount,
-         to make looping content appearances less obviously in a sequence. The
-         goal is to make every page load appear different, though it's unclear
-         if this function is still necessary."""
-      rand_travel = 1
-      while (( rand_travel < 2 ) and 
-             ( self.per_page % rand_travel == 0 ) and 
-             ( self.per_page > 3 )):
-         rand_travel = randint(2, self.per_page)
-      cnew = ( cnum + rand_travel ) % self.file_count
-      return cnew
 
 
 class cw_state:
@@ -304,7 +305,7 @@ class cw_state:
          done_distance.sort()
 
          dist = len(cards) - hidden_cards - i
-         # print "=> %s dist: %d i: %d card-len: %d  eff-len: %d" % ( card.ctype, dist, i, len(self.cards), len(self.cards) - hidden_cards)
+         # syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" % ( card.ctype, dist, i, len(cards), len(cards) - hidden_cards))
          getattr(self, card.ctype).distance = str(dist)
          # Early break once we've seen all the card types
          if ( done_distance == all_ctypes ):
@@ -595,6 +596,7 @@ class cw_page:
       """Given the largest spacing value, determine distance between
          our starting card on this page and a card of equal type that
          appeared on the previous page."""
+      # TODO: rewrite based on state.(cardtype) object
       # If this is the first page, there's no distance to
       # items on the last page. 
       last_dist = {}
@@ -636,18 +638,18 @@ class cw_page:
       # non-redist set (news articles)
       c_nodist = {}      
 
-      for ctype, space in CONFIG.items("card_spacing"):
+      for ctype, spacing in CONFIG.items("card_spacing"):
          # Spacing rules from the last page. Subtract the distance from
          # the end of the previous page. For all other cards, follow the
          # strict card spacing rules from the config file, plus jitter
-         card_spacing = int(space)
-         if ( lstop - c_lastcard[ctype] >= card_spacing ):
+         spacing = int(spacing)
+         if ( lstop - c_lastcard[ctype] >= spacing ):
             c_dist[ctype] = 0
          elif (( lstop == 0 ) and ( c_lastcard[ctype] == 0 )):
             c_dist[ctype] = 0
          else:
-            c_dist[ctype] = card_spacing - (lstop - c_lastcard[ctype])
-         # print "------ ctype %s   spacing %d   c_dist %d   c_lsatcard %d   lstop %d" % ( ctype, card_spacing, c_dist[ctype], c_lastcard[ctype], lstop)
+            c_dist[ctype] = spacing - (lstop - c_lastcard[ctype])
+         syslog.syslog("------ ctype %s   spacing %d   c_dist %d   c_lastcard %d   lstop %d" % ( ctype, spacing, c_dist[ctype], c_lastcard[ctype], lstop))
          c_redist[ctype] = []
          c_nodist[ctype] = []
 
@@ -680,8 +682,8 @@ class cw_page:
             continue   # Empty
 
          # Max distance between cards of this type on a page
-         norm_dist = CONFIG.getint("card_spacing", ctype)
-         card_count = CONFIG.getint("card_counts", ctype)
+         norm_dist = getattr(self.state, ctype).spacing
+         card_count = getattr(self.state, ctype).count
          # For spacing purposes, page starts at the earliest page we can
          # put a card on this page, w/o being too close to a same-type
          # card on the previous page. This shortens the effective page dist
@@ -703,6 +705,11 @@ class cw_page:
          start_jrange = c_dist[ctype]
          end_jrange = norm_dist 
 
+         # Let jitter be non-deterministic
+         # TODO: needs to be reset potentially later?
+         old_seed = self.state.seed
+         seed()
+
          # Add back the cards
          for k in xrange(0, len(c_redist[ctype])):
             if ( ctype not in seen_type ):   # If first page AND not seen before, add them early
@@ -723,7 +730,10 @@ class cw_page:
 
             card = c_redist[ctype][k]
             self.cards.insert(ins_index, card)
-            # print "ctype %s   ct-cnt %d   len %d   ins_index %d   jitter %d" % ( ctype, len(c_redist[ctype]), len(self.cards), ins_index, jitter)
+            syslog.syslog("ctype %s   ct-cnt %d   len %d   ins_index %d   jitter %d" % ( ctype, len(c_redist[ctype]), len(self.cards), ins_index, jitter))
+
+      # Return seed to previous value
+      seed(old_seed)
 
       # Lastly, add the topics cards back
       for j in xrange(0, len(c_nodist['topics'])):
