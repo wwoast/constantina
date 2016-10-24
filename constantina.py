@@ -71,20 +71,6 @@ class cw_cardtype:
       syslog.syslog("Replaced list of " + self.ctype + ": " + str(self.clist))
             
 
-   def jitter(self, cnum):
-      """Take a card number, and jitter the number forward by a random amount,
-         to make looping content appearances less obviously in a sequence. The
-         goal is to make every page load appear different, though it's unclear
-         if this function is still necessary."""
-      rand_travel = 1
-      while (( rand_travel < 2 ) and 
-             ( self.per_page % rand_travel == 0 ) and 
-             ( self.per_page > 3 )):
-         rand_travel = randint(2, self.per_page)
-      cnew = ( cnum + rand_travel ) % self.file_count
-      return cnew
-
-
    def __shuffle_files(self):
       """Take a card type, and create a shuffle array where we can preserve
          normal page-state numbering, using those page-state values as indexes
