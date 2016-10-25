@@ -693,8 +693,9 @@ class cw_page:
 
          # Let jitter be non-deterministic
          # TODO: needs to be reset potentially later?
-         old_seed = self.state.seed
-         seed()
+         # If no seed in the state, make a random one
+         if ( self.state.seed ):
+            seed()
 
          # Add back the cards
          for k in xrange(0, len(c_redist[ctype])):
@@ -719,7 +720,8 @@ class cw_page:
             syslog.syslog("ctype %s   ct-cnt %d   len %d   ins_index %d   jitter %d" % ( ctype, len(c_redist[ctype]), len(self.cards), ins_index, jitter))
 
       # Return seed to previous value
-      seed(old_seed)
+      if ( self.state.seed ):
+         seed(self.state.seed)
 
       # Lastly, add the topics cards back
       for j in xrange(0, len(c_nodist['topics'])):
