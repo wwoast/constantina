@@ -79,9 +79,10 @@ class cw_cardtype:
       total_pages = int(floor(len(opendir("news")) / CONFIG.getint("card_counts", "news")))
       total_ctype = total_pages * self.per_page
 
-      self.clist = range(0, self.file_count)*10
-      shuffle(self.clist)
+      # Guarantee enough cards to choose from
+      self.clist = range(0, self.file_count) * total_ctype
       self.clist = self.clist[0:total_ctype]
+      shuffle(self.clist)
 
 
    def __mark_uneven_distribution(self):
