@@ -751,6 +751,7 @@ class cw_card:
       self.cdate = CONFIG.get("card_defaults", "date")
       self.permalink = permalink
       self.search_result = search_result
+      self.hidden = False
       # Don't hit the filesystem if we're just tracking which cards have
       # been previously opened (cw_page.__get_previous_cards)
       if ( grab_body == True ):
@@ -763,16 +764,29 @@ class cw_card:
          the Nth file in a directory.
          For news files, the filename itself is a Unix timestamp number, and
          can be specified directly."""
-      type_files = opendir(self.ctype)
+      if ( self.cnum == 'x' ):
+         self.hidden = True
+
+      type_files = opendir(self.ctype, self.hidden)
 
       # Find the utime value in the array if the number given isn't an array index.
       # If we're inserting cards into an active page, the state variable will be
       # given, and should be represented by a shuffled value.
       random_types = CONFIG.get("card_properties", "randomize").replace(" ","").split(",")
-      if ( self.ctype in random_types ) and ( self.state != False ) and ( self.search_result == False ):
+      if ( self.ctype in random_types ) and ( self.state != False ) 
+                                        and ( self.search_result == False ):
+                                        and ( self.hidden == False ):
          cycle = len(getattr(self.state, self.ctype).clist)
          syslog.syslog("open file: " + str(self.num) + "/" + str(cycle))
          which_file = getattr(self.state, self.ctype).clist[self.num % cycle]
+
+      elif ( self.hidden == True ):
+         hidden_cards = xrange(0, len(DIR_INDEX[ctype + "/hidden"]))
+         self.num = hidden_cards[random()]
+         # TODO: totally random selected card (unset seed)
+         syslog.syslog("open hidden file: " + str(self.num) + "/" + str(hidden_cards))
+         which_file = self.cnum
+
       else:
          which_file = self.num
 
@@ -807,7 +821,12 @@ class cw_card:
       that doesn't pass muster returns "wrongtype".
       """
       magi = magic.Magic(mime=True)
-      fpath = CONFIG.get("paths", self.ctype) + "/" + thisfile
+
+      base_path = CONFIG.get("paths", self.ctype)
+      if ( self.hidden == True ):
+         fpath = base_path + "/hidden/" + thisfile
+      else: 
+         fpath = base_path + "/" + thisfile
 
       try:
          with open(fpath, 'r') as cfile:
@@ -1115,11 +1134,13 @@ def remove_future(dirlisting):
    return dirlisting
 
 
-def opendir(ctype):
+def opendir(ctype, hidden=False):
    """Return either cached directory information or open a dir and
    list all the files therein. Used for both searching and for the
    card reading functions, so we manage it outside those."""
    directory = CONFIG.get("paths", ctype)
+   if ( hidden == True ):
+      directory += "/hidden" 
 
    # If the directory wasn't previously cached
    if ( ctype not in DIR_INDEX.keys() ):
