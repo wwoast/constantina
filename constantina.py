@@ -636,7 +636,7 @@ class cw_page:
             c_dist[ctype] = 0
          else:
             c_dist[ctype] = spacing - (lstop - c_lastcard[ctype])
-         syslog.syslog("------ ctype %s   spacing %d   c_dist %d   c_lastcard %d   lstop %d" % ( ctype, spacing, c_dist[ctype], c_lastcard[ctype], lstop))
+         # syslog.syslog("------ ctype %s   spacing %d   c_dist %d   c_lastcard %d   lstop %d" % ( ctype, spacing, c_dist[ctype], c_lastcard[ctype], lstop))
          c_redist[ctype] = []
          c_nodist[ctype] = []
 
@@ -765,28 +765,32 @@ class cw_card:
          the Nth file in a directory.
          For news files, the filename itself is a Unix timestamp number, and
          can be specified directly."""
-      if ( self.cnum == 'x' ):
-         self.hidden = True
-
       type_files = opendir(self.ctype, self.hidden)
 
       # Find the utime value in the array if the number given isn't an array index.
       # If we're inserting cards into an active page, the state variable will be
       # given, and should be represented by a shuffled value.
       random_types = CONFIG.get("card_properties", "randomize").replace(" ","").split(",")
-      if ( self.ctype in random_types ) and ( self.state != False ) 
-                                        and ( self.search_result == False ):
-                                        and ( self.hidden == False ):
+      if (( self.ctype in random_types ) and ( self.state != False )
+                                         and ( self.search_result == False )
+                                         and ( self.hidden == False )):
          cycle = len(getattr(self.state, self.ctype).clist)
-         syslog.syslog("open file: " + str(self.num) + "/" + str(cycle))
          which_file = getattr(self.state, self.ctype).clist[self.num % cycle]
 
-      elif ( self.hidden == True ):
-         hidden_cards = xrange(0, len(DIR_INDEX[ctype + "/hidden"]))
-         self.num = hidden_cards[random()]
-         # TODO: totally random selected card (unset seed)
-         syslog.syslog("open hidden file: " + str(self.num) + "/" + str(hidden_cards))
-         which_file = self.cnum
+         # Logic for hidden files, which only works because it's inside the
+         # random_types check
+         if ( which_file == 'x' ):
+            self.hidden = True
+            type_files = opendir(self.ctype, self.hidden)
+            syslog.syslog(str(DIR_INDEX.keys()))
+            hidden_cards = xrange(0, len(DIR_INDEX[self.ctype + "/hidden"]))
+            self.num = hidden_cards[randint(0, len(hidden_cards)-1)]
+            # TODO: totally random selected card (unset seed)
+            syslog.syslog("open hidden file: " + str(self.num) + "/" + str(hidden_cards))
+            which_file = self.num
+         else:
+            syslog.syslog("open file: " + str(self.num) + "/" + str(cycle))
+            # pass
 
       else:
          which_file = self.num
@@ -882,7 +886,10 @@ class cw_card:
       except:   # File got moved in between dirlist caching and us reading it
          return CONFIG.get("card_defaults", "file")
 
-      return CONFIG.get("paths", self.ctype) + "/" + thisfile
+      if ( self.hidden == True ):
+          return CONFIG.get("paths", self.ctype) + "/hidden/" + thisfile
+      else:
+          return CONFIG.get("paths", self.ctype) + "/" + thisfile
 
 
 
@@ -1142,6 +1149,7 @@ def opendir(ctype, hidden=False):
    directory = CONFIG.get("paths", ctype)
    if ( hidden == True ):
       directory += "/hidden" 
+      ctype += "/hidden"
 
    # If the directory wasn't previously cached
    if ( ctype not in DIR_INDEX.keys() ):
