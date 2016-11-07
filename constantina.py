@@ -11,7 +11,7 @@ import os
 import re
 import magic
 import lxml.html
-from urllib import unquote_plus
+from urllib import quote, unquote_plus
 import syslog
 import ConfigParser
 
@@ -1261,7 +1261,14 @@ def create_textcard(card):
    is followed.
    """
    # TODO: VET title and topics for reasonable size restrictions
-   topics = ", ".join(card.topics)
+   topic_header = ""
+   for topic in card.topics:
+       topic_url = """/?s=xs%s""" % quote(topic) 
+       topic_link = """<a href="%s">%s</a>""" % ( topic_url, topic)
+       if ( topic_header == "" ):
+           topic_header = topic_link
+       else:
+           topic_header = topic_header + ", " + topic_link
    anchor = card.cfile.split('/').pop()
 
    # The body of a text card consists of paragraphs of text, possibly
@@ -1278,7 +1285,7 @@ def create_textcard(card):
       output += """      <p class="subject">%s</p>\n""" % card.cdate
    else:
       output += """      <h2><a href="#%s" onclick="cardToggle('%s');">%s</a></h2>\n""" % ( anchor, anchor, card.title )
-      output += """      <p class="subject">%s</p>\n""" % topics
+      output += """      <p class="subject">%s</p>\n""" % topic_header
    output += """   </div>\n"""
 
    passed = {}
