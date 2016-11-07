@@ -11,7 +11,7 @@ import os
 import re
 import magic
 import lxml.html
-from urllib import quote, unquote_plus
+from urllib import unquote_plus
 import syslog
 import ConfigParser
 
@@ -1263,8 +1263,7 @@ def create_textcard(card):
    # TODO: VET title and topics for reasonable size restrictions
    topic_header = ""
    for topic in card.topics:
-       topic_url = """/?s=xs%s""" % quote(topic) 
-       topic_link = """<a href="%s">%s</a>""" % ( topic_url, topic)
+       topic_link = """<a href="#" onclick="$('.searchEntry input').val($(this).html()); $('.searchSubmit form').submit(); return false;">%s</a>""" % topic
        if ( topic_header == "" ):
            topic_header = topic_link
        else:
