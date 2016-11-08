@@ -1263,7 +1263,7 @@ def create_textcard(card):
    # TODO: VET title and topics for reasonable size restrictions
    topic_header = ""
    for topic in card.topics:
-       topic_link = """<a href="#" onclick="$('.searchEntry input').val($(this).html()); $('.searchSubmit form').submit(); return false;">%s</a>""" % topic
+       topic_link = """<a class="topicLink" href="#">%s</a>""" % topic
        if ( topic_header == "" ):
            topic_header = topic_link
        else:
