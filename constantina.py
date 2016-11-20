@@ -126,12 +126,6 @@ class cw_cardtype:
                break
 
 
-   # TODO: replace with hidden items :) 
-   def __remove_marked(self):
-      """Remove any 'x' marked values in the clist array"""
-      self.clist == filter(lambda a: a == 'x', self.clist) 
-
-
 class cw_state:
    """
    Constantina Page State Object.
