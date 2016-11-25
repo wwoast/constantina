@@ -229,6 +229,9 @@ class cw_state:
             # and are removed from the special state tracking.
             if token[0:2] == 'xs':
                filterterms = self.__add_filter_cardtypes(items)
+               for filterterm in filterterms:
+                  syslog.syslog("filterterm: " + filterterm + " ; items: " + str(items))
+                  items.remove(filterterm)
 
             spcfield = CONFIG.get("special_states", token[0:2])
             setattr(self, spcfield, [])
@@ -335,10 +338,11 @@ class cw_state:
          of cards are configured in constantina.ini"""
       filterterms = []
       for term in searchterms:
-         syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
          if term[0] == '#':
-            for ctype, filternames in CONFIG.items("card_filters"):
+            for ctype, filterlist in CONFIG.items("card_filters"):
+                filternames = filterlist.split(',')
                 for filtername in filternames:
+                    syslog.syslog("filtername: " + filtername + " searchterm: " + term + " ; allterms: " + str(searchterms))
                     if term == '#' + filtername:
                         # Toggle this cardtype as one we'll filter on
                         getattr(self, ctype).filtertype = True
@@ -346,7 +350,7 @@ class cw_state:
                         self.filtercount = self.filtercount + 1
                         # Add to the list of filterterms, and remove from
                         # the base searching logic.
-                        filterterms.push(term)
+                        filterterms.append(term)
 
       return filterterms
 
