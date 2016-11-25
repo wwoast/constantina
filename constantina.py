@@ -226,18 +226,24 @@ class cw_state:
                continue
 
             # Search parameters with hashtags are treated as card filter types
-            # and are removed from the special state tracking.
+            # and are removed from the special state tracking. Process this list
+            # directly from the real "search" state tracking (getattr)
             if token[0:2] == 'xs':
-               filterterms = self.__add_filter_cardtypes(items)
+               searchterms = items[0].split(' ')   # single-space delimited terms
+               filterterms = self.__add_filter_cardtypes(searchterms)
                for filterterm in filterterms:
-                  syslog.syslog("filterterm: " + filterterm + " ; items: " + str(items))
-                  items.remove(filterterm)
+                  syslog.syslog("filterterm: " + filterterm + " ; items: " + str(searchterms))
+                  searchterms.remove(filterterm)
+               # Recombine the space-delimited array for processing by search funcs
+               items = [" ".join(searchterms)]
 
+            # Populate state object for this special state value
             spcfield = CONFIG.get("special_states", token[0:2])
             setattr(self, spcfield, [])
             for i in items:
                getattr(self, spcfield).append(i)
             last_parsed.append(token[0:2])   # Add to the parsed stack
+
 
          # If the token can be interpreted as a float when putting 0. in front,
          # this will become our random seed for shuffling
@@ -338,11 +344,11 @@ class cw_state:
          of cards are configured in constantina.ini"""
       filterterms = []
       for term in searchterms:
+         syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
          if term[0] == '#':
             for ctype, filterlist in CONFIG.items("card_filters"):
                 filternames = filterlist.split(',')
                 for filtername in filternames:
-                    syslog.syslog("filtername: " + filtername + " searchterm: " + term + " ; allterms: " + str(searchterms))
                     if term == '#' + filtername:
                         # Toggle this cardtype as one we'll filter on
                         getattr(self, ctype).filtertype = True
