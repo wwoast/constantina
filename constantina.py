@@ -149,7 +149,7 @@ class cw_state:
       self.in_state = state_string   # Track the original state string
       self.seed = None		     # The Random Seed for the page
       self.page = 0
-      self.filterpage = False        # Are there any cardtypes we're filtering on?
+      self.filtercount = 0           # Are there any cardtypes we're filtering on?
 
       # For the card types in the card_counts config, create variables, i.e.
       #   state.news.distance, state.topics.spacing
@@ -228,8 +228,9 @@ class cw_state:
             # Search parameters with hashtags are treated as card filter types
             # and are removed from the special state tracking.
             if token[0:2] == 'xs':
-               self.__add_filter_cardtypes(items)
-                      
+               filterterms = self.__add_filter_cardtypes(items)
+               foreach processed in filterterms:
+                  items.remove(processed)
 
             spcfield = CONFIG.get("special_states", token[0:2])
             setattr(self, spcfield, [])
@@ -334,6 +335,7 @@ class cw_state:
       """If you type a hashtag into the search box, Constantina will do a 
          filter based on the cardtype you want. Aliases for various types
          of cards are configured in constantina.ini"""
+      filterterms = []
       for term in searchterms:
          if term[0] == '#':
             for ctype, filternames in CONFIG.items("card_filters"):
@@ -342,7 +344,12 @@ class cw_state:
                         # Toggle this cardtype as one we'll filter on
                         getattr(self, ctype).filtertype = True
                         # Page filtering by type is enabled
-                        self.filterpage = True
+                        self.filtercount = self.filtercount + 1
+                        # Add to the list of filterterms, and remove from
+                        # the base searching logic.
+                        filterterms.push(term)
+
+      return filterterms
 
 
    def __set_random_seed(self):
@@ -476,7 +483,7 @@ class cw_page:
          if ( getattr(self.state, ctype).clist == None ) and ( self.state.in_state != None ):
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filterpage == True ):
+         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filtercount > 0 ):
             continue
 
          # Grab the cnum of the last inserted thing of this type
@@ -518,7 +525,7 @@ class cw_page:
          if ( ctype == 'topics' ):
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filterpage == True ):
+         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filtercount > 0 ):
             continue
 
          start = 0
@@ -591,7 +598,7 @@ class cw_page:
       # variable based on the current list of cards.
       for ctype, card_count in CONFIG.items("card_counts"):
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filterpage == True ):
+         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filtercount > 0 ):
             continue
          dist = getattr(self.state, ctype).distance
          if (( len(getattr(self.state, ctype).clist) == 0 ) or ( dist == None )):
@@ -655,7 +662,7 @@ class cw_page:
 
       for ctype, spacing in CONFIG.items("card_spacing"):
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filterpage == True ):
+         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filtercount > 0 ):
             continue
          # Spacing rules from the last page. Subtract the distance from
          # the end of the previous page. For all other cards, follow the
@@ -699,7 +706,7 @@ class cw_page:
          if ( c_redist[ctype] == [] ):
             continue   # Empty
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filterpage == True ):
+         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filtercount > 0 ):
             continue
 
          # Max distance between cards of this type on a page
