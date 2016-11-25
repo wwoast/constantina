@@ -231,9 +231,7 @@ class cw_state:
             # CANNOT REMOVE THESE TERMS, since future paging states need to track it
             if token[0:2] == 'xs':
                searchterms = items[0].split(' ')   # single-space delimited terms
-               filterterms = self.__add_filter_cardtypes(searchterms)
-               for filterterm in filterterms:
-                  syslog.syslog("filterterm: " + filterterm + " ; items: " + str(searchterms))
+               self.__add_filter_cardtypes(searchterms)
                # Recombine the space-delimited array for processing by search funcs
                items = [" ".join(searchterms)]
 
@@ -342,7 +340,6 @@ class cw_state:
       """If you type a hashtag into the search box, Constantina will do a 
          filter based on the cardtype you want. Aliases for various types
          of cards are configured in constantina.ini"""
-      filterterms = []
       for term in searchterms:
          syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
          if term[0] == '#':
@@ -356,9 +353,6 @@ class cw_state:
                         self.filtercount = self.filtercount + 1
                         # Add to the list of filterterms, and remove from
                         # the base searching logic.
-                        filterterms.append(term)
-
-      return filterterms
 
 
    def __set_random_seed(self):
