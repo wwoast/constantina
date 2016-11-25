@@ -227,7 +227,7 @@ class cw_state:
 
             # Search parameters with hashtags are treated as card filter types
             # and are moved from search state to filter state tracking.
-            if token[0:2] == 'xs':
+            if token[0:2] == 'xs' and 'xo' not in last_parsed:
                searchterms = items[0].split(' ')         # single-space delimited terms
                searchterms = filter(None, searchterms)   # remove null search submits
                filterterms = self.__add_filter_cardtypes(searchterms)
