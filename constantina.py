@@ -654,6 +654,9 @@ class cw_page:
       c_nodist = {}      
 
       for ctype, spacing in CONFIG.items("card_spacing"):
+         # Are we doing cardtype filtering, and this isn't an included card type?
+         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filterpage == True ):
+            continue
          # Spacing rules from the last page. Subtract the distance from
          # the end of the previous page. For all other cards, follow the
          # strict card spacing rules from the config file, plus jitter
@@ -695,6 +698,9 @@ class cw_page:
       for ctype in c_redist.keys():
          if ( c_redist[ctype] == [] ):
             continue   # Empty
+         # Are we doing cardtype filtering, and this isn't an included card type?
+         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filterpage == True ):
+            continue
 
          # Max distance between cards of this type on a page
          norm_dist = getattr(self.state, ctype).spacing
