@@ -230,7 +230,8 @@ class cw_state:
             # directly from the real "search" state tracking (getattr)
             # CANNOT REMOVE THESE TERMS, since future paging states need to track it
             if token[0:2] == 'xs':
-               searchterms = items[0].split(' ')   # single-space delimited terms
+               searchterms = items[0].split(' ')         # single-space delimited terms
+               searchterms = filter(None, searchterms)   # remove null search submits
                self.__add_filter_cardtypes(searchterms)
                # Recombine the space-delimited array for processing by search funcs
                items = [" ".join(searchterms)]
