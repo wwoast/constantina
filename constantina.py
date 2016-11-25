@@ -261,7 +261,7 @@ class cw_state:
 
    # TODO: move update_state portions to their own function?
    # TODO: most of the update-state stuff is calculating distance
-   def export_state(self, cards, query_terms):
+   def export_state(self, cards, query_terms, filter_terms):
       """Once all cards are read, calculate a new state variable to
          embed in the more-contents page link."""
       all_ctypes = CONFIG.options("card_counts")
@@ -338,6 +338,8 @@ class cw_state:
       # letting us know that the original query was a search attempt, and that
       # future data to insert into the page should be filtered by these 
       # provided terms.
+      if ( filter_terms != '' ):
+         export_string = export_string + ":" + "xo" + filter_terms
       if ( query_terms != '' ):
          export_string = export_string + ":" + "xs" + query_terms
       return export_string
@@ -446,6 +448,7 @@ class cw_page:
          # other than plus. All input-commas become pluses
          self.search_results = cw_search(self.state.search, self.state.card_filter)
          self.query_terms = self.search_results.query_string
+         self.filter_terms = self.search_results.filter_string
          self.__get_search_result_cards()
          self.__distribute_cards()
         
@@ -472,7 +475,7 @@ class cw_page:
 
       # Once we've constructed the new card list, update the page
       # state for insertion, for the "next_page" link.
-      self.out_state = self.state.export_state(self.cards, self.query_terms)
+      self.out_state = self.state.export_state(self.cards, self.query_terms, self.filter_terms)
       syslog.syslog("Initial state: " + str(self.state.in_state))
       syslog.syslog("To-load state: " + str(self.out_state))
       
