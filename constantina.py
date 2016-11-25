@@ -229,8 +229,6 @@ class cw_state:
             # and are removed from the special state tracking.
             if token[0:2] == 'xs':
                filterterms = self.__add_filter_cardtypes(items)
-               foreach processed in filterterms:
-                  items.remove(processed)
 
             spcfield = CONFIG.get("special_states", token[0:2])
             setattr(self, spcfield, [])
@@ -337,6 +335,7 @@ class cw_state:
          of cards are configured in constantina.ini"""
       filterterms = []
       for term in searchterms:
+         syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
          if term[0] == '#':
             for ctype, filternames in CONFIG.items("card_filters"):
                 for filtername in filternames:
@@ -1037,6 +1036,9 @@ class cw_search:
          0: word list and symbol erasing ate all the search terms
          1: valid query 
       """
+      # Remove any filtertypes (hashtags) from doing an actual search
+      # TODO
+
       # Make a or-regex of all the words in the wordlist
       if ( self.ignore_words == '' ):
          with open(self.words_file, 'r') as wfile:
