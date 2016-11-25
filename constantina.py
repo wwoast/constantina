@@ -342,7 +342,7 @@ class cw_state:
          filter based on the cardtype you want. Aliases for various types
          of cards are configured in constantina.ini"""
       for term in searchterms:
-         syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
+         # syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
          if term[0] == '#':
             for ctype, filterlist in CONFIG.items("card_filters"):
                 filternames = filterlist.split(',')
@@ -1051,12 +1051,6 @@ class cw_search:
       if ( safe_input == '' ):
          return 0
 
-      # Remove any search-filters (hashtags) from doing an actual search
-      # Specifically, remove any term with a # in the conents
-      remove_hashtags = re.compile(r'\w*#\w+\s*')
-      safe_input = remove_hashtags.sub("", safe_input)
-      syslog.syslog("safe_input: " + safe_input)
-
       # Get rid of symbol instances in whatever input we're processing
       # Note this only works on ASCII symbol characters, not the special
       # double-quote characters &ldquo; and &rdquo;, as well as other
@@ -1139,7 +1133,12 @@ class cw_search:
       """Given a list of search paramters, look for any of them in the 
       indexes. For now don't return more than 200 hits"""
       self.parser = QueryParser("content", self.schema)
-      self.query = self.parser.parse(unicode(self.query_string))
+
+      # Keep search filters in the query state tracking, but do not
+      # process these strings for actual searching
+      final_query = self.__remove_search_filters()
+
+      self.query = self.parser.parse(unicode(final_query))
       self.results = self.searcher.search(self.query, limit=count)
 
       # Just want the utime filenames themselves? Here they are, in 
@@ -1157,6 +1156,15 @@ class cw_search:
          self.hits[ctype].sort()
          self.hits[ctype].reverse()
 
+
+   def __remove_search_filters(self):
+      """ Remove any search-filters (hashtags) from doing an actual search.
+          Specifically, remove any term with a # in the conents. It is
+          crucial to only use this routine just before actual searching, so
+          that page-state and pagination for future page loads doesn't break"""
+      regex = re.compile(r'\w*#\w+\s*')
+      remove_hashtags = regex.sub("", self.query_string)
+      return remove_hashtags
 
 
 class cw_song:
