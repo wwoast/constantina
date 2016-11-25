@@ -36,14 +36,16 @@ class cw_cardtype:
       - The distance from the last-displayed item of this type to the end
         of the displayed page
       - The spacing per page of news cards
+      - Whether the page state is asking to filter cards of a specific type
 
    Through checking the configured card_counts, we create one of these
    objects named for each card type (ctype).
    """
-   def __init__(self, ctype, count, distance, spacing):
+   def __init__(self, ctype, count, distance, filtertype, spacing):
       self.ctype = ctype
       self.count = count
       self.distance = distance
+      self.filtertype = filtertype
       self.spacing = spacing
 
       self.clist = []      # List of card indexes that appeared of this type
@@ -147,6 +149,7 @@ class cw_state:
       self.in_state = state_string   # Track the original state string
       self.seed = None		     # The Random Seed for the page
       self.page = 0
+      self.filterpage = False        # Are there any cardtypes we're filtering on?
 
       # For the card types in the card_counts config, create variables, i.e.
       #   state.news.distance, state.topics.spacing
@@ -155,6 +158,7 @@ class cw_state:
             ctype=ctype,
             count=int(card_count),
             distance=None,
+            filtertype=False,
             spacing=CONFIG.getint('card_spacing', ctype)))
 
       # For permalink settings or search strings, define object fields as well
@@ -179,7 +183,7 @@ class cw_state:
       if ( self.news.distance != None ):
          self.page = ( int(self.news.distance) + 1 ) / CONFIG.getint('card_counts', 'news')
 
-      syslog.syslog("Random seed: " + str(self.seed))
+      # syslog.syslog("Random seed: " + str(self.seed))
 
 
    def __import_state(self, state_string):
@@ -220,6 +224,12 @@ class cw_state:
                items = item_str.split(',')[0:max_params]
             except:
                continue
+
+            # Search parameters with hashtags are treated as card filter types
+            # and are removed from the special state tracking.
+            if token[0:2] == 'xs':
+               self.__add_filter_cardtypes(items)
+                      
 
             spcfield = CONFIG.get("special_states", token[0:2])
             setattr(self, spcfield, [])
@@ -318,6 +328,21 @@ class cw_state:
       if ( query_terms != '' ):
          export_string = export_string + ":" + "xs" + query_terms
       return export_string
+
+
+   def __add_filter_cardtypes(self, searchterms):
+      """If you type a hashtag into the search box, Constantina will do a 
+         filter based on the cardtype you want. Aliases for various types
+         of cards are configured in constantina.ini"""
+      for term in searchterms:
+         if term[0] == '#':
+            for ctype, filternames in CONFIG.items("card_filters"):
+                for filtername in filternames:
+                    if term == '#' + filtername:
+                        # Toggle this cardtype as one we'll filter on
+                        getattr(self, ctype).filtertype = True
+                        # Page filtering by type is enabled
+                        self.filterpage = True
 
 
    def __set_random_seed(self):
@@ -450,6 +475,9 @@ class cw_page:
          # No data and it's not the first page? Skip this type
          if ( getattr(self.state, ctype).clist == None ) and ( self.state.in_state != None ):
             continue
+         # Are we doing cardtype filtering, and this isn't an included card type?
+         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filterpage == True ):
+            continue
 
          # Grab the cnum of the last inserted thing of this type
          # and then open the next one
@@ -488,6 +516,9 @@ class cw_page:
       for ctype in search_types:
          # Manage the encyclopedia cards separately
          if ( ctype == 'topics' ):
+            continue
+         # Are we doing cardtype filtering, and this isn't an included card type?
+         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filterpage == True ):
             continue
 
          start = 0
@@ -559,6 +590,9 @@ class cw_page:
       # of this page's content and need to write a new state
       # variable based on the current list of cards.
       for ctype, card_count in CONFIG.items("card_counts"):
+         # Are we doing cardtype filtering, and this isn't an included card type?
+         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filterpage == True ):
+            continue
          dist = getattr(self.state, ctype).distance
          if (( len(getattr(self.state, ctype).clist) == 0 ) or ( dist == None )):
             continue
