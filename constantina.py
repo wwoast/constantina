@@ -1024,7 +1024,7 @@ class cw_search:
          self.hits[ctype] = []
 
       # Process the filter strings first, in case that's all we have
-      if ( unsafe_filter_terms != [] ):
+      if ( unsafe_filter_terms != None ):
          self.__process_input(' '.join(unsafe_filter_terms), returning="filter")
 
       # If the query string is null after processing, don't do anything else.
