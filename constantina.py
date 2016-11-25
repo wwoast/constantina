@@ -410,7 +410,8 @@ class cw_page:
       self.out_state = ''
 
       self.search_results = ''
-      self.query_terms = ''   # Use this locally, in case we happen not to create a search object
+      self.query_terms = ''    # Use this locally, in case we happen not to create a search object
+      self.filter_terms = ''   # For filtering based on cardtypes 
 
       news_items = CONFIG.getint("card_counts", "news")
 
@@ -443,7 +444,7 @@ class cw_page:
          # parsed by __import_state into self.state.search.
          # TODO: Tokenize all search parameters and remove non-alphanum characters
          # other than plus. All input-commas become pluses
-         self.search_results = cw_search(self.state.search)
+         self.search_results = cw_search(self.state.search, self.state.card_filter)
          self.query_terms = self.search_results.query_string
          self.__get_search_result_cards()
          self.__distribute_cards()
@@ -967,14 +968,15 @@ class cw_search:
    Finally, there is an "index-tree" list where if specific search terms
    are queried, all related terms are pulled in as well. If the user requests
    the related phrases can be turned off."""
-   def __init__(self, unsafe_query_terms):
+   def __init__(self, unsafe_query_terms, unsafe_filter_terms):
       # List of symbols to filter out in the unsafe input
       self.ignore_symbols = []
       # Regex of words that won't be indexed
       self.ignore_words = ''
-      # After processing unsafe_query, save it in the object
+      # After processing unsafe_query or unsafe_filter, save it in the object
       # Assume we're searching for all terms, unless separated by pluses
       self.query_string = ''
+      self.filter_string = ''
       # The contents of the last file we read
       self.content = ''
       # Notes on what was searched for. This will either be an error
@@ -1017,6 +1019,9 @@ class cw_search:
          # Other functions will expect this to exist regardless.
          self.hits[ctype] = []
 
+      # Process the filter strings first, in case that's all we have
+      self.__process_input(' '.join(unsafe_filter_terms), returning="filter")
+
       # If the query string is null after processing, don't do anything else.
       # Feed our input as a space-delimited set of terms. NOTE that we limit
       # this in the __import_state function in cw_state.
@@ -1029,7 +1034,7 @@ class cw_search:
          # reindex all the modified files
          self.__add_ctype_to_index(ctype)
 
-
+ 
       # TODO: Prior to searching, __parse_input to allow union searches
       # with "word1 + word2" or negative searches (word1 - word2)
       # TODO: Save these results to query_string somehow
@@ -1080,6 +1085,8 @@ class cw_search:
       if (safe_input != '' ):
          if ( returning == "query" ):
             self.query_string = safe_input
+         elif ( returning == "filter" ):
+            self.filter_string = safe_input
          else:
             self.content = safe_input
          return 1
@@ -1162,15 +1169,6 @@ class cw_search:
          self.hits[ctype].sort()
          self.hits[ctype].reverse()
 
-
-   def __remove_search_filters(self):
-      """ Remove any search-filters (hashtags) from doing an actual search.
-          Specifically, remove any term with a # in the conents. It is
-          crucial to only use this routine just before actual searching, so
-          that page-state and pagination for future page loads doesn't break"""
-      regex = re.compile(r'\w*#\w+\s*')
-      remove_hashtags = regex.sub("", self.query_string)
-      return remove_hashtags
 
 
 class cw_song:
