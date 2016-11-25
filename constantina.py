@@ -238,11 +238,12 @@ class cw_state:
                   for term in filterterms:
                      searchterms.remove(term)
                      getattr(self, spcfilter).append(term)
+                  last_parsed.append("xo")
 
                # Recombine the space-delimited array for processing by search funcs
                items = [" ".join(searchterms)]
 
-            # Populate state object for this special state value
+            # Populate state object for this generic special state value
             spcfield = CONFIG.get("special_states", token[0:2])
             setattr(self, spcfield, [])
             for i in items:
@@ -1023,7 +1024,8 @@ class cw_search:
          self.hits[ctype] = []
 
       # Process the filter strings first, in case that's all we have
-      self.__process_input(' '.join(unsafe_filter_terms), returning="filter")
+      if ( unsafe_filter_terms != [] ):
+         self.__process_input(' '.join(unsafe_filter_terms), returning="filter")
 
       # If the query string is null after processing, don't do anything else.
       # Feed our input as a space-delimited set of terms. NOTE that we limit
