@@ -228,12 +228,12 @@ class cw_state:
             # Search parameters with hashtags are treated as card filter types
             # and are removed from the special state tracking. Process this list
             # directly from the real "search" state tracking (getattr)
+            # CANNOT REMOVE THESE TERMS, since future paging states need to track it
             if token[0:2] == 'xs':
                searchterms = items[0].split(' ')   # single-space delimited terms
                filterterms = self.__add_filter_cardtypes(searchterms)
                for filterterm in filterterms:
                   syslog.syslog("filterterm: " + filterterm + " ; items: " + str(searchterms))
-                  searchterms.remove(filterterm)
                # Recombine the space-delimited array for processing by search funcs
                items = [" ".join(searchterms)]
 
@@ -534,6 +534,7 @@ class cw_page:
          if ( ctype == 'topics' ):
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
+         syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype))
          if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filtercount > 0 ):
             continue
 
@@ -1043,9 +1044,6 @@ class cw_search:
          0: word list and symbol erasing ate all the search terms
          1: valid query 
       """
-      # Remove any filtertypes (hashtags) from doing an actual search
-      # TODO
-
       # Make a or-regex of all the words in the wordlist
       if ( self.ignore_words == '' ):
          with open(self.words_file, 'r') as wfile:
@@ -1057,6 +1055,12 @@ class cw_search:
       safe_input = self.ignore_words.sub("", unsafe_input)
       if ( safe_input == '' ):
          return 0
+
+      # Remove any search-filters (hashtags) from doing an actual search
+      # Specifically, remove any term with a # in the conents
+      remove_hashtags = re.compile(r'\w*#\w+\s')
+      safe_input = remove_hashtags.sub("", safe_input)
+      syslog.syslog("safe_input: " + safe_input)
 
       # Get rid of symbol instances in whatever input we're processing
       # Note this only works on ASCII symbol characters, not the special
