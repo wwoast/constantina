@@ -149,7 +149,7 @@ class cw_state:
       self.in_state = state_string   # Track the original state string
       self.seed = None		     # The Random Seed for the page
       self.page = 0
-      self.filtercount = 0           # Are there any cardtypes we're filtering on?
+      self.filterlist = []           # Are there any cardtypes we're filtering on?
 
       # For the card types in the card_counts config, create variables, i.e.
       #   state.news.distance, state.topics.spacing
@@ -233,11 +233,8 @@ class cw_state:
                filterterms = self.__add_filter_cardtypes(searchterms)
                # Remove search filters from the search state list
                if ( filterterms != [] ):
-                  spcfilter = CONFIG.get("special_states", "xo")
-                  setattr(self, spcfilter, [])
                   for term in filterterms:
                      searchterms.remove(term)
-                     getattr(self, spcfilter).append(term)
                   last_parsed.append("xo")
 
                # Recombine the space-delimited array for processing by search funcs
@@ -351,21 +348,30 @@ class cw_state:
          filter based on the cardtype you want. Aliases for various types
          of cards are configured in constantina.ini"""
       filterterms = []
+      filtertypes = []
 
       for term in searchterms:
          # syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
          if term[0] == '#':
             for ctype, filterlist in CONFIG.items("card_filters"):
-                filternames = filterlist.split(',')
-                for filtername in filternames:
-                    if term == '#' + filtername:
-                        # Toggle this cardtype as one we'll filter on
-                        getattr(self, ctype).filtertype = True
-                        # Page filtering by type is enabled
-                        self.filtercount = self.filtercount + 1
-                        # Add to the list of filterterms, and remove from
-                        # the base searching logic.
-                        filterterms.append(term)
+               filternames = filterlist.split(',')
+               for filtername in filternames:
+                  if term == '#' + filtername:
+                     # Toggle this cardtype as one we'll filter on
+                     getattr(self, ctype).filtertype = True
+                     # Page filtering by type is enabled
+                     # Add to the list of filterterms, and prepare to
+                     # remove any filter tags from the search state.
+                     filtertypes.append(ctype)
+                     filterterms.append(term)
+
+      # Add the types we're filtering on to the filter state.
+      # This gets rid of stupid #-prefixed things in the URI potentially
+      if filtertypes != []:
+         spcfilter = CONFIG.get("special_states", "xo")
+         setattr(self, spcfilter, [])
+         for ctype in filtertypes:
+            getattr(self, spcfilter).append(ctype)
 
       return filterterms
 
@@ -442,11 +448,11 @@ class cw_page:
          self.__get_permalink_card()
          self.cards.append(cw_card('heading', 'footer', grab_body=True, permalink=True))
 
-      elif ( self.state.search != None ):
+      elif (( self.state.search != None ) or ( self.state.card_filter != None )):
          # Return search results based on the subsequent comma-separated list,
          # parsed by __import_state into self.state.search.
          # TODO: Tokenize all search parameters and remove non-alphanum characters
-         # other than plus. All input-commas become pluses
+         # other than plus or hash for hashtags. All input-commas become pluses
          self.search_results = cw_search(self.state.search, self.state.card_filter)
          self.query_terms = self.search_results.query_string
          self.filter_terms = self.search_results.filter_string
@@ -503,7 +509,7 @@ class cw_page:
          if ( getattr(self.state, ctype).clist == None ) and ( self.state.in_state != None ):
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filtercount > 0 ):
+         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.filterlist) > 0 ):
             continue
 
          # Grab the cnum of the last inserted thing of this type
@@ -546,7 +552,7 @@ class cw_page:
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
          syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype))
-         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filtercount > 0 ):
+         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.filterlist) > 0 ):
             continue
 
          start = 0
@@ -619,7 +625,7 @@ class cw_page:
       # variable based on the current list of cards.
       for ctype, card_count in CONFIG.items("card_counts"):
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filtercount > 0 ):
+         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.filterlist) > 0 ):
             continue
          dist = getattr(self.state, ctype).distance
          if (( len(getattr(self.state, ctype).clist) == 0 ) or ( dist == None )):
@@ -724,7 +730,7 @@ class cw_page:
          if ( c_redist[ctype] == [] ):
             continue   # Empty
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( self.state.filtercount > 0 ):
+         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.filterlist) > 0 ):
             continue
 
          # Max distance between cards of this type on a page
