@@ -226,13 +226,19 @@ class cw_state:
                continue
 
             # Search parameters with hashtags are treated as card filter types
-            # and are removed from the special state tracking. Process this list
-            # directly from the real "search" state tracking (getattr)
-            # CANNOT REMOVE THESE TERMS, since future paging states need to track it
+            # and are moved from search state to filter state tracking.
             if token[0:2] == 'xs':
                searchterms = items[0].split(' ')         # single-space delimited terms
                searchterms = filter(None, searchterms)   # remove null search submits
-               self.__add_filter_cardtypes(searchterms)
+               filterterms = self.__add_filter_cardtypes(searchterms)
+               # Remove search filters from the search state list
+               if ( filterterms != [] ):
+                  spcfilter = CONFIG.get("special_states", "xo")
+                  setattr(self, spcfilter, [])
+                  for term in filterterms:
+                     searchterms.remove(term)
+                     getattr(self, spcfilter).append(term)
+
                # Recombine the space-delimited array for processing by search funcs
                items = [" ".join(searchterms)]
 
@@ -341,6 +347,8 @@ class cw_state:
       """If you type a hashtag into the search box, Constantina will do a 
          filter based on the cardtype you want. Aliases for various types
          of cards are configured in constantina.ini"""
+      filterterms = []
+
       for term in searchterms:
          # syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
          if term[0] == '#':
@@ -354,6 +362,9 @@ class cw_state:
                         self.filtercount = self.filtercount + 1
                         # Add to the list of filterterms, and remove from
                         # the base searching logic.
+                        filterterms.append(term)
+
+      return filterterms
 
 
    def __set_random_seed(self):
@@ -1133,12 +1144,7 @@ class cw_search:
       """Given a list of search paramters, look for any of them in the 
       indexes. For now don't return more than 200 hits"""
       self.parser = QueryParser("content", self.schema)
-
-      # Keep search filters in the query state tracking, but do not
-      # process these strings for actual searching
-      final_query = self.__remove_search_filters()
-
-      self.query = self.parser.parse(unicode(final_query))
+      self.query = self.parser.parse(unicode(self.query_string))
       self.results = self.searcher.search(self.query, limit=count)
 
       # Just want the utime filenames themselves? Here they are, in 
