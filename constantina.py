@@ -1058,7 +1058,7 @@ class cw_search:
 
       # Remove any search-filters (hashtags) from doing an actual search
       # Specifically, remove any term with a # in the conents
-      remove_hashtags = re.compile(r'\w*#\w+\s')
+      remove_hashtags = re.compile(r'\w*#\w+\s*')
       safe_input = remove_hashtags.sub("", safe_input)
       syslog.syslog("safe_input: " + safe_input)
 
