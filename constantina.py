@@ -1579,9 +1579,10 @@ def application(env, start_response):
       html = html.replace(substitute, create_page(page))
       start_response('200 OK', [('Content-Type','text/html')])
 
-   # Doing a search
-   elif ( page.state.search != None ): 
-      if ( page.state.search == [''] ):
+   # Doing a search or a filter process
+   elif (( page.state.search != None ) or 
+         ( page.state.card_filter != None )): 
+      if ( page.state.search == [''] ) and ( page.state.card_filter == [''] ):
          # No search query given -- just regenerate the page
          page = cw_page()
 
