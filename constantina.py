@@ -165,6 +165,10 @@ class cw_state:
       for spctype, spcfield in CONFIG.items("special_states"):
          setattr(self, spcfield, None)
 
+      # Filter checks require an empty array here
+      spcfilter = CONFIG.get("special_states", "xo")
+      setattr(self, spcfilter, [])
+
       # Was there an initial state string? Read it if there is. Then shuffle
       # each ctype that we care about :)
       self.__import_state(state_string)
@@ -366,10 +370,9 @@ class cw_state:
 
       # Add the types we're filtering on to the filter state.
       # This gets rid of stupid #-prefixed things in the URI potentially
-      spcfilter = CONFIG.get("special_states", "xo")
-      setattr(self, spcfilter, [])
       if filtertypes != []:
          for ctype in filtertypes:
+            spcfilter = CONFIG.get("special_states", "xo")
             getattr(self, spcfilter).append(ctype)
 
       return filterterms
@@ -1042,7 +1045,7 @@ class cw_search:
       # this in the __import_state function in cw_state.
       if not ( self.__process_input(' '.join(unsafe_query_terms))):
          if ( self.filter_string != '' ):
-            self.__return_results(CONFIG.getint("search", "max_results"))
+            self.__filter_cardtypes()
             return
          else:
             return
@@ -1166,22 +1169,31 @@ class cw_search:
             self.__add_file_to_index(fnmtime, filename, ctype)
 
 
-   def __search_index(self, count=CONFIG.get("search", "max_results")):
+   def __search_index(self, count=CONFIG.getint("search", "max_results")):
       """Given a list of search paramters, look for any of them in the 
       indexes. For now don't return more than 200 hits"""
       self.parser = QueryParser("content", self.schema)
       self.query = self.parser.parse(unicode(self.query_string))
       self.results = self.searcher.search(self.query, limit=count)
       # print self.results[0:]
-      self.__return_results(len(self.results))
 
-
-   def __return_results(self, result_count):
-      """ Just want the utime filenames themselves? Here they are, in 
-      reverse-utime order just like we want for insert into the page"""
-      for i in xrange(0, result_count):
+      # Just want the utime filenames themselves? Here they are, in 
+      # reverse-utime order just like we want for insert into the page
+      for i in xrange(0, len(self.results)):
          ctype = self.results[i]['ctype']
+         # TODO: if also a filter string, include it here
          self.hits[ctype].append(self.results[i]['file'])
+
+
+   def __filter_cardtypes(self, count=CONFIG.getint("search", "max_results")):
+      """Get a list of cards to return, in response to a card-filter
+      event. These tend to be of a single card type."""
+      self.parser = QueryParser("content", self.schema)
+      self.query = self.parser.parse(unicode("*"))
+      self.results = self.searcher.search(self.query, limit=count)
+      for ctype in self.filter_string.split(' '):
+         for i in xrange(0, len(self.results)):      
+            self.hits[ctype].append(self.results[i]['file'])
 
 
    def __sort_search_results(self):
