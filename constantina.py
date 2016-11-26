@@ -149,7 +149,6 @@ class cw_state:
       self.in_state = state_string   # Track the original state string
       self.seed = None		     # The Random Seed for the page
       self.page = 0
-      self.filterlist = []           # Are there any cardtypes we're filtering on?
 
       # For the card types in the card_counts config, create variables, i.e.
       #   state.news.distance, state.topics.spacing
@@ -367,9 +366,9 @@ class cw_state:
 
       # Add the types we're filtering on to the filter state.
       # This gets rid of stupid #-prefixed things in the URI potentially
+      spcfilter = CONFIG.get("special_states", "xo")
+      setattr(self, spcfilter, [])
       if filtertypes != []:
-         spcfilter = CONFIG.get("special_states", "xo")
-         setattr(self, spcfilter, [])
          for ctype in filtertypes:
             getattr(self, spcfilter).append(ctype)
 
@@ -450,7 +449,8 @@ class cw_page:
          self.__get_permalink_card()
          self.cards.append(cw_card('heading', 'footer', grab_body=True, permalink=True))
 
-      elif (( self.state.search != None ) or ( self.state.card_filter != None )):
+      elif (( self.state.search != None ) or 
+            ( self.state.card_filter != None )):
          # Return search results based on the subsequent comma-separated list,
          # parsed by __import_state into self.state.search.
          # TODO: Tokenize all search parameters and remove non-alphanum characters
@@ -513,7 +513,7 @@ class cw_page:
          if ( getattr(self.state, ctype).clist == None ) and ( self.state.in_state != None ):
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.filterlist) > 0 ):
+         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
             continue
 
          # Grab the cnum of the last inserted thing of this type
@@ -555,8 +555,8 @@ class cw_page:
          if ( ctype == 'topics' ):
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
-         syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype))
-         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.filterlist) > 0 ):
+         syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype) + " card_filter_state: " + str(self.state.card_filter))
+         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
             continue
 
          start = 0
@@ -629,7 +629,7 @@ class cw_page:
       # variable based on the current list of cards.
       for ctype, card_count in CONFIG.items("card_counts"):
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.filterlist) > 0 ):
+         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
             continue
          dist = getattr(self.state, ctype).distance
          if (( len(getattr(self.state, ctype).clist) == 0 ) or ( dist == None )):
@@ -734,7 +734,7 @@ class cw_page:
          if ( c_redist[ctype] == [] ):
             continue   # Empty
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.filterlist) > 0 ):
+         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
             continue
 
          # Max distance between cards of this type on a page
@@ -1041,7 +1041,11 @@ class cw_search:
       # Feed our input as a space-delimited set of terms. NOTE that we limit
       # this in the __import_state function in cw_state.
       if not ( self.__process_input(' '.join(unsafe_query_terms))):
-         return
+         if ( self.filter_string != '' ):
+            self.__return_results(CONFIG.getint("search", "max_results"))
+            return
+         else:
+            return
 
       for ctype in self.search_types:
          # Now we have good safe input, but we don't know if our index is 
@@ -1168,11 +1172,14 @@ class cw_search:
       self.parser = QueryParser("content", self.schema)
       self.query = self.parser.parse(unicode(self.query_string))
       self.results = self.searcher.search(self.query, limit=count)
-
-      # Just want the utime filenames themselves? Here they are, in 
-      # reverse-utime order just like we want for insert into the page
       # print self.results[0:]
-      for i in xrange(0, len(self.results)):
+      self.__return_results(len(self.results))
+
+
+   def __return_results(self, result_count):
+      """ Just want the utime filenames themselves? Here they are, in 
+      reverse-utime order just like we want for insert into the page"""
+      for i in xrange(0, result_count):
          ctype = self.results[i]['ctype']
          self.hits[ctype].append(self.results[i]['file'])
 
