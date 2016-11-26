@@ -1181,15 +1181,19 @@ class cw_search:
       # reverse-utime order just like we want for insert into the page
       for i in xrange(0, len(self.results)):
          ctype = self.results[i]['ctype']
-         # TODO: if also a filter string, include it here
-         self.hits[ctype].append(self.results[i]['file'])
+         # Account for filter strings
+         if ( self.filter_string != '' ):
+            if self.results[i]['ctype'] in self.filter_string.split(' '):
+               self.hits[ctype].append(self.results[i]['file'])
+         else:
+            self.hits[ctype].append(self.results[i]['file'])
 
 
    def __filter_cardtypes(self, count=CONFIG.getint("search", "max_results")):
       """Get a list of cards to return, in response to a card-filter
       event. These tend to be of a single card type."""
       self.parser = QueryParser("content", self.schema)
-      self.query = self.parser.parse(unicode("*"))
+      self.query = self.parser.parse("*")
       self.results = self.searcher.search(self.query, limit=count)
       for ctype in self.filter_string.split(' '):
          for i in xrange(0, len(self.results)):      
