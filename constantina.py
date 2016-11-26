@@ -427,6 +427,7 @@ class cw_page:
       if ( self.state.in_state == None ):
          # Create a new page of randomly-assorted images and quotes,
          # along with reverse-time-order News items
+         syslog.syslog("***** Completely new page-load workflow *****")
          self.__get_cards()
          self.__distribute_cards()
          self.cards.insert(0, cw_card('heading', 'basic', grab_body=True))
@@ -445,6 +446,7 @@ class cw_page:
          # This is a permalink page request. For these, use a
          # special footer card (just a header card placed at 
          # the bottom of the page).
+         syslog.syslog("***** Permalink page workflow *****")
          self.__get_permalink_card()
          self.cards.append(cw_card('heading', 'footer', grab_body=True, permalink=True))
 
@@ -453,6 +455,7 @@ class cw_page:
          # parsed by __import_state into self.state.search.
          # TODO: Tokenize all search parameters and remove non-alphanum characters
          # other than plus or hash for hashtags. All input-commas become pluses
+         syslog.syslog("***** Search/Filter card workflow *****")
          self.search_results = cw_search(self.state.search, self.state.card_filter)
          self.query_terms = self.search_results.query_string
          self.filter_terms = self.search_results.filter_string
@@ -467,6 +470,7 @@ class cw_page:
          # Get new cards for an existing page, tracking what the
          # previous page's state variable was in creating the list 
          # of cards to display.
+         syslog.syslog("***** New cards on existing page workflow *****")
          self.__get_prior_cards()
          self.__get_cards()
          self.__distribute_cards()
@@ -847,15 +851,15 @@ class cw_card:
          if ( which_file == 'x' ):
             self.hidden = True
             type_files = opendir(self.ctype, self.hidden)
-            syslog.syslog(str(DIR_INDEX.keys()))
+            # syslog.syslog(str(DIR_INDEX.keys()))
             hidden_cards = xrange(0, len(DIR_INDEX[self.ctype + "/hidden"]))
             self.num = hidden_cards[randint(0, len(hidden_cards)-1)]
             # TODO: totally random selected card (unset seed)
-            syslog.syslog("open hidden file: " + str(self.num) + "/" + str(hidden_cards))
+            # syslog.syslog("open hidden file: " + str(self.num) + "/" + str(hidden_cards))
             which_file = self.num
          else:
-            syslog.syslog("open file: " + str(self.num) + "/" + str(cycle))
-            # pass
+            # syslog.syslog("open file: " + str(self.num) + "/" + str(cycle))
+            pass
 
       else:
          which_file = self.num
