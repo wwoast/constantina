@@ -1425,6 +1425,7 @@ def create_textcard(card):
                 ( card.permalink == False ) and (card.search_result == False ) and
                 ( ptags >= 3 )):
                e.attrib.update({"id": "imgExpand" })
+            img.close()
          elif (( ptags >= 3 ) and ( card.permalink == False ) and
                ( card.search_result == False )):
             # Add a showExtend tag to hide it 
