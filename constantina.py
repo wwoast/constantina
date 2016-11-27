@@ -1201,13 +1201,14 @@ class cw_search:
       """Get a list of cards to return, in response to a card-filter
       event. These tend to be of a single card type."""
       self.parser = QueryParser("content", self.schema)
-      self.query = self.parser.parse("*")
-      self.results = self.searcher.search(self.query, limit=count)
 
-      for i in xrange(0, len(self.results)):
-         ctype = self.results[i]['ctype']
-         # Account for filter strings
-         if ( self.filter_string != '' ):
+      for filter_ctype in self.filter_string.split(' '):
+         self.query = self.parser.parse("ctype:" + filter_ctype)
+         self.results = self.searcher.search(self.query, limit=count)
+
+         for i in xrange(0, len(self.results)):
+            ctype = self.results[i]['ctype']
+            # Account for filter strings
             if self.results[i]['ctype'] in self.filter_string.split(' '):
                self.hits[ctype].append(self.results[i]['file'])
 
