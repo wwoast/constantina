@@ -244,10 +244,14 @@ class cw_state:
                items = [" ".join(searchterms)]
 
             # Populate state object for this generic special state value
-            spcfield = CONFIG.get("special_states", token[0:2])
-            setattr(self, spcfield, [])
-            for i in items:
-               getattr(self, spcfield).append(i)
+            # Account for processing items into the filter list -- if no search
+            # items, then we don't count that as part of the state. 
+            if ( items != '' ):
+               spcfield = CONFIG.get("special_states", token[0:2])
+               syslog.syslog("setting special_state: " + token[0:2] + " : " + spcfield)
+               setattr(self, spcfield, [])
+               for i in items:
+                  getattr(self, spcfield).append(i)
             last_parsed.append(token[0:2])   # Add to the parsed stack
 
 
@@ -1604,9 +1608,10 @@ def application(env, start_response):
 
    # Doing a search or a filter process
    elif (( page.state.search != None ) or 
-         ( page.state.card_filter != None )): 
-      if ( page.state.search == [''] ) and ( page.state.card_filter == [''] ):
+         ( page.state.card_filter != [] )): 
+      if ( page.state.search == [''] ) and ( page.state.card_filter == [] ):
          # No search query given -- just regenerate the page
+         syslog.syslog("***** Reshuffle Page Contents *****")
          page = cw_page()
 
       start_response('200 OK', [('Content-Type','text/html')])
