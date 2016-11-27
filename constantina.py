@@ -457,7 +457,7 @@ class cw_page:
          self.cards.append(cw_card('heading', 'footer', grab_body=True, permalink=True))
 
       elif (( self.state.search != None ) or 
-            ( self.state.card_filter != None )):
+            ( self.state.card_filter != [] )):
          # Return search results based on the subsequent comma-separated list,
          # parsed by __import_state into self.state.search.
          # TODO: Tokenize all search parameters and remove non-alphanum characters
