@@ -1023,7 +1023,7 @@ class cw_search:
       # content in the backend, ctype so that we can manage the distribution
       # of returned search results similar to the normal pages, and the 
       # filename itself as a unique identifier (most filenames are utimes).
-      self.schema = Schema(file=ID(stored=True, unique=True), ctype=ID(stored=True), mtime=ID(stored=True), content=TEXT)
+      self.schema = Schema(file=ID(stored=True, unique=True, sortable=True), ctype=ID(stored=True), mtime=ID(stored=True), content=TEXT)
 
       # If index doesn't exist, create it
       if ( index.exists_in(self.index_dir)):
@@ -1204,7 +1204,9 @@ class cw_search:
 
       for filter_ctype in self.filter_string.split(' '):
          self.query = self.parser.parse("ctype:" + filter_ctype)
-         self.results = self.searcher.search(self.query, limit=count)
+         # TODO: implement a "search order" card parameter
+         # Some card types get non-reverse-sorting by default
+         self.results = self.searcher.search(self.query, sortedby="file", limit=count, reverse=True)
 
          for i in xrange(0, len(self.results)):
             ctype = self.results[i]['ctype']
