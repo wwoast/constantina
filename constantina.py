@@ -1050,8 +1050,10 @@ class cw_search:
       if not ( self.__process_input(' '.join(unsafe_query_terms))):
          if ( self.filter_string != '' ):
             self.__filter_cardtypes()
+            self.searcher.close()
             return
          else:
+            self.searcher.close()
             return
 
       for ctype in self.search_types:
@@ -1070,7 +1072,9 @@ class cw_search:
       # and then we'll later determine which of these results we'll display
       # on the returned search results page.
       self.__search_index()
-      self.__sort_search_results() 
+      self.__sort_search_results()
+
+      self.searcher.close()
 
 
    def __process_input(self, unsafe_input, returning="query"):
