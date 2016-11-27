@@ -1199,9 +1199,13 @@ class cw_search:
       self.parser = QueryParser("content", self.schema)
       self.query = self.parser.parse("*")
       self.results = self.searcher.search(self.query, limit=count)
-      for ctype in self.filter_string.split(' '):
-         for i in xrange(0, len(self.results)):      
-            self.hits[ctype].append(self.results[i]['file'])
+
+      for i in xrange(0, len(self.results)):
+         ctype = self.results[i]['ctype']
+         # Account for filter strings
+         if ( self.filter_string != '' ):
+            if self.results[i]['ctype'] in self.filter_string.split(' '):
+               self.hits[ctype].append(self.results[i]['file'])
 
 
    def __sort_search_results(self):
