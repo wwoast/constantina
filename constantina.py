@@ -354,14 +354,14 @@ class cw_state:
       """If you type a hashtag into the search box, Constantina will do a 
          filter based on the cardtype you want. Aliases for various types
          of cards are configured in constantina.ini"""
-      filterterms = []
+      removeterms = []
       filtertypes = []
 
       for term in searchterms:
          # syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
          if term[0] == '#':
             for ctype, filterlist in CONFIG.items("card_filters"):
-               filternames = filterlist.split(',')
+               filternames = filterlist.replace(" ", "").split(',')
                for filtername in filternames:
                   if term == '#' + filtername:
                      # Toggle this cardtype as one we'll filter on
@@ -370,7 +370,7 @@ class cw_state:
                      # Add to the list of filterterms, and prepare to
                      # remove any filter tags from the search state.
                      filtertypes.append(ctype)
-                     filterterms.append(term)
+                     removeterms.append(term)
 
       # Add the types we're filtering on to the filter state.
       # This gets rid of stupid #-prefixed things in the URI potentially
@@ -379,7 +379,7 @@ class cw_state:
             spcfilter = CONFIG.get("special_states", "xo")
             getattr(self, spcfilter).append(ctype)
 
-      return filterterms
+      return removeterms
 
 
    def __set_random_seed(self):
