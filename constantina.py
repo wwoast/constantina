@@ -66,11 +66,11 @@ class cw_cardtype:
       """Once a fixed seed is set in the state object, run the shuffle method
          to get the shuffled file listing for this ctype created."""
       self.__shuffle_files()
-      syslog.syslog("Shuffled list of " + self.ctype + ": " + str(self.clist))
+      # syslog.syslog("Shuffled list of " + self.ctype + ": " + str(self.clist))
       self.__mark_uneven_distribution()
-      syslog.syslog("Marked list of " + self.ctype + ": " + str(self.clist))
+      # syslog.syslog("Marked list of " + self.ctype + ": " + str(self.clist))
       self.__replace_marked()
-      syslog.syslog("Replaced list of " + self.ctype + ": " + str(self.clist))
+      # syslog.syslog("Replaced list of " + self.ctype + ": " + str(self.clist))
             
 
    def __shuffle_files(self):
@@ -709,7 +709,7 @@ class cw_page:
             c_dist[ctype] = 0
          else:
             c_dist[ctype] = spacing - (lstop - c_lastcard[ctype])
-         # syslog.syslog("------ ctype %s   spacing %d   c_dist %d   c_lastcard %d   lstop %d" % ( ctype, spacing, c_dist[ctype], c_lastcard[ctype], lstop))
+         syslog.syslog("*** initial spacing: ctype:%s  spacing:%d  c_dist:%d  c_lastcard:%d  lstop:%d" % ( ctype, spacing, c_dist[ctype], c_lastcard[ctype], lstop))
          c_redist[ctype] = []
          c_nodist[ctype] = []
 
@@ -736,7 +736,9 @@ class cw_page:
       # Now, for each type of non-news card, figure out the starting point
       # where cards can be inserted, follow the spacing rules, and redist
       # them throughout the cards.
-      for ctype in c_redist.keys():
+      # TODO: lowest card-count ctype inserts happen first, so there is better
+      # spacing for higher-card-count types
+      for ctype in sorted(c_redist, key=lambda ctype: len(c_redist[ctype])):
          if ( c_redist[ctype] == [] ):
             continue   # Empty
          # Are we doing cardtype filtering, and this isn't an included card type?
@@ -770,12 +772,14 @@ class cw_page:
          # to properly follow.
          start_jrange = c_dist[ctype]
          cur_p_dist = len(self.cards) - lstop
-         end_jrange = cur_p_dist - ((card_count - 1) * norm_dist)
-         syslog.syslog("*** dist initial: ctype:%s  cnt:%d  cur_pd:%d  sj:%d  ej:%d" % ( ctype, len(c_redist[ctype]), cur_p_dist, start_jrange, end_jrange))
+         next_cnt = 1
+         cards_ahead = card_count - next_cnt 
+         end_jrange = cur_p_dist - (cards_ahead * norm_dist)
+         syslog.syslog("*** dist initial: ctype:%s  cnt:%d  spacing:%d cur_pd:%d  sj:%d  ej:%d" % ( ctype, len(c_redist[ctype]), norm_dist, cur_p_dist, start_jrange, end_jrange))
 
          # Add back the cards. NOTE all jumpranges must be offsets from lstop,
          # not specific indexes that refer to the insert points in the array
-         for k in xrange(0, len(c_redist[ctype])):
+         for k in xrange(0, card_count):
             # Not many items in the array?
             if ( start_jrange >= end_jrange ):
                jump = start_jrange
@@ -786,13 +790,16 @@ class cw_page:
 
             card = c_redist[ctype][k]
             self.cards.insert(ins_index, card)
-            syslog.syslog("k:%d  ins_index:%d  jump:%d  sj:%d  ej:%d" % ( k, ins_index, jump, start_jrange, end_jrange))
+            syslog.syslog("k:%d  ins_index:%d  jump:%d  cur_pd:%d  sj:%d  ej:%d" % ( k, ins_index, jump, cur_p_dist, start_jrange, end_jrange))
+
             # For next iteration, spacing is at least space distance away from
             # the current insert, and no further than the distance by which
             # future spacing rules are not possible to follow.
             start_jrange = jump + norm_dist
             cur_p_dist = len(self.cards) - lstop
-            end_jrange = cur_p_dist - ((card_count - ( k + 1)) * norm_dist)
+            next_cnt = next_cnt + 1
+            cards_ahead = card_count - next_cnt
+            end_jrange = cur_p_dist - (cards_ahead * norm_dist)
 
 
       # Return seed to previous deterministic value, if it existed
