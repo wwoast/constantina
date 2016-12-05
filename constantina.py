@@ -70,7 +70,7 @@ class cw_cardtype:
       self.__mark_uneven_distribution()
       # syslog.syslog("Marked list of " + self.ctype + ": " + str(self.clist))
       self.__replace_marked()
-      # syslog.syslog("Final list of " + self.ctype + ": " + str(self.clist))
+      syslog.syslog("Final list of " + self.ctype + ": " + str(self.clist))
             
 
    def __shuffle_files(self):
@@ -751,7 +751,7 @@ class cw_page:
          next_cnt = 1
          cards_ahead = card_count - next_cnt 
          end_jrange = cur_p_dist - (cards_ahead * norm_dist)
-         syslog.syslog("*** dist initial: ctype:%s  cnt:%d  spacing:%d cur_pd:%d  sj:%d  ej:%d" % ( ctype, len(c_redist[ctype]), norm_dist, cur_p_dist, start_jrange, end_jrange))
+         # syslog.syslog("*** dist initial: ctype:%s  cnt:%d  spacing:%d cur_pd:%d  sj:%d  ej:%d" % ( ctype, len(c_redist[ctype]), norm_dist, cur_p_dist, start_jrange, end_jrange))
 
          # Add back the cards. NOTE all jumpranges must be offsets from lstop,
          # not specific indexes that refer to the insert points in the array
@@ -766,7 +766,7 @@ class cw_page:
 
             card = c_redist[ctype][k]
             self.cards.insert(ins_index, card)
-            syslog.syslog("k:%d  ins_index:%d  jump:%d  cur_pd:%d  sj:%d  ej:%d" % ( k, ins_index, jump, cur_p_dist, start_jrange, end_jrange))
+            # syslog.syslog("k:%d  ins_index:%d  jump:%d  cur_pd:%d  sj:%d  ej:%d" % ( k, ins_index, jump, cur_p_dist, start_jrange, end_jrange))
 
             # For next iteration, spacing is at least space distance away from
             # the current insert, and no further than the distance by which
