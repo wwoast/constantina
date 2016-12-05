@@ -762,8 +762,7 @@ class cw_page:
             norm_dist = max_dist - 1
 
          # Let jumps be non-deterministic
-         if ( self.state.seed ):
-            seed()
+         seed()
 
          # Start with an initial shorter distance for shuffling.
          # The furthest initial insert spot isn't the "first space", but
@@ -771,7 +770,8 @@ class cw_page:
          # to properly follow.
          start_jrange = c_dist[ctype]
          cur_p_dist = len(self.cards) - lstop
-         end_jrange = cur_p_dist - (card_count * norm_dist)
+         end_jrange = cur_p_dist - ((card_count - 1) * norm_dist)
+         syslog.syslog("*** dist initial: ctype:%s  cnt:%d  cur_pd:%d  sj:%d  ej:%d" % ( ctype, len(c_redist[ctype]), cur_p_dist, start_jrange, end_jrange))
 
          # Add back the cards. NOTE all jumpranges must be offsets from lstop,
          # not specific indexes that refer to the insert points in the array
@@ -779,7 +779,6 @@ class cw_page:
             # Not many items in the array?
             if ( start_jrange >= end_jrange ):
                jump = start_jrange
-
             else:
                jump = randint(start_jrange, end_jrange)
 
@@ -787,16 +786,16 @@ class cw_page:
 
             card = c_redist[ctype][k]
             self.cards.insert(ins_index, card)
-            syslog.syslog("ctype %s   ct-cnt %d   len %d   ins_index %d   jump %d" % ( ctype, len(c_redist[ctype]), len(self.cards), ins_index, jump))
+            syslog.syslog("k:%d  ins_index:%d  jump:%d  sj:%d  ej:%d" % ( k, ins_index, jump, start_jrange, end_jrange))
             # For next iteration, spacing is at least space distance away from
             # the current insert, and no further than the distance by which
             # future spacing rules are not possible to follow.
             start_jrange = jump + norm_dist
             cur_p_dist = len(self.cards) - lstop
-            end_jrange = cur_p_dist - ((card_count - k) * norm_dist)
+            end_jrange = cur_p_dist - ((card_count - ( k + 1)) * norm_dist)
 
 
-      # Return seed to previous deterministic value
+      # Return seed to previous deterministic value, if it existed
       if ( self.state.seed ):
          seed(self.state.seed)
 
