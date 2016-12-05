@@ -70,7 +70,7 @@ class cw_cardtype:
       self.__mark_uneven_distribution()
       # syslog.syslog("Marked list of " + self.ctype + ": " + str(self.clist))
       self.__replace_marked()
-      # syslog.syslog("Replaced list of " + self.ctype + ": " + str(self.clist))
+      syslog.syslog("Final list of " + self.ctype + ": " + str(self.clist))
             
 
    def __shuffle_files(self):
@@ -652,34 +652,6 @@ class cw_page:
       self.cur_len = len(self.cards)
 
 
-   def __last_item_per_type(self):
-      """Given the largest spacing value, determine distance between
-         our starting card on this page and a card of equal type that
-         appeared on the previous page."""
-      # TODO: rewrite based on state.(cardtype) object
-      # If this is the first page, there's no distance to
-      # items on the last page. 
-      last_dist = {}
-      if ( self.state.in_state == None ):
-         for ctype in CONFIG.options("card_spacing"):
-            last_dist[ctype] = 0
-         return last_dist
-
-      # Otherwise go back in our cardlist and determine
-      # the distances between current cards and the last
-      # card of each type.
-      lb = self.cur_len - max([int(space) for (ctype,space) in CONFIG.items("card_spacing")])
-      for card in self.cards[lb::]:
-         last_dist[card.ctype] = self.cur_len - lb
-
-      # If no cards of a particular type, set dist to zero
-      for ctype in CONFIG.options("card_spacing"):
-         if ctype not in last_dist:
-            last_dist[ctype] = 0
-
-      return last_dist
-
-
    def __distribute_cards(self):
       """
       Distribute cards evenly in the array in order to 
@@ -689,8 +661,6 @@ class cw_page:
       total = len(self.cards)
       lstop = self.cur_len 
       p_dist = total - lstop
-      # On this page and the last, the most recent card seen
-      c_lastcard = self.__last_item_per_type()   # Index nums
       # Distance from last ctype'd card on the previous page
       c_dist = {}
       # "hold-aside" hash to help shuffle the main run of cards
@@ -703,13 +673,17 @@ class cw_page:
          # the end of the previous page. For all other cards, follow the
          # strict card spacing rules from the config file, plus jitter
          spacing = int(spacing)
-         if ( lstop - c_lastcard[ctype] >= spacing ):
+         distance = getattr(self.state, ctype).distance
+         if ( distance == None ):
+            distance = 0
+
+         if ( distance >= spacing ):   # Prev page ctype card not close
             c_dist[ctype] = 0
-         elif (( lstop == 0 ) and ( c_lastcard[ctype] == 0 )):
+         elif (( lstop == 0 ) and ( distance == 0 )):   # No pages yet
             c_dist[ctype] = 0
-         else:
-            c_dist[ctype] = spacing - (lstop - c_lastcard[ctype])
-         syslog.syslog("*** initial spacing: ctype:%s  spacing:%d  c_dist:%d  c_lastcard:%d  lstop:%d" % ( ctype, spacing, c_dist[ctype], c_lastcard[ctype], lstop))
+         else:   # Implement spacing from the beginning of the new page
+            c_dist[ctype] = spacing - distance
+         syslog.syslog("*** initial spacing: ctype:%s  spacing:%d  c_dist:%d  distance:%d  lstop:%d" % ( ctype, spacing, c_dist[ctype], distance, lstop))
          c_redist[ctype] = []
          c_nodist[ctype] = []
 
