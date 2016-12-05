@@ -713,8 +713,7 @@ class cw_page:
          c_redist[ctype] = []
          c_nodist[ctype] = []
 
-      # Make arrays of each card type, so we can shuffle,
-      # jitter, and reinsert them later.
+      # Make arrays of each card type, so we can random-jump their inserts later.
       for i in xrange(lstop, total):
          ctype = self.cards[i].ctype
          # News cards don't get redistributed, and cards that we 
@@ -746,7 +745,9 @@ class cw_page:
 
          # Max distance between cards of this type on a page
          norm_dist = getattr(self.state, ctype).spacing
-         card_count = getattr(self.state, ctype).count
+         # Number of input cards we're working with 
+         # (should never be more than getattr(self.state, ctype).count
+         card_count = len(c_redist[ctype])
          # For spacing purposes, page starts at the earliest page we can
          # put a card on this page, w/o being too close to a same-type
          # card on the previous page. This shortens the effective page dist
@@ -760,43 +761,39 @@ class cw_page:
             max_dist = norm_dist
             norm_dist = max_dist - 1
 
-         # Take the cards for this type and re-add them to the cards list
-         # jitter = randint(c_dist[ctype], norm_dist)
-         seen_type = {}
-
-         # Start with an initial shorter distance for shuffling
-         start_jrange = c_dist[ctype]
-         end_jrange = norm_dist 
-
-         # Let jitter be non-deterministic
-         # TODO: needs to be reset potentially later?
-         # If no seed in the state, make a random one
+         # Let jumps be non-deterministic
          if ( self.state.seed ):
             seed()
 
-         # Add back the cards
+         # Start with an initial shorter distance for shuffling.
+         # The furthest initial insert spot isn't the "first space", but
+         # the maximum insert distance before spacing rules are not possible
+         # to properly follow.
+         start_jrange = c_dist[ctype]
+         end_jrange = p_dist - (card_count * norm_dist)
+
+         # Add back the cards. NOTE all jumpranges must be offsets from lstop,
+         # not specific indexes that refer to the insert points in the array
          for k in xrange(0, len(c_redist[ctype])):
-            if ( ctype not in seen_type ):   # If first page AND not seen before, add them early
-               if ( start_jrange >= end_jrange ):   # Not many items?
-                  jitter = 1
-               else:
-                  jitter = randint(start_jrange, end_jrange)
-               ins_index = lstop + c_dist[ctype] + jitter
-               seen_type[ctype] = True
-            else:   # Now we've seen cards, start spacing
-               start_jrange = norm_dist
-               end_jrange = max_dist
-               if ( start_jrange >= end_jrange ):   # Not many items?
-                  jitter = 1
-               else:
-                  jitter = randint(start_jrange, end_jrange)
-               ins_index = ins_index + jitter
+            # Not many items in the array?
+            if ( start_jrange >= end_jrange ):
+               jump = start_jrange
+
+            else:
+               jump = randint(start_jrange, end_jrange)
+
+            ins_index = lstop + jump  
+            # For next iteration, spacing is at least space distance away from
+            # the current insert, and no further than the distance by which
+            # future spacing rules are not possible to follow.
+            start_jrange = jump + norm_dist
+            end_jrange = p_dist - ((card_count - k) * norm_dist)
 
             card = c_redist[ctype][k]
             self.cards.insert(ins_index, card)
-            syslog.syslog("ctype %s   ct-cnt %d   len %d   ins_index %d   jitter %d" % ( ctype, len(c_redist[ctype]), len(self.cards), ins_index, jitter))
+            syslog.syslog("ctype %s   ct-cnt %d   len %d   ins_index %d   jump %d" % ( ctype, len(c_redist[ctype]), len(self.cards), ins_index, jump))
 
-      # Return seed to previous value
+      # Return seed to previous deterministic value
       if ( self.state.seed ):
          seed(self.state.seed)
 
