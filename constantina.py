@@ -70,7 +70,7 @@ class cw_cardtype:
       self.__mark_uneven_distribution()
       # syslog.syslog("Marked list of " + self.ctype + ": " + str(self.clist))
       self.__replace_marked()
-      syslog.syslog("Final list of " + self.ctype + ": " + str(self.clist))
+      # syslog.syslog("Final list of " + self.ctype + ": " + str(self.clist))
             
 
    def __shuffle_files(self):
@@ -595,6 +595,8 @@ class cw_page:
          permalink page of that type."""
       for spctype, spcfield in CONFIG.items("special_states"):
          if ( getattr(self.state, spcfield) != None ):
+            if ( spctype == "xo" ):   # TODO: make xo objects consistent with other absent states
+               continue
             cnum = str(getattr(self.state, spcfield)[0])
             # Insert a card after the first heading
             ctype = spcfield.split("_")[0]
@@ -683,7 +685,7 @@ class cw_page:
             c_dist[ctype] = 0
          else:   # Implement spacing from the beginning of the new page
             c_dist[ctype] = spacing - distance
-         syslog.syslog("*** initial spacing: ctype:%s  spacing:%d  c_dist:%d  distance:%d  lstop:%d" % ( ctype, spacing, c_dist[ctype], distance, lstop))
+         # syslog.syslog("*** initial spacing: ctype:%s  spacing:%d  c_dist:%d  distance:%d  lstop:%d" % ( ctype, spacing, c_dist[ctype], distance, lstop))
          c_redist[ctype] = []
          c_nodist[ctype] = []
 
