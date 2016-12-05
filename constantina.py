@@ -770,7 +770,8 @@ class cw_page:
          # the maximum insert distance before spacing rules are not possible
          # to properly follow.
          start_jrange = c_dist[ctype]
-         end_jrange = p_dist - (card_count * norm_dist)
+         cur_p_dist = len(self.cards) - lstop
+         end_jrange = cur_p_dist - (card_count * norm_dist)
 
          # Add back the cards. NOTE all jumpranges must be offsets from lstop,
          # not specific indexes that refer to the insert points in the array
@@ -783,15 +784,17 @@ class cw_page:
                jump = randint(start_jrange, end_jrange)
 
             ins_index = lstop + jump  
-            # For next iteration, spacing is at least space distance away from
-            # the current insert, and no further than the distance by which
-            # future spacing rules are not possible to follow.
-            start_jrange = jump + norm_dist
-            end_jrange = p_dist - ((card_count - k) * norm_dist)
 
             card = c_redist[ctype][k]
             self.cards.insert(ins_index, card)
             syslog.syslog("ctype %s   ct-cnt %d   len %d   ins_index %d   jump %d" % ( ctype, len(c_redist[ctype]), len(self.cards), ins_index, jump))
+            # For next iteration, spacing is at least space distance away from
+            # the current insert, and no further than the distance by which
+            # future spacing rules are not possible to follow.
+            start_jrange = jump + norm_dist
+            cur_p_dist = len(self.cards) - lstop
+            end_jrange = cur_p_dist - ((card_count - k) * norm_dist)
+
 
       # Return seed to previous deterministic value
       if ( self.state.seed ):
