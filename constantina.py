@@ -345,7 +345,7 @@ class cw_state:
          # Track the distance to the last-printed card in each state variable
          stype = ctype[0]
          cdist = getattr(self, ctype).distance
-         state_tokens.append(stype + cdist)
+         state_tokens.append(stype + str(cdist))
 
       # Track page number for the next state variable by adding one to the current
       export_string = ":".join(state_tokens) + ":" + "n" + str(news_last) + ":" + str(seed)
@@ -486,9 +486,14 @@ class cw_page:
          self.filter_terms = self.search_results.filter_string
          self.__get_search_result_cards()
          self.__distribute_cards()
-        
-         # TODO: Implement search result paging
-         if ( len(self.cards) > 0 ):
+       
+         # If the results have filled up the page, try and load more results 
+         if ( self.state.max_items * ( self.state.page + 1 ) <= len(self.cards)):
+            # Add a hidden card to trigger loading more data when reached
+            self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
+            # Finally, add the "next page" tombstone to load more content
+            self.cards.append(cw_card('heading', 'tombstone', grab_body=True))
+         else:
             self.cards.append(cw_card('heading', 'bottom', grab_body=True))
 
       else:
@@ -595,7 +600,7 @@ class cw_page:
             # If the hits[ctype][j] is a file name, figure out which Nth file this is
             if ( grab_file.isdigit() == False ):
                for k in xrange(0, len(DIR_INDEX[ctype])):
-                  syslog.syslog("compare:" + grab_file + "==" + DIR_INDEX[ctype][k])
+                  # syslog.syslog("compare:" + grab_file + "==" + DIR_INDEX[ctype][k])
                   if DIR_INDEX[ctype][k] == grab_file:
                      grab_file = k
                      break
