@@ -362,7 +362,7 @@ class cw_state:
       # If we had search results and used a page number, write an incremented page
       # number into the next search state for loading
       if ( self.page != 0 ) and (( query_terms != '' ) or ( filter_terms != '' )):
-         export_page = self.page + 1
+         export_page = int(self.page) + 1
          export_string = export_string + ":" + "xp" + str(export_page)
 
       return export_string
