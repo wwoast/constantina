@@ -186,7 +186,7 @@ class cw_state:
          getattr(self, ctype).shuffle()
 
       # If page was read in as a special state variable, use that (for search results)
-      if ( self.page != 0 ) and ( self.search != None ):
+      if ( self.page != None ) and (( self.search != None ) or ( self.card_filter != None )):
          self.page = int(self.page[0])
 
       # Otherwise, determine our page number from the news article index reported
@@ -361,8 +361,8 @@ class cw_state:
 
       # If we had search results and used a page number, write an incremented page
       # number into the next search state for loading
-      if ( self.state.page != 0 ) and (( query_terms != '' ) or ( filter_terms != '' )):
-         export_page = self.state.page + 1
+      if ( self.page != 0 ) and (( query_terms != '' ) or ( filter_terms != '' )):
+         export_page = self.page + 1
          export_string = export_string + ":" + "xp" + str(export_page)
 
       return export_string
@@ -1014,8 +1014,9 @@ class cw_search:
       self.results = ''
 
       # Max search results per page is equal to the number of cards that would
-      # be shown on a normal news page
-      self.page = page
+      # be shown on a normal news page. And while whoosh expects pages starting
+      # at one, the page state counting will be from zero (possible TODO)
+      self.page = page + 1
       self.resultcount = resultcount
 
       # File paths for loading things
@@ -1182,27 +1183,27 @@ class cw_search:
             self.__add_file_to_index(fnmtime, filename, ctype)
 
 
-   def __search_index(self, count=self.resultcount):
+   def __search_index(self):
       """Given a list of search paramters, look for any of them in the 
       indexes. For now don't return more than 200 hits"""
       self.parser = QueryParser("content", self.schema)
       self.query = self.parser.parse(unicode(self.query_string))
-      self.results = self.searcher.search_page(self.query, self.page, pagelen=count)
+      self.results = self.searcher.search_page(self.query, self.page, pagelen=self.resultcount)
       # print self.results[0:]
 
       # Just want the utime filenames themselves? Here they are, in 
       # reverse-utime order just like we want for insert into the page
-      for i in xrange(0, len(self.results)):
-         ctype = self.results[i]['ctype']
+      for result in self.results:
+         ctype = result['ctype']
          # Account for filter strings
          if ( self.filter_string != '' ):
-            if self.results[i]['ctype'] in self.filter_string.split(' '):
-               self.hits[ctype].append(self.results[i]['file'])
+            if result['ctype'] in self.filter_string.split(' '):
+               self.hits[ctype].append(result['file'])
          else:
-            self.hits[ctype].append(self.results[i]['file'])
+            self.hits[ctype].append(result['file'])
 
 
-   def __filter_cardtypes(self, count=self.resultcount):
+   def __filter_cardtypes(self):
       """Get a list of cards to return, in response to a card-filter
       event. These tend to be of a single card type."""
       self.parser = QueryParser("content", self.schema)
@@ -1211,7 +1212,7 @@ class cw_search:
          self.query = self.parser.parse("ctype:" + filter_ctype)
          # TODO: implement a "search order" card parameter
          # Some card types get non-reverse-sorting by default
-         self.results = self.searcher.search_page(self.query, self.page, sortedby="file", pagelen=count, reverse=True)
+         self.results = self.searcher.search_page(self.query, self.page, sortedby="file", pagelen=self.resultcount, reverse=True)
 
          for i in xrange(0, len(self.results)):
             ctype = self.results[i]['ctype']
