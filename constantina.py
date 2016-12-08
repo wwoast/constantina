@@ -1214,11 +1214,11 @@ class cw_search:
          # Some card types get non-reverse-sorting by default
          self.results = self.searcher.search_page(self.query, self.page, sortedby="file", pagelen=self.resultcount, reverse=True)
 
-         for i in xrange(0, len(self.results)):
-            ctype = self.results[i]['ctype']
+         for result in self.results:
+            ctype = result['ctype']
             # Account for filter strings
-            if self.results[i]['ctype'] in self.filter_string.split(' '):
-               self.hits[ctype].append(self.results[i]['file'])
+            if result['ctype'] in self.filter_string.split(' '):
+               self.hits[ctype].append(result['file'])
 
 
    def __sort_search_results(self):
