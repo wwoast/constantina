@@ -148,7 +148,11 @@ class cw_state:
    def __init__(self, state_string=None):
       self.in_state = state_string   # Track the original state string
       self.seed = None		     # The Random Seed for the page
-      self.page = 0
+
+      self.max_items = 0             # Max items per page, based on
+                                     # counts from all card types
+      for ctype, cpp in CONFIG.items('card_counts'):
+         self.max_items = self.max_items + int(cpp)
 
       # For the card types in the card_counts config, create variables, i.e.
       #   state.news.distance, state.topics.spacing
@@ -181,10 +185,17 @@ class cw_state:
       for ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(","):
          getattr(self, ctype).shuffle()
 
-      # Determine our page number from the news article index reported
+      # If page was read in as a special state variable, use that (for search results)
+      if ( self.page != 0 ) and ( self.search != None ):
+         self.page = int(self.page[0])
+
+      # Otherwise, determine our page number from the news article index reported
       # TODO: for news articles, it's not a distance value! Its a news[] index
-      if ( self.news.distance != None ):
+      elif ( self.news.distance != None ):
          self.page = ( int(self.news.distance) + 1 ) / CONFIG.getint('card_counts', 'news')
+
+      else:
+         self.page = 0
 
       # syslog.syslog("Random seed: " + str(self.seed))
 
@@ -347,6 +358,13 @@ class cw_state:
          export_string = export_string + ":" + "xo" + filter_terms
       if ( query_terms != '' ):
          export_string = export_string + ":" + "xs" + query_terms
+
+      # If we had search results and used a page number, write an incremented page
+      # number into the next search state for loading
+      if ( self.state.page != 0 ) and (( query_terms != '' ) or ( filter_terms != '' )):
+         export_page = self.state.page + 1
+         export_string = export_string + ":" + "xp" + str(export_page)
+
       return export_string
 
 
@@ -463,7 +481,7 @@ class cw_page:
          # TODO: Tokenize all search parameters and remove non-alphanum characters
          # other than plus or hash for hashtags. All input-commas become pluses
          syslog.syslog("***** Search/Filter card workflow *****")
-         self.search_results = cw_search(self.state.search, self.state.card_filter)
+         self.search_results = cw_search(self.state.page, self.state.max_items, self.state.search, self.state.card_filter)
          self.query_terms = self.search_results.query_string
          self.filter_terms = self.search_results.filter_string
          self.__get_search_result_cards()
@@ -971,7 +989,7 @@ class cw_search:
    Finally, there is an "index-tree" list where if specific search terms
    are queried, all related terms are pulled in as well. If the user requests
    the related phrases can be turned off."""
-   def __init__(self, unsafe_query_terms, unsafe_filter_terms):
+   def __init__(self, page, resultcount, unsafe_query_terms, unsafe_filter_terms):
       # List of symbols to filter out in the unsafe input
       self.ignore_symbols = []
       # Regex of words that won't be indexed
@@ -994,6 +1012,11 @@ class cw_search:
       self.parser =''
       self.searcher = ''
       self.results = ''
+
+      # Max search results per page is equal to the number of cards that would
+      # be shown on a normal news page
+      self.page = page
+      self.resultcount = resultcount
 
       # File paths for loading things
       self.index_dir = CONFIG.get('search', 'index_dir')
@@ -1159,12 +1182,12 @@ class cw_search:
             self.__add_file_to_index(fnmtime, filename, ctype)
 
 
-   def __search_index(self, count=CONFIG.getint("search", "max_results")):
+   def __search_index(self, count=self.resultcount):
       """Given a list of search paramters, look for any of them in the 
       indexes. For now don't return more than 200 hits"""
       self.parser = QueryParser("content", self.schema)
       self.query = self.parser.parse(unicode(self.query_string))
-      self.results = self.searcher.search(self.query, limit=count)
+      self.results = self.searcher.search_page(self.query, self.page, pagelen=count)
       # print self.results[0:]
 
       # Just want the utime filenames themselves? Here they are, in 
@@ -1179,7 +1202,7 @@ class cw_search:
             self.hits[ctype].append(self.results[i]['file'])
 
 
-   def __filter_cardtypes(self, count=CONFIG.getint("search", "max_results")):
+   def __filter_cardtypes(self, count=self.resultcount):
       """Get a list of cards to return, in response to a card-filter
       event. These tend to be of a single card type."""
       self.parser = QueryParser("content", self.schema)
@@ -1188,7 +1211,7 @@ class cw_search:
          self.query = self.parser.parse("ctype:" + filter_ctype)
          # TODO: implement a "search order" card parameter
          # Some card types get non-reverse-sorting by default
-         self.results = self.searcher.search(self.query, sortedby="file", limit=count, reverse=True)
+         self.results = self.searcher.search_page(self.query, self.page, sortedby="file", pagelen=count, reverse=True)
 
          for i in xrange(0, len(self.results)):
             ctype = self.results[i]['ctype']
