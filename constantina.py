@@ -1193,7 +1193,7 @@ class cw_search:
       indexes. For now don't return more than 200 hits"""
       self.parser = QueryParser("content", self.schema)
       self.query = self.parser.parse(unicode(self.query_string))
-      self.results = self.searcher.search_page(self.query, self.page, pagelen=self.resultcount)
+      self.results = self.searcher.search_page(self.query, self.page, sortedby="file", reverse=True, pagelen=self.resultcount)
       # print self.results[0:]
 
       # Just want the utime filenames themselves? Here they are, in 
@@ -1217,7 +1217,7 @@ class cw_search:
          self.query = self.parser.parse("ctype:" + filter_ctype)
          # TODO: implement a "search order" card parameter
          # Some card types get non-reverse-sorting by default
-         self.results = self.searcher.search_page(self.query, self.page, sortedby="file", pagelen=self.resultcount, reverse=True)
+         self.results = self.searcher.search_page(self.query, self.page, sortedby="file", reverse=True, pagelen=self.resultcount)
 
          for result in self.results:
             ctype = result['ctype']
