@@ -361,7 +361,7 @@ class cw_state:
 
       # If we had search results and used a page number, write an incremented page
       # number into the next search state for loading
-      if ( self.page != 0 ) and (( query_terms != '' ) or ( filter_terms != '' )):
+      if (( query_terms != '' ) or ( filter_terms != '' )):
          export_page = int(self.page) + 1
          export_string = export_string + ":" + "xp" + str(export_page)
 
@@ -1054,6 +1054,16 @@ class cw_search:
       # Process the filter strings first, in case that's all we have
       if ( unsafe_filter_terms != None ):
          self.__process_input(' '.join(unsafe_filter_terms), returning="filter")
+
+      # Double check if the query terms exist or not
+      if ( unsafe_query_terms == None ):
+         if ( self.filter_string != '' ):
+            self.__filter_cardtypes()
+            self.searcher.close()
+            return
+         else:
+            self.searcher.close()
+            return
 
       # If the query string is null after processing, don't do anything else.
       # Feed our input as a space-delimited set of terms. NOTE that we limit
