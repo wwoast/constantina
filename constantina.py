@@ -625,7 +625,8 @@ class cw_page:
          permalink page of that type."""
       for spctype, spcfield in CONFIG.items("special_states"):
          if ( getattr(self.state, spcfield) != None ):
-            if ( spctype == "xo" ):   # TODO: make xo objects consistent with other absent states
+            if ( spctype == "xo" ) or ( spctype == "xp" ):   
+               # TODO: make xo objects consistent with other absent states
                continue
             cnum = str(getattr(self.state, spcfield)[0])
             # Insert a card after the first heading
