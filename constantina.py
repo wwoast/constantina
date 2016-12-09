@@ -1083,7 +1083,6 @@ class cw_search:
       # and then we'll later determine which of these results we'll display
       # on the returned search results page.
       self.__search_index()
-      self.__sort_search_results()
 
       self.searcher.close()
 
@@ -1224,14 +1223,6 @@ class cw_search:
             # Account for filter strings
             if result['ctype'] in self.filter_string.split(' '):
                self.hits[ctype].append(result['file'])
-
-
-   def __sort_search_results(self):
-      """Sort the search results in reverse-time order. For the randomly-
-      shuffled elements, reverse-lexicographic sorting shouldn't matter"""
-      for ctype in self.search_types:
-         self.hits[ctype].sort()
-         self.hits[ctype].reverse()
 
 
 
