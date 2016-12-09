@@ -265,6 +265,13 @@ class cw_state:
                   getattr(self, spcfield).append(i)
             last_parsed.append(token[0:2])   # Add to the parsed stack
 
+            # For paged searches, add xo state to filter cardtypes
+            if token[0:2] == 'xo':
+               spcfield = CONFIG.get("special_states", token[0:2])
+               # Add-filter-cardtypes expects strings that start with #
+               hashtag_process = map(lambda x: "#" + x, getattr(self, spcfield)) 
+               self.__add_filter_cardtypes(hashtag_process)
+
 
          # If the token can be interpreted as a float when putting 0. in front,
          # this will become our random seed for shuffling
