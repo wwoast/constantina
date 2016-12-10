@@ -362,7 +362,10 @@ class cw_state:
          state_tokens.append(stype + str(cdist))
 
       # Track page number for the next state variable by adding one to the current
-      export_string = ":".join(state_tokens) + ":" + "n" + str(news_last) + ":" + str(seed)
+      if ( state_tokens != [] ):
+         export_string = ":".join(state_tokens) + ":" + "n" + str(news_last) + ":" + str(seed)
+      else:
+         export_string = "n" + str(news_last) + ":" + str(seed)
 
       # The up-to-10 search terms come after the primary state variable,
       # letting us know that the original query was a search attempt, and that
@@ -464,7 +467,7 @@ class cw_page:
       self.search_results = ''
       self.query_terms = ''    # Use this locally, in case we happen not to create a search object
       self.filter_terms = ''   # For filtering based on cardtypes 
-      self.filtered = ''       # Cards excluded from search results by filtering
+      self.filtered = 0        # Cards excluded from search results by filtering
 
       news_items = CONFIG.getint("card_counts", "news")
 
@@ -504,12 +507,13 @@ class cw_page:
          self.search_results = cw_search(self.state.page, self.state.max_items, self.state.search, self.state.card_filter, self.state.filtered)
          self.query_terms = self.search_results.query_string
          self.filter_terms = self.search_results.filter_string
+         self.filtered = self.search_results.filtered
          self.__get_search_result_cards()
          self.__distribute_cards()
        
          # If the results have filled up the page, try and load more results
-         syslog.syslog("page:%d  maxitems:%d  max-filter:%d  cardlen:%d" % (self.state.page, self.state.max_items, self.state.max_items - self.search_results.filtered, len(self.cards))) 
-         if (( self.state.max_items - self.search_results.filtered ) * ( self.state.page + 1 ) <= len(self.cards)):
+         syslog.syslog("page:%d  maxitems:%d  max-filter:%d  cardlen:%d" % (self.state.page, self.state.max_items, self.state.max_items - self.filtered, len(self.cards))) 
+         if (( self.state.max_items - self.filtered ) * ( self.state.page + 1 ) <= len(self.cards)):
             # Add a hidden card to trigger loading more data when reached
             self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
             # Finally, add the "next page" tombstone to load more content
@@ -537,7 +541,7 @@ class cw_page:
 
       # Once we've constructed the new card list, update the page
       # state for insertion, for the "next_page" link.
-      self.out_state = self.state.export_state(self.cards, self.query_terms, self.filter_terms, self.search_results.filtered)
+      self.out_state = self.state.export_state(self.cards, self.query_terms, self.filter_terms, self.filtered)
       syslog.syslog("Initial state: " + str(self.state.in_state))
       syslog.syslog("To-load state: " + str(self.out_state))
       
