@@ -197,6 +197,12 @@ class cw_state:
       else:
          self.page = 0
 
+      # Filtered card count, tracked when we have a query type and a filter count
+      if ( self.filtered != None ) and (( self.search != None ) and ( self.card_filter != None )):
+         self.filtered = int(self.filtered[0])
+      else:
+         self.filtered = 0
+
       # syslog.syslog("Random seed: " + str(self.seed))
 
 
@@ -284,7 +290,7 @@ class cw_state:
 
    # TODO: move update_state portions to their own function?
    # TODO: most of the update-state stuff is calculating distance
-   def export_state(self, cards, query_terms, filter_terms):
+   def export_state(self, cards, query_terms, filter_terms, filtered_count):
       """Once all cards are read, calculate a new state variable to
          embed in the more-contents page link."""
       all_ctypes = CONFIG.options("card_counts")
@@ -372,6 +378,11 @@ class cw_state:
          export_page = int(self.page) + 1
          export_string = export_string + ":" + "xp" + str(export_page)
 
+      # If any cards were excluded by filtering, and a search is in progress,
+      # track the number of filtered cards in the state.
+      if (( query_terms != '' ) and ( filter_terms != '' )):
+         export_string = export_string + ":" + "xx" + str(filtered_count)
+
       return export_string
 
 
@@ -452,6 +463,7 @@ class cw_page:
       self.search_results = ''
       self.query_terms = ''    # Use this locally, in case we happen not to create a search object
       self.filter_terms = ''   # For filtering based on cardtypes 
+      self.filtered = ''       # Cards excluded from search results by filtering
 
       news_items = CONFIG.getint("card_counts", "news")
 
@@ -488,13 +500,14 @@ class cw_page:
          # TODO: Tokenize all search parameters and remove non-alphanum characters
          # other than plus or hash for hashtags. All input-commas become pluses
          syslog.syslog("***** Search/Filter card workflow *****")
-         self.search_results = cw_search(self.state.page, self.state.max_items, self.state.search, self.state.card_filter)
+         self.search_results = cw_search(self.state.page, self.state.max_items, self.state.search, self.state.card_filter, self.state.filtered)
          self.query_terms = self.search_results.query_string
          self.filter_terms = self.search_results.filter_string
          self.__get_search_result_cards()
          self.__distribute_cards()
        
-         # If the results have filled up the page, try and load more results 
+         # If the results have filled up the page, try and load more results
+         syslog.syslog("page:%d  maxitems:%d  cardlen:%d" % (self.state.page, self.state.max_items, len(self.cards))) 
          if ( self.state.max_items * ( self.state.page + 1 ) <= len(self.cards)):
             # Add a hidden card to trigger loading more data when reached
             self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
@@ -523,7 +536,7 @@ class cw_page:
 
       # Once we've constructed the new card list, update the page
       # state for insertion, for the "next_page" link.
-      self.out_state = self.state.export_state(self.cards, self.query_terms, self.filter_terms)
+      self.out_state = self.state.export_state(self.cards, self.query_terms, self.filter_terms, self.filtered)
       syslog.syslog("Initial state: " + str(self.state.in_state))
       syslog.syslog("To-load state: " + str(self.out_state))
       
@@ -1002,7 +1015,7 @@ class cw_search:
    Finally, there is an "index-tree" list where if specific search terms
    are queried, all related terms are pulled in as well. If the user requests
    the related phrases can be turned off."""
-   def __init__(self, page, resultcount, unsafe_query_terms, unsafe_filter_terms):
+   def __init__(self, page, resultcount, unsafe_query_terms, unsafe_filter_terms, previous_filtered):
       # List of symbols to filter out in the unsafe input
       self.ignore_symbols = []
       # Regex of words that won't be indexed
@@ -1031,6 +1044,7 @@ class cw_search:
       # at one, the page state counting will be from zero (possible TODO)
       self.page = page + 1
       self.resultcount = resultcount
+      self.filtered = previous_filtered
 
       # File paths for loading things
       self.index_dir = CONFIG.get('search', 'index_dir')
@@ -1221,6 +1235,8 @@ class cw_search:
          if ( self.filter_string != '' ):
             if result['ctype'] in self.filter_string.split(' '):
                self.hits[ctype].append(result['file'])
+            else:
+               self.filtered = self.filtered + 1
          else:
             self.hits[ctype].append(result['file'])
 
@@ -1241,6 +1257,8 @@ class cw_search:
             # Account for filter strings
             if result['ctype'] in self.filter_string.split(' '):
                self.hits[ctype].append(result['file'])
+            else:
+               self.filtered = self.filtered + 1
 
 
 
