@@ -229,6 +229,7 @@ class cw_state:
       for token in state_string.split(':'):
          # Non-special tokens just track the distance (in cards looking back)
          # to last card of that type on the previous page
+         syslog.syslog("%s" % token )
          if token[0] in valid_tokens and token[0] not in last_parsed:
             ctype = valid_tokens[token[0]]  
             getattr(self, ctype).distance = int(token[1:])
@@ -507,8 +508,8 @@ class cw_page:
          self.__distribute_cards()
        
          # If the results have filled up the page, try and load more results
-         syslog.syslog("page:%d  maxitems:%d  cardlen:%d" % (self.state.page, self.state.max_items, len(self.cards))) 
-         if ( self.state.max_items * ( self.state.page + 1 ) <= len(self.cards)):
+         syslog.syslog("page:%d  maxitems:%d  max-filter:%d  cardlen:%d" % (self.state.page, self.state.max_items, self.state.max_items - self.search_results.filtered, len(self.cards))) 
+         if (( self.state.max_items - self.search_results.filtered ) * ( self.state.page + 1 ) <= len(self.cards)):
             # Add a hidden card to trigger loading more data when reached
             self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
             # Finally, add the "next page" tombstone to load more content
@@ -536,7 +537,7 @@ class cw_page:
 
       # Once we've constructed the new card list, update the page
       # state for insertion, for the "next_page" link.
-      self.out_state = self.state.export_state(self.cards, self.query_terms, self.filter_terms, self.filtered)
+      self.out_state = self.state.export_state(self.cards, self.query_terms, self.filter_terms, self.search_results.filtered)
       syslog.syslog("Initial state: " + str(self.state.in_state))
       syslog.syslog("To-load state: " + str(self.out_state))
       
@@ -638,7 +639,7 @@ class cw_page:
          permalink page of that type."""
       for spctype, spcfield in CONFIG.items("special_states"):
          if ( getattr(self.state, spcfield) != None ):
-            if ( spctype == "xo" ) or ( spctype == "xp" ):   
+            if ( spctype == "xo" ) or ( spctype == "xp" ) or ( spctype == "xx" ): 
                # TODO: make xo objects consistent with other absent states
                continue
             cnum = str(getattr(self.state, spcfield)[0])
