@@ -13,126 +13,15 @@ import magic
 import lxml.html
 from urllib import unquote_plus
 import syslog
-
+import ConfigParser
 
 syslog.openlog(ident='constantina')
-
-
-# (Full path) Web resources and directories that Constantina reads from
-ROOT_DIR = "/var/www"
-
-# (Relative to RESOURCE DIR) Root of the Constantina files
-RESOURCE_DIR = "/cwdc"
-
-# Per-page global values are based on news items per page
-NEWSITEMS = 10
-
-
-# Card types, and where their data lives. 
-# All card types MUST start with a unique letter of the
-# alphabet, since state variables come from the first
-# letter of each card type. 
-CARD_PATHS = {
-    'news': './news/',
-  'images': './pictures/',
-   'songs': './songs/',
-  'quotes': './interjections/',
-     'ads': './gracias/',
-   'media': './embedded/',
-'features': './features/',
- 'heading': './headers/',
-  'topics': './encyclopedia/'
-}
-
-
-# Both describes how many cards per page, and serves as
-# the canonical list of card types designed to be
-# randomly distributed on each page. TWO KEYS IN THIS
-# HASH MAY NOT START WITH THE SAME FIRST LETTER!
-CARD_COUNTS = {
-    'news': NEWSITEMS,
-  'images': int(ceil(NEWSITEMS / 3)),
-   'songs': int(ceil(NEWSITEMS / 10)),
-  'quotes': int(ceil(NEWSITEMS / 3)),
-     'ads': int(ceil(NEWSITEMS / 10)),
-   'media': int(ceil(NEWSITEMS / 8)),
-'features': int(ceil(NEWSITEMS / 10)),
-  'topics': 0
-}
-
-
-# Some state tokens represent special queries to our
-# script, and shouldn't represent specific card types.
-# These are permalink types, and the permalink fields
-# must be underscore_delimited versions of the CARD_COUNTS
-# fields should new ones be defined.
-SPECIAL_STATES = {
-       'xn': 'news_permalink',
-       'xf': 'features_permalink',
-       'xt': 'topics_permalink',
-       'xs': 'search'
-}
-
-
-# How many cards in between each card of this type. 0 means
-# we can have cards right next to each other.
-CARD_SPACING = {
-    'news': 0,
-  'images': int(floor(NEWSITEMS / 3)),
-   'songs': int(floor(NEWSITEMS / 1.5)),
-  'quotes': int(floor(NEWSITEMS / 4)),
-     'ads': int(floor(NEWSITEMS / 1.5)),
-   'media': int(ceil(NEWSITEMS / 2)),
-'features': int(ceil(NEWSITEMS / 2)),
-  'topics': 0
-}
+CONFIG = ConfigParser.SafeConfigParser()
+CONFIG.read('constantina.ini')
 
 
 # Only do opendir once per directory
 DIR_INDEX = {}
-
-
-# Default card values, occasionally used for checking
-# to see if something has been set or not. In case of
-# an error, these values will not look too obvious as 
-# default-values on a public webpage.
-DEFAULT = {
-     'body': 'Zen-like calm.',
-    'title': 'Empty Card',
-     'file': 'No filename grabbed.',
-     'date': 'Insert date here',
-'tombstone': 'Next-page Tombstone'
-}
-
-
-# Directory and parameters for the search indexing
-SEARCH_INDEX = {
-           'dir': "./index/",
-  'ignore-words': "./index/ignore-words",
-'ignore-symbols': "./index/ignore-symbols"
-}
-
-
-# Types of cards that we both index and search for
-SEARCH_CARDS = [
-     'news',
- 'features',
-   'quotes',
-]
-
-
-# Types of cards we randomize in the output pages
-RANDOMIZE_CARDS = [
-   'images',
-   'quotes',
-]
-
-
-# Max search results to return in a query
-MAX_SEARCH_RESULTS = 200
-# Max number of comma-separated values for a parameter
-# This is also the max number of search terms (TODO?)
-MAX_STATE_PARAMETERS = 10
 
 
 class cw_cardtype:
@@ -146,17 +35,97 @@ class cw_cardtype:
            in each card-type data directory
       - The distance from the last-displayed item of this type to the end
         of the displayed page
+      - The spacing per page of news cards
+      - Whether the page state is asking to filter cards of a specific type
 
-   Through introspection of the CARD_COUNTS settings, we create one of these
+   Through checking the configured card_counts, we create one of these
    objects named for each card type (ctype).
    """
-   def __init__(self, count, distance, spacing, start, end):
+   def __init__(self, ctype, count, distance, filtertype, spacing):
+      self.ctype = ctype
       self.count = count
       self.distance = distance
+      self.filtertype = filtertype
       self.spacing = spacing
-      self.start = start
-      self.end = end
+
       self.clist = []      # List of card indexes that appeared of this type
+      # Number of files of this type
+      self.file_count = len(opendir(self.ctype))	
+      # Files per page of this type
+      self.per_page = CONFIG.getint("card_counts", self.ctype)
+      # How many ctype cards should we see before the same card
+      # appears again in the randomized view? This is a function
+      # of the number of available cards
+      if ( self.per_page == 0 ):
+         self.page_distance = 0;
+      else: 
+         self.page_distance = self.file_count*2 / self.per_page
+
+
+   def shuffle(self):
+      """Once a fixed seed is set in the state object, run the shuffle method
+         to get the shuffled file listing for this ctype created."""
+      self.__shuffle_files()
+      # syslog.syslog("Shuffled list of " + self.ctype + ": " + str(self.clist))
+      self.__mark_uneven_distribution()
+      # syslog.syslog("Marked list of " + self.ctype + ": " + str(self.clist))
+      self.__replace_marked()
+      syslog.syslog("Final list of " + self.ctype + ": " + str(self.clist))
+            
+
+   def __shuffle_files(self):
+      """Take a card type, and create a shuffle array where we can preserve
+         normal page-state numbering, using those page-state values as indexes
+         into a shuffled list of files. The shuffled array is extended, but
+         adjusted so that repeat rules across pages will be respected"""
+      total_pages = int(floor(len(opendir("news")) / CONFIG.getint("card_counts", "news")))
+      total_ctype = total_pages * self.per_page
+
+      # Guarantee enough cards to choose from
+      self.clist = range(0, self.file_count) * total_ctype
+      self.clist = self.clist[0:total_ctype]
+      shuffle(self.clist)
+
+
+   def __mark_uneven_distribution(self):
+      """Look across a clist and remove any cards that would appear on the next
+         Nth page, which duplicate a card you've seen on this page. The array is made
+         large enough that just outright removing items should be ok. The N distance
+         between pages is a function of the number of possible elements."""
+      for i in range(0, len(self.clist)):
+         if ( self.clist[i] == 'x' ):
+            continue
+
+         part_end = i + self.page_distance
+         if ( i + part_end > len(self.clist)):
+            part_end = len(self.clist)
+
+         # Mark array items for removal
+         for j in range(i+1, part_end):
+            if ( self.clist[i] == self.clist[j] ):
+               self.clist[j] = 'x'
+
+   
+   def __replace_marked(self):
+      """Given 'x' marked indexes from __mark_even_distribution, determine good 
+         replacement values."""
+      for i in range(0, len(self.clist)):
+         if ( self.clist[i] != 'x' ):
+            continue
+
+         part_start = i - self.page_distance
+         if ( i - part_start < 0 ):
+            part_start = 0;
+         part_end = i + self.page_distance
+         if ( i + part_end > len(self.clist)):
+            part_end = len(self.clist)
+
+         choices = range(0, self.file_count)
+         shuffle(choices)
+         for k in choices:
+            if ( k not in self.clist[part_start:part_end] ):
+               self.clist[i] = k
+               break
 
 
 class cw_state:
@@ -179,36 +148,62 @@ class cw_state:
    def __init__(self, state_string=None):
       self.in_state = state_string   # Track the original state string
       self.seed = None		     # The Random Seed for the page
-      self.shuffled = {}             # Arrays of shuffled index lists
 
-      # For the card types in CARD_COUNTS, create variables, i.e.
+      self.max_items = 0             # Max items per page, based on
+                                     # counts from all card types
+      for ctype, cpp in CONFIG.items('card_counts'):
+         self.max_items = self.max_items + int(cpp)
+
+      # For the card types in the card_counts config, create variables, i.e.
       #   state.news.distance, state.topics.spacing
-      for ctype in CARD_COUNTS:
+      for ctype, card_count in CONFIG.items('card_counts'):
          setattr(self, ctype, cw_cardtype(
-            count=CARD_COUNTS[ctype],
+            ctype=ctype,
+            count=int(card_count),
             distance=None,
-            spacing=CARD_SPACING[ctype],
-            start=None,
-            end=None))
+            filtertype=False,
+            spacing=CONFIG.getint('card_spacing', ctype)))
 
       # For permalink settings or search strings, define object fields as well
       #    Examples: self.search, self.news_permalink
-      for spctype, spcfield in SPECIAL_STATES.iteritems():
+      for spctype, spcfield in CONFIG.items("special_states"):
          setattr(self, spcfield, None)
 
-      # Was there an initial state string? Read it if there is
+      # Filter checks require an empty array here
+      spcfilter = CONFIG.get("special_states", "xo")
+      setattr(self, spcfilter, [])
+
+      # Was there an initial state string? Read it if there is. Then shuffle
+      # each ctype that we care about :)
       self.__import_state(state_string)
 
       # If there wasn't a random seed, we better generate one :)
       if (self.seed == None):
          self.__set_random_seed()
 
-      # Calculate consistent shuffled arrays of filetypes for the real state
-      # indexes to make reference to in card selection
-      for ctype in RANDOMIZE_CARDS:
-         self.__shuffle_files(ctype)
+      # For any card types we want to shuffle, do the shuffle dance
+      for ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(","):
+         getattr(self, ctype).shuffle()
 
-      syslog.syslog("Random seed: " + str(self.seed))
+      # If page was read in as a special state variable, use that (for search results)
+      if ( self.page != None ) and (( self.search != None ) or ( self.card_filter != None )):
+         self.page = int(self.page[0])
+
+      # Otherwise, determine our page number from the news article index reported
+      # TODO: for news articles, it's not a distance value! Its a news[] index
+      elif ( self.news.distance != None ):
+         self.page = ( int(self.news.distance) + 1 ) / CONFIG.getint('card_counts', 'news')
+
+      else:
+         self.page = 0
+
+      # Filtered card count, tracked when we have a query type and a filter count
+      if ( self.filtered != None ) and (( self.search != None ) and ( self.card_filter != None )):
+         self.filtered = int(self.filtered[0])
+      else:
+         self.filtered = 0
+
+      # syslog.syslog("Random seed: " + str(self.seed))
 
 
    def __import_state(self, state_string):
@@ -223,33 +218,21 @@ class cw_state:
          return
 
       # State types are the same as the first letter of each card type
-      for ctype in CARD_COUNTS:
+      for ctype in CONFIG.options("card_counts"):
          valid_tokens[ctype[0]] = ctype
 
       # Special two-letter states may be processed as well
-      for spctype, spcfield in SPECIAL_STATES.iteritems():
+      for spctype, spcfield in CONFIG.items("special_states"):
          valid_tokens[spctype] = spcfield
 
       # Parse each colon-separated item that matches a state type
       for token in state_string.split(':'):
-         # News tokens are just a single number for the last item loaded
-         if token[0] == 'n' and token[0] not in last_parsed:
-            getattr(self, 'news').end = int(token[1:])
-            last_parsed.append(token[0])   # Add to the parsed stack
-
-         # Single-character tokens typically have a "start, end, and spacing" 
-         # value, so we only need three items.
-         elif token[0] in valid_tokens and token[0] not in last_parsed:
-            # Determine ctype from introspection
+         # Non-special tokens just track the distance (in cards looking back)
+         # to last card of that type on the previous page
+         syslog.syslog("%s" % token )
+         if token[0] in valid_tokens and token[0] not in last_parsed:
             ctype = valid_tokens[token[0]]  
-            item_range_dist = token[1:].split(',')[0:3]
-            try:
-               getattr(self, ctype).distance = int(item_range_dist.pop())
-               getattr(self, ctype).start = int(item_range_dist[0])
-               getattr(self, ctype).end = int(item_range_dist[1])
-            except:
-               continue
-
+            getattr(self, ctype).distance = int(token[1:])
             last_parsed.append(token[0])   # Add to the parsed stack
 
          # Special two-character tokens don't denote typical state
@@ -258,15 +241,44 @@ class cw_state:
          elif token[0:2] in valid_tokens and token[0:2] not in last_parsed:
             try:
                item_str = unquote_plus(token[2:])
-               items = item_str.split(',')[0:MAX_STATE_PARAMETERS]
+               max_params = CONFIG.getint("miscellaneous", "max_state_parameters") 
+               items = item_str.split(',')[0:max_params]
             except:
                continue
 
-            spcfield = SPECIAL_STATES[token[0:2]]
-            setattr(self, spcfield, [])
-            for i in items:
-               getattr(self, spcfield).append(i)
+            # Search parameters with hashtags are treated as card filter types
+            # and are moved from search state to filter state tracking.
+            if token[0:2] == 'xs' and 'xo' not in last_parsed:
+               searchterms = items[0].split(' ')         # single-space delimited terms
+               searchterms = filter(None, searchterms)   # remove null search submits
+               filterterms = self.__add_filter_cardtypes(searchterms)
+               # Remove search filters from the search state list
+               if ( filterterms != [] ):
+                  for term in filterterms:
+                     searchterms.remove(term)
+                  last_parsed.append("xo")
+
+               # Recombine the space-delimited array for processing by search funcs
+               items = [" ".join(searchterms)]
+
+            # Populate state object for this generic special state value
+            # Account for processing items into the filter list -- if no search
+            # items, then we don't count that as part of the state. 
+            if ( items != '' ):
+               spcfield = CONFIG.get("special_states", token[0:2])
+               syslog.syslog("setting special_state: " + token[0:2] + " : " + spcfield)
+               setattr(self, spcfield, [])
+               for i in items:
+                  getattr(self, spcfield).append(i)
             last_parsed.append(token[0:2])   # Add to the parsed stack
+
+            # For paged searches, add xo state to filter cardtypes
+            if token[0:2] == 'xo':
+               spcfield = CONFIG.get("special_states", token[0:2])
+               # Add-filter-cardtypes expects strings that start with #
+               hashtag_process = map(lambda x: "#" + x, getattr(self, spcfield)) 
+               self.__add_filter_cardtypes(hashtag_process)
+
 
          # If the token can be interpreted as a float when putting 0. in front,
          # this will become our random seed for shuffling
@@ -279,10 +291,10 @@ class cw_state:
 
    # TODO: move update_state portions to their own function?
    # TODO: most of the update-state stuff is calculating distance
-   def export_state(self, cards, query_terms):
+   def export_state(self, cards, query_terms, filter_terms, filtered_count):
       """Once all cards are read, calculate a new state variable to
          embed in the more-contents page link."""
-      all_ctypes = CARD_COUNTS.keys()
+      all_ctypes = CONFIG.options("card_counts")
 
       # Populate the state object, which we'll later build the
       # state_string from. Don't deal with news items yet
@@ -327,7 +339,7 @@ class cw_state:
          done_distance.sort()
 
          dist = len(cards) - hidden_cards - i
-         # print "=> %s dist: %d i: %d card-len: %d  eff-len: %d" % ( card.ctype, dist, i, len(self.cards), len(self.cards) - hidden_cards)
+         # syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" % ( card.ctype, dist, i, len(cards), len(cards) - hidden_cards))
          getattr(self, card.ctype).distance = str(dist)
          # Early break once we've seen all the card types
          if ( done_distance == all_ctypes ):
@@ -341,28 +353,73 @@ class cw_state:
 
       for ctype in all_ctypes:
          # If no cards for this state, do not track
-         if ( getattr(self, ctype).clist == [] ):
+         if (( getattr(self, ctype).clist == [] ) or ( getattr(self, ctype).distance == None )):
             continue
 
-         # Track just the range of values, not the intermediaries
-         # TODO TODO IMPORTANT: this is why items repeat. You need to track the last N actual
-         # appearance items so that there's at least N entries between duplicates.
+         # Track the distance to the last-printed card in each state variable
          stype = ctype[0]
-         crange = getattr(self, ctype).clist
          cdist = getattr(self, ctype).distance
-         crange.sort()
+         state_tokens.append(stype + str(cdist))
 
-         item_range_dist = crange[0] + "," + crange[-1] + "," + cdist
-         state_tokens.append(stype + item_range_dist)
-      export_string = ":".join(state_tokens) + ":" + "n" + str(news_last) + ":" + str(seed)
+      # Track page number for the next state variable by adding one to the current
+      if ( state_tokens != [] ):
+         export_string = ":".join(state_tokens) + ":" + "n" + str(news_last) + ":" + str(seed)
+      else:
+         export_string = "n" + str(news_last) + ":" + str(seed)
 
       # The up-to-10 search terms come after the primary state variable,
       # letting us know that the original query was a search attempt, and that
       # future data to insert into the page should be filtered by these 
       # provided terms.
+      if ( filter_terms != '' ):
+         export_string = export_string + ":" + "xo" + filter_terms
       if ( query_terms != '' ):
          export_string = export_string + ":" + "xs" + query_terms
+
+      # If we had search results and used a page number, write an incremented page
+      # number into the next search state for loading
+      if (( query_terms != '' ) or ( filter_terms != '' )):
+         export_page = int(self.page) + 1
+         export_string = export_string + ":" + "xp" + str(export_page)
+
+      # If any cards were excluded by filtering, and a search is in progress,
+      # track the number of filtered cards in the state.
+      if (( query_terms != '' ) and ( filter_terms != '' )):
+         export_string = export_string + ":" + "xx" + str(filtered_count)
+
       return export_string
+
+
+   def __add_filter_cardtypes(self, searchterms):
+      """If you type a hashtag into the search box, Constantina will do a 
+         filter based on the cardtype you want. Aliases for various types
+         of cards are configured in constantina.ini"""
+      removeterms = []
+      filtertypes = []
+
+      for term in searchterms:
+         # syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
+         if term[0] == '#':
+            for ctype, filterlist in CONFIG.items("card_filters"):
+               filternames = filterlist.replace(" ", "").split(',')
+               for filtername in filternames:
+                  if term == '#' + filtername:
+                     # Toggle this cardtype as one we'll filter on
+                     getattr(self, ctype).filtertype = True
+                     # Page filtering by type is enabled
+                     # Add to the list of filterterms, and prepare to
+                     # remove any filter tags from the search state.
+                     filtertypes.append(ctype)
+                     removeterms.append(term)
+
+      # Add the types we're filtering on to the filter state.
+      # This gets rid of stupid #-prefixed things in the URI potentially
+      if filtertypes != []:
+         for ctype in filtertypes:
+            spcfilter = CONFIG.get("special_states", "xo")
+            getattr(self, spcfilter).append(ctype)
+
+      return removeterms
 
 
    def __set_random_seed(self):
@@ -383,18 +440,6 @@ class cw_state:
    def __export_random_seed(self):
       """Export the random seed for adding to the state variable"""
       return str(self.seed).replace("0.", "")
-
-
-   def __shuffle_files(self, ctype):
-      """Take a card type, and create a shuffle array where we can preserve
-      normal page-state numbering, using those page-state values as indexes
-      into a shuffled list of files."""
-      file_count = len(opendir(ctype))
-      self.shuffled[ctype] = range(0, file_count)
-      syslog.syslog("Unshuffled " + ctype + ": " + str(self.shuffled[ctype]))
-      shuffle(self.shuffled[ctype])
-      syslog.syslog("    Random " + ctype + ": " + str(self.shuffled[ctype]))
-
 
 
 class cw_page:
@@ -420,16 +465,21 @@ class cw_page:
       self.out_state = ''
 
       self.search_results = ''
-      self.query_terms = ''   # Use this locally, in case we happen not to create a search object
+      self.query_terms = ''    # Use this locally, in case we happen not to create a search object
+      self.filter_terms = ''   # For filtering based on cardtypes 
+      self.filtered = 0        # Cards excluded from search results by filtering
+
+      news_items = CONFIG.getint("card_counts", "news")
 
       if ( self.state.in_state == None ):
          # Create a new page of randomly-assorted images and quotes,
          # along with reverse-time-order News items
+         syslog.syslog("***** Completely new page-load workflow *****")
          self.__get_cards()
          self.__distribute_cards()
          self.cards.insert(0, cw_card('heading', 'basic', grab_body=True))
 
-         if ( len(self.cards) - self.cur_len > NEWSITEMS ):
+         if ( len(self.cards) - self.cur_len > news_items ):
             # Add a hidden card to trigger loading more data when reached
             self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
             # Finally, add the "next page" tombstone to load more content
@@ -443,32 +493,45 @@ class cw_page:
          # This is a permalink page request. For these, use a
          # special footer card (just a header card placed at 
          # the bottom of the page).
+         syslog.syslog("***** Permalink page workflow *****")
          self.__get_permalink_card()
          self.cards.append(cw_card('heading', 'footer', grab_body=True, permalink=True))
 
-      elif ( self.state.search != None ):
+      elif (( self.state.search != None ) or 
+            ( self.state.card_filter != [] )):
          # Return search results based on the subsequent comma-separated list,
          # parsed by __import_state into self.state.search.
          # TODO: Tokenize all search parameters and remove non-alphanum characters
-         # other than plus and whoosh wildcard characters. All input-commas become pluses
-         self.search_results = cw_search(self.state.search)
+         # other than plus or hash for hashtags. All input-commas become pluses
+         syslog.syslog("***** Search/Filter card workflow *****")
+         self.search_results = cw_search(self.state.page, self.state.max_items, self.state.search, self.state.card_filter, self.state.filtered)
          self.query_terms = self.search_results.query_string
+         self.filter_terms = self.search_results.filter_string
+         self.filtered = self.search_results.filtered
          self.__get_search_result_cards()
          self.__distribute_cards()
-        
-         # TODO: Implement search result paging
-         if ( len(self.cards) > 0 ):
+       
+         # If the results have filled up the page, try and load more results
+         syslog.syslog("page:%d  maxitems:%d  max-filter:%d  cardlen:%d" % (self.state.page, self.state.max_items, self.state.max_items - self.filtered, len(self.cards))) 
+         if (( self.state.max_items - self.filtered ) * ( self.state.page + 1 ) <= len(self.cards)):
+            # Add a hidden card to trigger loading more data when reached
+            self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
+            # Finally, add the "next page" tombstone to load more content
+            self.cards.append(cw_card('heading', 'tombstone', grab_body=True))
+         else:
             self.cards.append(cw_card('heading', 'bottom', grab_body=True))
 
       else:
          # Get new cards for an existing page, tracking what the
          # previous page's state variable was in creating the list 
          # of cards to display.
+         syslog.syslog("***** New cards on existing page workflow *****")
          self.__get_prior_cards()
          self.__get_cards()
          self.__distribute_cards()
 
-         if ( len(self.cards) - self.cur_len > NEWSITEMS ): 
+         # TODO: news dist isn't dist!
+         if ( self.state.news.distance + self.state.news.per_page <= self.state.news.file_count ): 
             # Add a hidden card to trigger loading more data when reached
             self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
             # Finally, add the "next page" tombstone to load more content
@@ -478,7 +541,7 @@ class cw_page:
 
       # Once we've constructed the new card list, update the page
       # state for insertion, for the "next_page" link.
-      self.out_state = self.state.export_state(self.cards, self.query_terms)
+      self.out_state = self.state.export_state(self.cards, self.query_terms, self.filter_terms, self.filtered)
       syslog.syslog("Initial state: " + str(self.state.in_state))
       syslog.syslog("To-load state: " + str(self.out_state))
       
@@ -495,13 +558,17 @@ class cw_page:
       # Anything with rules for cards per page, start adding them.
       # Do not grab full data for all but the most recent cards!
       # For older cards, just track their metadata
-      for ctype in CARD_COUNTS:
+      for ctype, count in CONFIG.items("card_counts"):
+         card_count = int(count)
          # No topic cards unless they're search results, and no card types
          # that have no historical values in the last page
-         if ( CARD_COUNTS[ctype] == 0 ):
+         if ( card_count == 0 ):
             continue
          # No data and it's not the first page? Skip this type
-         if ( getattr(self.state, ctype).end == None ) and ( self.state.in_state != None ):
+         if ( getattr(self.state, ctype).clist == None ) and ( self.state.in_state != None ):
+            continue
+         # Are we doing cardtype filtering, and this isn't an included card type?
+         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
             continue
 
          # Grab the cnum of the last inserted thing of this type
@@ -511,9 +578,9 @@ class cw_page:
             start = 0
          # If these are previous items, calculate how many were on previous pages
          else:
-            start = int(getattr(self.state, ctype).end) + 1
+            start = int(self.state.page * card_count) + 1
 
-         for i in xrange(start, start + CARD_COUNTS[ctype]):
+         for i in xrange(start, start + card_count):
             card = cw_card(ctype, i, state=self.state, grab_body=True)
             # Don't include cards that failed to load content
             if ( card.topics != [] ):
@@ -537,9 +604,14 @@ class cw_page:
          self.cards.append(encyclopedia)
 
       # Other types of search results come afterwards
-      for ctype in SEARCH_CARDS:
+      search_types = CONFIG.get("card_properties", "search").replace(" ","").split(",")
+      for ctype in search_types:
          # Manage the encyclopedia cards separately
          if ( ctype == 'topics' ):
+            continue
+         # Are we doing cardtype filtering, and this isn't an included card type?
+         syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype) + " card_filter_state: " + str(self.state.card_filter))
+         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
             continue
 
          start = 0
@@ -553,7 +625,7 @@ class cw_page:
             # If the hits[ctype][j] is a file name, figure out which Nth file this is
             if ( grab_file.isdigit() == False ):
                for k in xrange(0, len(DIR_INDEX[ctype])):
-                  syslog.syslog("compare:" + grab_file + "==" + DIR_INDEX[ctype][k])
+                  # syslog.syslog("compare:" + grab_file + "==" + DIR_INDEX[ctype][k])
                   if DIR_INDEX[ctype][k] == grab_file:
                      grab_file = k
                      break
@@ -569,8 +641,11 @@ class cw_page:
    def __get_permalink_card(self):
       """Given a utime or card filename, return a pre-constructed
          permalink page of that type."""
-      for spctype, spcfield in SPECIAL_STATES.iteritems():
+      for spctype, spcfield in CONFIG.items("special_states"):
          if ( getattr(self.state, spcfield) != None ):
+            if ( spctype == "xo" ) or ( spctype == "xp" ) or ( spctype == "xx" ): 
+               # TODO: make xo objects consistent with other absent states
+               continue
             cnum = str(getattr(self.state, spcfield)[0])
             # Insert a card after the first heading
             ctype = spcfield.split("_")[0]
@@ -592,7 +667,10 @@ class cw_page:
          Achieve the proper estimate of the previously displayed
          contents by distributing news articles such that the
          card-type distances are properly represented."""
-      news_items = int(self.state.news.end)
+      if ( self.state.news.distance != None ):
+         news_items = int(self.state.news.distance)   # TODO: track separately
+      else:
+         news_items = 0
 
       # Then add the appropriate page count's worth of news
       for n in xrange(0, news_items):
@@ -607,10 +685,14 @@ class cw_page:
       # page, which is important for once we've generated all
       # of this page's content and need to write a new state
       # variable based on the current list of cards.
-      for ctype in CARD_COUNTS:
-         if ( len(getattr(self.state, ctype).clist) == 0 ):
+      for ctype, card_count in CONFIG.items("card_counts"):
+         # Are we doing cardtype filtering, and this isn't an included card type?
+         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
             continue
          dist = getattr(self.state, ctype).distance
+         if (( len(getattr(self.state, ctype).clist) == 0 ) or ( dist == None )):
+            continue
+         # syslog.syslog("ctype, len, and dist: " + str(ctype) + " " + str(len(self.cards)) + " " + str(dist))
          put = len(self.cards) - 1 - int(dist)
          for cnum in getattr(self.state, ctype).clist:
             self.cards.insert(put, cw_card(ctype, cnum, grab_body=False))
@@ -619,33 +701,6 @@ class cw_page:
       # of where we begin adding new cards to the page, not just 
       # tracking the old ones.
       self.cur_len = len(self.cards)
-
-
-   def __last_item_per_type(self):
-      """Given the largest spacing value, determine distance between
-         our starting card on this page and a card of equal type that
-         appeared on the previous page."""
-      # If this is the first page, there's no distance to
-      # items on the last page. 
-      last_dist = {}
-      if ( self.state.in_state == None ):
-         for ctype in CARD_SPACING:
-            last_dist[ctype] = 0
-         return last_dist
-
-      # Otherwise go back in our cardlist and determine
-      # the distances between current cards and the last
-      # card of each type.
-      lb = self.cur_len - max(CARD_SPACING.values())
-      for card in self.cards[lb::]:
-         last_dist[card.ctype] = self.cur_len - lb
-
-      # If no cards of a particular type, set dist to zero
-      for ctype in CARD_SPACING.keys():
-         if ctype not in last_dist:
-            last_dist[ctype] = 0
-
-      return last_dist
 
 
    def __distribute_cards(self):
@@ -657,8 +712,6 @@ class cw_page:
       total = len(self.cards)
       lstop = self.cur_len 
       p_dist = total - lstop
-      # On this page and the last, the most recent card seen
-      c_lastcard = self.__last_item_per_type()   # Index nums
       # Distance from last ctype'd card on the previous page
       c_dist = {}
       # "hold-aside" hash to help shuffle the main run of cards
@@ -666,22 +719,26 @@ class cw_page:
       # non-redist set (news articles)
       c_nodist = {}      
 
-      for ctype in CARD_SPACING:
+      for ctype, spacing in CONFIG.items("card_spacing"):
          # Spacing rules from the last page. Subtract the distance from
          # the end of the previous page. For all other cards, follow the
-         # strict CARD_SPACING rules, plus jitter
-         if ( lstop - c_lastcard[ctype] >= CARD_SPACING[ctype] ):
+         # strict card spacing rules from the config file, plus jitter
+         spacing = int(spacing)
+         distance = getattr(self.state, ctype).distance
+         if ( distance == None ):
+            distance = 0
+
+         if ( distance >= spacing ):   # Prev page ctype card not close
             c_dist[ctype] = 0
-         elif (( lstop == 0 ) and ( c_lastcard[ctype] == 0 )):
+         elif (( lstop == 0 ) and ( distance == 0 )):   # No pages yet
             c_dist[ctype] = 0
-         else:
-            c_dist[ctype] = CARD_SPACING[ctype] - (lstop - c_lastcard[ctype])
-         # print "------ ctype %s   spacing %d   c_dist %d   c_lsatcard %d   lstop %d" % ( ctype, CARD_SPACING[ctype], c_dist[ctype], c_lastcard[ctype], lstop)
+         else:   # Implement spacing from the beginning of the new page
+            c_dist[ctype] = spacing - distance
+         # syslog.syslog("*** initial spacing: ctype:%s  spacing:%d  c_dist:%d  distance:%d  lstop:%d" % ( ctype, spacing, c_dist[ctype], distance, lstop))
          c_redist[ctype] = []
          c_nodist[ctype] = []
 
-      # Make arrays of each card type, so we can shuffle,
-      # jitter, and reinsert them later.
+      # Make arrays of each card type, so we can random-jump their inserts later.
       for i in xrange(lstop, total):
          ctype = self.cards[i].ctype
          # News cards don't get redistributed, and cards that we 
@@ -704,54 +761,75 @@ class cw_page:
       # Now, for each type of non-news card, figure out the starting point
       # where cards can be inserted, follow the spacing rules, and redist
       # them throughout the cards.
-      for ctype in c_redist.keys():
+      # TODO: lowest card-count ctype inserts happen first, so there is better
+      # spacing for higher-card-count types
+      for ctype in sorted(c_redist, key=lambda ctype: len(c_redist[ctype])):
          if ( c_redist[ctype] == [] ):
             continue   # Empty
+         # Are we doing cardtype filtering, and this isn't an included card type?
+         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
+            continue
 
          # Max distance between cards of this type on a page
-         norm_dist = CARD_SPACING[ctype]
+         norm_dist = getattr(self.state, ctype).spacing
+         # Number of input cards we're working with 
+         # (should never be more than getattr(self.state, ctype).count
+         card_count = len(c_redist[ctype])
          # For spacing purposes, page starts at the earliest page we can
          # put a card on this page, w/o being too close to a same-type
          # card on the previous page. This shortens the effective page dist
 	 effective_pdist = p_dist - c_dist[ctype]
          max_dist = effective_pdist
-         if ( CARD_COUNTS[ctype] >= 1 ):
-            max_dist = floor(effective_pdist / CARD_COUNTS[ctype])
+         if ( card_count >= 1 ):
+            max_dist = floor(effective_pdist / card_count)
 
          # If less cards on the page then expected, degrade
          if ( max_dist < norm_dist ):
             max_dist = norm_dist
             norm_dist = max_dist - 1
 
-         # Take the cards for this type and re-add them to the cards list
-         # jitter = randint(c_dist[ctype], norm_dist)
-         seen_type = {}
+         # Let jumps be non-deterministic
+         seed()
 
-         # Start with an initial shorter distance for shuffling
+         # Start with an initial shorter distance for shuffling.
+         # The furthest initial insert spot isn't the "first space", but
+         # the maximum insert distance before spacing rules are not possible
+         # to properly follow.
          start_jrange = c_dist[ctype]
-         end_jrange = norm_dist 
+         cur_p_dist = len(self.cards) - lstop
+         next_cnt = 1
+         cards_ahead = card_count - next_cnt 
+         end_jrange = cur_p_dist - (cards_ahead * norm_dist)
+         # syslog.syslog("*** dist initial: ctype:%s  cnt:%d  spacing:%d cur_pd:%d  sj:%d  ej:%d" % ( ctype, len(c_redist[ctype]), norm_dist, cur_p_dist, start_jrange, end_jrange))
 
-         # Add back the cards
-         for k in xrange(0, len(c_redist[ctype])):
-            if ( ctype not in seen_type ):   # If first page AND not seen before, add them early
-               if ( start_jrange >= end_jrange ):   # Not many items?
-                  jitter = 1
-               else:
-                  jitter = randint(start_jrange, end_jrange)
-               ins_index = lstop + c_dist[ctype] + jitter
-               seen_type[ctype] = True
-            else:   # Now we've seen cards, start spacing
-               start_jrange = norm_dist
-               end_jrange = max_dist
-               if ( start_jrange >= end_jrange ):   # Not many items?
-                  jitter = 1
-               else:
-                  jitter = randint(start_jrange, end_jrange)
-               ins_index = ins_index + jitter
+         # Add back the cards. NOTE all jumpranges must be offsets from lstop,
+         # not specific indexes that refer to the insert points in the array
+         for k in xrange(0, card_count):
+            # Not many items in the array?
+            if ( start_jrange >= end_jrange ):
+               jump = start_jrange
+            else:
+               jump = randint(start_jrange, end_jrange)
+
+            ins_index = lstop + jump  
 
             card = c_redist[ctype][k]
             self.cards.insert(ins_index, card)
-            # print "ctype %s   ct-cnt %d   len %d   ins_index %d   jitter %d" % ( ctype, len(c_redist[ctype]), len(self.cards), ins_index, jitter)
+            # syslog.syslog("k:%d  ins_index:%d  jump:%d  cur_pd:%d  sj:%d  ej:%d" % ( k, ins_index, jump, cur_p_dist, start_jrange, end_jrange))
+
+            # For next iteration, spacing is at least space distance away from
+            # the current insert, and no further than the distance by which
+            # future spacing rules are not possible to follow.
+            start_jrange = jump + norm_dist
+            cur_p_dist = len(self.cards) - lstop
+            next_cnt = next_cnt + 1
+            cards_ahead = card_count - next_cnt
+            end_jrange = cur_p_dist - (cards_ahead * norm_dist)
+
+
+      # Return seed to previous deterministic value, if it existed
+      if ( self.state.seed ):
+         seed(self.state.seed)
 
       # Lastly, add the topics cards back
       for j in xrange(0, len(c_nodist['topics'])):
@@ -768,19 +846,20 @@ class cw_card:
    """
 
    def __init__(self, ctype, num, state=False, grab_body=True, permalink=False, search_result=False):
-      self.title = DEFAULT['title']
+      self.title = CONFIG.get("card_defaults", "title")
       self.topics = []
-      self.body = DEFAULT['body']
+      self.body = CONFIG.get("card_defaults", "body")
       self.ctype = ctype
       # Request either the Nth entry of this type, or a specific utime/date
       self.num = num
       # If we need to access data from the state object, for card shuffling
       self.state = state
       self.songs = []
-      self.cfile = DEFAULT['file']
-      self.cdate = DEFAULT['date']
+      self.cfile = CONFIG.get("card_defaults", "file")
+      self.cdate = CONFIG.get("card_defaults", "date")
       self.permalink = permalink
       self.search_result = search_result
+      self.hidden = False
       # Don't hit the filesystem if we're just tracking which cards have
       # been previously opened (cw_page.__get_previous_cards)
       if ( grab_body == True ):
@@ -788,38 +867,46 @@ class cw_card:
 
 
    def __openfile(self):
-      """Either open the Nth file or the utime-named file in the dir,
-         populate the object, and return the name of the opened file"""
-      type_files = opendir(self.ctype)
+      """Open a file in a folder by "number", and populate the cw_card object.
+         For most files, this will be an integer (card number) that represents 
+         the Nth file in a directory.
+         For news files, the filename itself is a Unix timestamp number, and
+         can be specified directly."""
+      type_files = opendir(self.ctype, self.hidden)
 
       # Find the utime value in the array if the number given isn't an array index.
       # If we're inserting cards into an active page, the state variable will be
       # given, and should be represented by a shuffled value.
-      if ( self.ctype in RANDOMIZE_CARDS ) and ( self.state != False ) and ( self.search_result == False ):
-         cycle = len(self.state.shuffled[self.ctype])
-         syslog.syslog("open file: " + str(self.num) + "/" + str(cycle))
-         which_file = self.state.shuffled[self.ctype][self.num % cycle]
+      random_types = CONFIG.get("card_properties", "randomize").replace(" ","").split(",")
+      if (( self.ctype in random_types ) and ( self.state != False )
+                                         and ( self.search_result == False )
+                                         and ( self.hidden == False )):
+         cycle = len(getattr(self.state, self.ctype).clist)
+         which_file = getattr(self.state, self.ctype).clist[self.num % cycle]
+
+         # Logic for hidden files, which only works because it's inside the
+         # random_types check
+         if ( which_file == 'x' ):
+            self.hidden = True
+            type_files = opendir(self.ctype, self.hidden)
+            # syslog.syslog(str(DIR_INDEX.keys()))
+            hidden_cards = xrange(0, len(DIR_INDEX[self.ctype + "/hidden"]))
+            self.num = hidden_cards[randint(0, len(hidden_cards)-1)]
+            # TODO: totally random selected card (unset seed)
+            # syslog.syslog("open hidden file: " + str(self.num) + "/" + str(hidden_cards))
+            which_file = self.num
+         else:
+            # syslog.syslog("open file: " + str(self.num) + "/" + str(cycle))
+            pass
+
       else:
          which_file = self.num
 
-      if which_file >= len(type_files):
-         if ( self.num in type_files ):
+      # News files: convert utime filename to the "Nth" item in the folder
+      if ( which_file >= len(type_files)): 
+         if ( self.num in type_files):
             which_file = type_files.index(self.num)
-            self.num = which_file   # Don't save the filename as the number
-         elif ( self.ctype in RANDOMIZE_CARDS ): 
-            # Some types should support looping over the available
-            # content. Add those to this clause. To make the monotonic
-            # content appearances more evenly distributed and less
-            # obviously in sequence, jitter the next image count in
-            # a consistent positive direction.
-            rand_travel = 1
-            while (( rand_travel < 2 ) and 
-                   ( CARD_COUNTS[self.ctype] % rand_travel == 0 ) and 
-                   ( CARD_COUNTS[self.ctype] > 3 )):
-               # Without looping, try to cycle the array of possible inserts
-               # in a unique way on every page load
-               rand_travel = randint(2, CARD_COUNTS[self.ctype])
-            which_file = ( self.num + rand_travel ) % len(type_files)
+            self.num = which_file
          else:
             return "nofile"
 
@@ -829,7 +916,7 @@ class cw_card:
    def __songfiles(self):
       """Create an array of song objects for this card"""
       for songpath in self.body.splitlines():
-         songpath = CARD_PATHS['songs'] + songpath
+         songpath = CONFIG.get("paths", "songs") + "/" + songpath
          self.songs.append(cw_song(songpath))
 
 
@@ -846,18 +933,23 @@ class cw_card:
       that doesn't pass muster returns "wrongtype".
       """
       magi = magic.Magic(mime=True)
-      fpath = CARD_PATHS[self.ctype] + thisfile
+
+      base_path = CONFIG.get("paths", self.ctype)
+      if ( self.hidden == True ):
+         fpath = base_path + "/hidden/" + thisfile
+      else: 
+         fpath = base_path + "/" + thisfile
 
       try:
          with open(fpath, 'r') as cfile:
             ftype = magi.from_file(fpath)
             # News entries or features are processed the same way
             if (( "text" in ftype ) and 
-                (( CARD_PATHS['news'] in cfile.name ) or
-                 ( CARD_PATHS['heading'] in cfile.name ) or 
-                 ( CARD_PATHS['quotes'] in cfile.name ) or 
-                 ( CARD_PATHS['topics'] in cfile.name ) or 
-                 ( CARD_PATHS['features'] in cfile.name ))):
+                (( CONFIG.get("paths", "news") in cfile.name ) or
+                 ( CONFIG.get("paths", "heading") in cfile.name ) or 
+                 ( CONFIG.get("paths", "quotes") in cfile.name ) or 
+                 ( CONFIG.get("paths", "topics") in cfile.name ) or 
+                 ( CONFIG.get("paths", "features") in cfile.name ))):
                self.title = cfile.readline().replace("\n", "")
                rawtopics = cfile.readline().replace("\n", "")
                for item in rawtopics.split(', '):
@@ -866,7 +958,7 @@ class cw_card:
    
             # Multiple-song playlists
             if (( "text" in ftype ) and
-                ( CARD_PATHS['songs'] in cfile.name )):
+                ( CONFIG.get("paths", "songs") in cfile.name )):
                self.title = fpath
                self.topics.append("Song Playlist")
                self.body = cfile.read()
@@ -874,7 +966,7 @@ class cw_card:
    
             # Single-image cards
             if ((( "jpeg" in ftype ) or ( "png" in ftype)) and 
-                 ( CARD_PATHS['images'] in cfile.name )):
+                 ( CONFIG.get("paths", "images") in cfile.name )):
                # TODO: alt/img metadata
                self.title = fpath
                self.topics.append("Images")
@@ -882,7 +974,7 @@ class cw_card:
    
             # Single-song orphan cards
             if ((( "mpeg" in ftype ) and ( "layer iii" in ftype)) and
-                 ( CARD_PATHS['songs'] in cfile.name )):
+                 ( CONFIG.get("paths", "songs") in cfile.name )):
                self.title = fpath      # TODO: filename from title
                self.topics.append("Songs")   # TODO: include the album
                self.body = fpath
@@ -899,9 +991,12 @@ class cw_card:
          file.close(cfile)
 
       except:   # File got moved in between dirlist caching and us reading it
-         return DEFAULT['file']
+         return CONFIG.get("card_defaults", "file")
 
-      return CARD_PATHS[self.ctype] + thisfile
+      if ( self.hidden == True ):
+          return CONFIG.get("paths", self.ctype) + "/hidden/" + thisfile
+      else:
+          return CONFIG.get("paths", self.ctype) + "/" + thisfile
 
 
 
@@ -925,14 +1020,15 @@ class cw_search:
    Finally, there is an "index-tree" list where if specific search terms
    are queried, all related terms are pulled in as well. If the user requests
    the related phrases can be turned off."""
-   def __init__(self, unsafe_query_terms):
+   def __init__(self, page, resultcount, unsafe_query_terms, unsafe_filter_terms, previous_filtered):
       # List of symbols to filter out in the unsafe input
       self.ignore_symbols = []
       # Regex of words that won't be indexed
       self.ignore_words = ''
-      # After processing unsafe_query, save it in the object
+      # After processing unsafe_query or unsafe_filter, save it in the object
       # Assume we're searching for all terms, unless separated by pluses
       self.query_string = ''
+      self.filter_string = ''
       # The contents of the last file we read
       self.content = ''
       # Notes on what was searched for. This will either be an error
@@ -948,40 +1044,73 @@ class cw_search:
       self.searcher = ''
       self.results = ''
 
+      # Max search results per page is equal to the number of cards that would
+      # be shown on a normal news page. And while whoosh expects pages starting
+      # at one, the page state counting will be from zero (possible TODO)
+      self.page = page + 1
+      self.resultcount = resultcount
+      self.filtered = previous_filtered
+
+      # File paths for loading things
+      self.index_dir = CONFIG.get('search', 'index_dir')
+      self.words_file = CONFIG.get('search', 'ignore_words')
+      self.symobls_file = CONFIG.get('search', 'ignore_symbols')
+      self.search_types = CONFIG.get("card_properties", "search").replace(" ","").split(",")
+
       # Define the indexing schema. Include the mtime to track updated 
       # content in the backend, ctype so that we can manage the distribution
       # of returned search results similar to the normal pages, and the 
       # filename itself as a unique identifier (most filenames are utimes).
-      self.schema = Schema(file=ID(stored=True, unique=True), ctype=ID(stored=True), mtime=ID(stored=True), content=TEXT)
+      self.schema = Schema(file=ID(stored=True, unique=True, sortable=True), ctype=ID(stored=True), mtime=ID(stored=True), content=TEXT)
 
       # If index doesn't exist, create it
-      if ( index.exists_in(SEARCH_INDEX['dir'])):
-         self.index = index.open_dir(SEARCH_INDEX['dir'])
+      if ( index.exists_in(self.index_dir)):
+         self.index = index.open_dir(self.index_dir)
          # print "Index exists"
       else:
-         self.index = index.create_in(SEARCH_INDEX['dir'], schema=self.schema)
+         self.index = index.create_in(self.index_dir, schema=self.schema)
          # print "Index not found -- creating one"
       # Prepare for query searching (mtime update, search strings)
       self.searcher = self.index.searcher()
 
-      for ctype in SEARCH_CARDS:
+      for ctype in self.search_types:
          # Prior to processing input, prepare the results arrays.
          # Other functions will expect this to exist regardless.
          self.hits[ctype] = []
+
+      # Process the filter strings first, in case that's all we have
+      if ( unsafe_filter_terms != None ):
+         self.__process_input(' '.join(unsafe_filter_terms), returning="filter")
+
+      # Double check if the query terms exist or not
+      if ( unsafe_query_terms == None ):
+         if ( self.filter_string != '' ):
+            self.__filter_cardtypes()
+            self.searcher.close()
+            return
+         else:
+            self.searcher.close()
+            return
 
       # If the query string is null after processing, don't do anything else.
       # Feed our input as a space-delimited set of terms. NOTE that we limit
       # this in the __import_state function in cw_state.
       if not ( self.__process_input(' '.join(unsafe_query_terms))):
-         return
+         if ( self.filter_string != '' ):
+            self.__filter_cardtypes()
+            self.searcher.close()
+            return
+         else:
+            self.searcher.close()
+            return
 
-      for ctype in SEARCH_CARDS:
+      for ctype in self.search_types:
          # Now we have good safe input, but we don't know if our index is 
          # up-to-date or not. If have changed since their last-modified date, 
          # reindex all the modified files
          self.__add_ctype_to_index(ctype)
 
-
+ 
       # TODO: Prior to searching, __parse_input to allow union searches
       # with "word1 + word2" or negative searches (word1 - word2)
       # TODO: Save these results to query_string somehow
@@ -991,7 +1120,8 @@ class cw_search:
       # and then we'll later determine which of these results we'll display
       # on the returned search results page.
       self.__search_index()
-      self.__sort_search_results() 
+
+      self.searcher.close()
 
 
    def __process_input(self, unsafe_input, returning="query"):
@@ -1004,7 +1134,7 @@ class cw_search:
       """
       # Make a or-regex of all the words in the wordlist
       if ( self.ignore_words == '' ):
-         with open(SEARCH_INDEX['ignore-words'], 'r') as wfile:
+         with open(self.words_file, 'r') as wfile:
             words = wfile.read().splitlines()
             remove = '|'.join(words)
             self.ignore_words = re.compile(r'\b('+remove+r')\b', flags=re.IGNORECASE)
@@ -1019,7 +1149,7 @@ class cw_search:
       # double-quote characters &ldquo; and &rdquo;, as well as other
       # lxml.html converted &-escaped HTML characters
       if ( self.ignore_symbols == '' ):
-         with open(SEARCH_INDEX['ignore-symbols'], 'r') as sfile:
+         with open(self.symbols_file, 'r') as sfile:
             for character in sfile.read().splitlines():
                self.ignore_symbols.push(character)
                safe_input = safe_input.replace(character, " ")               
@@ -1032,6 +1162,8 @@ class cw_search:
       if (safe_input != '' ):
          if ( returning == "query" ):
             self.query_string = safe_input
+         elif ( returning == "filter" ):
+            self.filter_string = safe_input
          else:
             self.content = safe_input
          return 1
@@ -1047,8 +1179,9 @@ class cw_search:
       # Enable writing to our chosen index
       # TODO: Should we only open the writer once, in a different scope?
       writer = self.index.writer()
+      card_path = CONFIG.get("paths", ctype)
 
-      with open(CARD_PATHS[ctype] + filename, 'r') as indexfh:
+      with open(card_path + "/" + filename, 'r') as indexfh:
          body = ""
          lines = indexfh.read().splitlines()
          unrolled = unroll_newlines(lines)
@@ -1071,10 +1204,11 @@ class cw_search:
       body contents to the index."""
       # Make sure the DIR_INDEX is populated
       opendir(ctype)
+      card_path = CONFIG.get("paths", ctype)
 
       for filename in DIR_INDEX[ctype]:
          try:
-            fnmtime = int(os.path.getmtime(CARD_PATHS[ctype] + filename))
+            fnmtime = int(os.path.getmtime(card_path + "/" + filename))
          except:
             return   # File has been removed, nothing to index
 
@@ -1090,27 +1224,46 @@ class cw_search:
             self.__add_file_to_index(fnmtime, filename, ctype)
 
 
-   def __search_index(self, count=MAX_SEARCH_RESULTS):
+   def __search_index(self):
       """Given a list of search paramters, look for any of them in the 
       indexes. For now don't return more than 200 hits"""
       self.parser = QueryParser("content", self.schema)
       self.query = self.parser.parse(unicode(self.query_string))
-      self.results = self.searcher.search(self.query, limit=count)
+      self.results = self.searcher.search_page(self.query, self.page, sortedby="file", reverse=True, pagelen=self.resultcount)
+      # print self.results[0:]
 
       # Just want the utime filenames themselves? Here they are, in 
       # reverse-utime order just like we want for insert into the page
-      # print self.results[0:]
-      for i in xrange(0, len(self.results)):
-         ctype = self.results[i]['ctype']
-         self.hits[ctype].append(self.results[i]['file'])
+      for result in self.results:
+         ctype = result['ctype']
+         # Account for filter strings
+         if ( self.filter_string != '' ):
+            if result['ctype'] in self.filter_string.split(' '):
+               self.hits[ctype].append(result['file'])
+            else:
+               self.filtered = self.filtered + 1
+         else:
+            self.hits[ctype].append(result['file'])
 
 
-   def __sort_search_results(self):
-      """Sort the search results in reverse-time order. For the randomly-
-      shuffled elements, reverse-lexicographic sorting shouldn't matter"""
-      for ctype in SEARCH_CARDS:
-         self.hits[ctype].sort()
-         self.hits[ctype].reverse()
+   def __filter_cardtypes(self):
+      """Get a list of cards to return, in response to a card-filter
+      event. These tend to be of a single card type."""
+      self.parser = QueryParser("content", self.schema)
+
+      for filter_ctype in self.filter_string.split(' '):
+         self.query = self.parser.parse("ctype:" + filter_ctype)
+         # TODO: implement a "search order" card parameter
+         # Some card types get non-reverse-sorting by default
+         self.results = self.searcher.search_page(self.query, self.page, sortedby="file", reverse=True, pagelen=self.resultcount)
+
+         for result in self.results:
+            ctype = result['ctype']
+            # Account for filter strings
+            if result['ctype'] in self.filter_string.split(' '):
+               self.hits[ctype].append(result['file'])
+            else:
+               self.filtered = self.filtered + 1
 
 
 
@@ -1146,11 +1299,14 @@ def remove_future(dirlisting):
    return dirlisting
 
 
-def opendir(ctype):
+def opendir(ctype, hidden=False):
    """Return either cached directory information or open a dir and
    list all the files therein. Used for both searching and for the
    card reading functions, so we manage it outside those."""
-   directory = CARD_PATHS[ctype]
+   directory = CONFIG.get("paths", ctype)
+   if ( hidden == True ):
+      directory += "/hidden" 
+      ctype += "/hidden"
 
    # If the directory wasn't previously cached
    if ( ctype not in DIR_INDEX.keys() ):
@@ -1243,7 +1399,8 @@ def create_simplecard(card, next_state):
       output += line + "\n"
 
    # For special tombstone cards, insert the state as non-visible text
-   if ( card.title == DEFAULT['tombstone'] ):
+   default_string = CONFIG.get("card_defaults", "tombstone")
+   if ( card.title == default_string ):
       output += """\n<p id="state">%s</p>""" % next_state
 
    output += """</div>\n"""
@@ -1261,7 +1418,13 @@ def create_textcard(card):
    is followed.
    """
    # TODO: VET title and topics for reasonable size restrictions
-   topics = ", ".join(card.topics)
+   topic_header = ""
+   for topic in card.topics:
+       topic_link = """<a class="topicLink" href="javascript:">%s</a>""" % topic
+       if ( topic_header == "" ):
+           topic_header = topic_link
+       else:
+           topic_header = topic_header + ", " + topic_link
    anchor = card.cfile.split('/').pop()
 
    # The body of a text card consists of paragraphs of text, possibly
@@ -1278,7 +1441,7 @@ def create_textcard(card):
       output += """      <p class="subject">%s</p>\n""" % card.cdate
    else:
       output += """      <h2><a href="#%s" onclick="cardToggle('%s');">%s</a></h2>\n""" % ( anchor, anchor, card.title )
-      output += """      <p class="subject">%s</p>\n""" % topics
+      output += """      <p class="subject">%s</p>\n""" % topic_header
    output += """   </div>\n"""
 
    passed = {}
@@ -1331,7 +1494,7 @@ def create_textcard(card):
                ( card.search_result == False )):
             # First <p> is OK, but follow it with a (Read More) link, and a 
             # div with showExtend that hides all the other elements
-            read_more = """ <a href="#%s" class="showShort" onclick="cardToggle('%s');">(Read More...)</a>""" % ( anchor, anchor )
+            read_more = """ <a href="#%s" class="showShort" onclick="cardToggle('%s');">(Read&nbsp;More...)</a>""" % ( anchor, anchor )
             prep = lxml.html.tostring(e)
             output += prep.replace('</p>', read_more + '</p>')
             output += """<div class="divExpand">\n"""
@@ -1353,7 +1516,8 @@ def create_textcard(card):
       output += """   </div>\n"""
 
    # And close the textcard
-   permanchor = RESOURCE_DIR + "/?x" + card.ctype[0] + anchor
+   resource_dir = CONFIG.get("paths", "resource")
+   permanchor = "/" + resource_dir + "/?x" + card.ctype[0] + anchor
 
    if ( card.permalink == False ):
       output += """   <div class="cardFooter">\n"""
@@ -1372,9 +1536,9 @@ def create_imagecard(card):
    3 per page of news items. Duplicates of images are OK, as long
    as we need to keep adding eye candy to the page.
    """
-   anchor = card.cfile.split('/')[2]
+   anchor = card.cfile.split('/')[1]
    # Get URI absolute path out of a Python relative path
-   uripath = "/" + "/".join(card.cfile.split('/')[1:])
+   uripath = "/" + "/".join(card.cfile.split('/')[0:])
 
    output = ""
    output += """<div class="imageCard" id="%s">\n""" % anchor
@@ -1457,7 +1621,10 @@ def application(env, start_response):
    generate a special randomized page just for that link,
    with an introduction, footers, an image, and more...
    """
-   os.chdir(ROOT_DIR + RESOURCE_DIR)
+   root_dir = CONFIG.get("paths", "root")
+   resource_dir = CONFIG.get("paths", "resource")
+
+   os.chdir(root_dir + "/" + resource_dir)
    in_state = os.environ.get('QUERY_STRING')
    if ( in_state != None ) and ( in_state != '' ):
       # Truncate state variable at 1024 characters
@@ -1493,10 +1660,12 @@ def application(env, start_response):
       html = html.replace(substitute, create_page(page))
       start_response('200 OK', [('Content-Type','text/html')])
 
-   # Doing a search
-   elif ( page.state.search != None ): 
-      if ( page.state.search == [''] ):
+   # Doing a search or a filter process
+   elif (( page.state.search != None ) or 
+         ( page.state.card_filter != [] )): 
+      if ( page.state.search == [''] ) and ( page.state.card_filter == [] ):
          # No search query given -- just regenerate the page
+         syslog.syslog("***** Reshuffle Page Contents *****")
          page = cw_page()
 
       start_response('200 OK', [('Content-Type','text/html')])
