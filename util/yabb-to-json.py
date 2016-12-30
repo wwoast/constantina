@@ -57,14 +57,38 @@ class zoo_post:
 class zoo_poll:
    """
    Individual poll object that's part of a thread. 
-      .ctb/.poll/.polled => something rolled into a post
+      .poll/.polled => something rolled into a post
    """
    
-   def __init__(self, input_file):
-      self.polltype = 1
-      self.question = None
-      self.body = []
-      pass   ## TODO: has to read multiple yabb input files
+   def __init__(self, file_prefix):
+      with open(YABB_MSGDIR + "/" + file_prefix + ".poll", 'r') as pfh:
+         body = pfh.read().splitlines()
+         values = body[0].split("|")
+         self.question = values[0]
+         self.options = []
+
+         body.remove(body[0])
+         for idx, line in enumerate(body):
+            self.options.append({})
+            self.options[idx]['choice'] = line.split("|")[1]
+            self.options[idx]['voter'] = []
+
+         # YaBB is either multi-vote or single vote. 
+         # Zoo is "number of choices" vote.
+         if ( values[-5] == 0 ):
+            self.polltype = 1
+         else:
+            self.polltype = len(self.options)
+
+      with open(YABB_MSGDIR + "/" + file_prefix + ".polled", 'r' ) as qfh:
+         body = qfh.read().splitlines()
+         for line in body:
+            values = line.split("|")
+            voter = values[1]
+            choices = values[2].split(',')   # Poll can have multiple choices
+            for choice in choices:
+               choice_idx = int(choice)
+               self.options[choice_idx]['voter'].append(voter)
 
    def to_JSON(self):
       return json.dumps(self, default=lambda o: o.__dict__, indent=2, ensure_ascii=False)
@@ -75,10 +99,13 @@ class zoo_thread:
 
    def __init__(self, input_file):
       self.posts = []
+      self.poll = None
 
       # Use YaBB forum lookup to set channel
       lookup = input_file.split("/")[-1].split('.')[0]
       self.channel = "#" + YABB_MEMBER[lookup]
+
+      self.pollProcess(lookup)
 
       with open(YABB_MSGDIR + "/" + input_file, 'r') as rfh:
          body = rfh.read().splitlines()
@@ -87,6 +114,12 @@ class zoo_thread:
 
          for line in body:
             self.posts.append(zoo_post(line))
+
+   def pollProcess(self, file_prefix):
+      """If .poll and .polled files exist, roll them into the post JSON"""
+      test_path = YABB_MSGDIR + "/" + file_prefix + ".poll"
+      if os.path.exists(YABB_MSGDIR + "/" + file_prefix + ".poll"):
+         self.poll = zoo_poll(file_prefix)
 
    def to_JSON(self):
       return json.dumps(self, default=lambda o: o.__dict__, indent=2, ensure_ascii=False)
@@ -112,7 +145,6 @@ def all_zoo_threads():
    dirlisting = os.listdir(YABB_MSGDIR)
    
    threads = [ f for f in dirlisting if ".txt" in f ]
-   # polls = [ p for p in dirlisting if ".poll" in p ]
 
    if not os.path.exists(JSON_OUTDIR):
       os.makedirs(JSON_OUTDIR)
@@ -122,8 +154,6 @@ def all_zoo_threads():
       output_file = input_file.split("/")[-1].replace(".txt", ".json")
       with open(JSON_OUTDIR + "/" + output_file, 'w') as wfh:
          wfh.write(thread.to_JSON())
-
-   # TODO: write logic for dealing with polls too
 
 
 def main():
