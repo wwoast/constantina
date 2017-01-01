@@ -6,11 +6,18 @@ YaBB to Zoo forum conversion tool
 
 Tested on YaBB 2.1, to convert their pipe-delimited forum thread flat-files
 into a JSON format where the post metadata can be processed by the Zoo server
-software in a cleaner way.
+software in a cleaner way. 
+
+In normal Zoo forum posts, we don't convert any [PRE]/[URL]/:smiley tags prior
+to displaying content. This is because if a post is user-modifiable, we want to
+preseve the exact contents of the original forum post, as written. However, 
+when migrating YaBB posts, we assume that no posts are in this modifiable state
+and thus we write the bulletin-board translations out explicitly.
 """
 
 import os
 import json
+import re
 
 # Forum .txt files to read from, and a dict for them to live in
 YABB_FORUMS = [ "abuse", "family", "fhanime", "general", "scrabble" ]
@@ -22,33 +29,131 @@ YABB_BOARDDIR = "./Boards"
 YABB_MSGDIR = "./Messages"
 JSON_OUTDIR = "./zoo"
 
+# Block elements
+YABB_BLOCK = ['pre', 'code', 'quote']
+
+# Smilies and URL elements are all inline
+YABB_INLINE = ['smiley', 'smilie', 'url']
+YABB_SMILIES = {	
+    # ;), ;-)
+       "wink": [re.compile(r'(\W|\A)\;\)'), re.compile(r'(\W|\A)\;-\)')],
+    # ;D, ;-D
+       "grin": [re.compile(r'(\W|\A)\;D'), re.compile(r'(\W|\A)\;-D')],
+        # :'(
+        "cry": [re.compile(re.escape(r":'("))],
+    # :/, :-/
+  "undecided": [re.compile(r'(\W|\A)\:\/'), re.compile(r'(\W|\A)\:-\/')],
+        # :-X
+"lipsrsealed": [re.compile(re.escape(r":-X"))],
+        # :-[
+ "embarassed": [re.compile(re.escape(r":-["))],
+        # :-*
+       "kiss": [re.compile(re.escape(r":-*"))],
+        # >:(
+      "angry": [re.compile(re.escape(r"&gt;:("))],
+        # ::)
+   "rolleyes": [re.compile(re.escape(r"::)"))],
+         # :P
+     "tongue": [re.compile(re.escape(r":P"))],
+    # :), :-)
+     "smiley": [re.compile(re.escape(r":)")), re.compile(re.escape(r":-)"))],
+         # :D
+     "cheesy": [re.compile(re.escape(r":D"))],
+    # :(, :-(
+        "sad": [re.compile(re.escape(r":(")), re.compile(re.escape(r":-("))],
+         # :o
+    "shocked": [re.compile(re.escape(r":o"))],
+        # 8-)
+       "cool": [re.compile(re.escape(r"8-)"))],
+        # :-?
+        "huh": [re.compile(re.escape(r":-?"))],
+        # ^_^
+      "happy": [re.compile(re.escape(r"^_^"))],
+  # thumbs up
+   "thumbsup": [re.compile(re.escape(r":thumb:"))],
+       # >:-D
+       "evil": [re.compile(re.escape(r"&gt;:-D"))]
+}
+
 
 class zoo_post:
    """
    Individual forum post object
       pipe-delimited line => single JSON post object
    """
-
    def __init__(self, input_line):
-      self.body = []
-
       values = input_line.split("|")
       self.author = values[1]
-      self.revision = 0   ## Reset revision counts from YaBB until I know how they work TODO
-      self.processBody(values[-5])
+      self.revision = 0         # Reset revision counts from YaBB until I know how they work TODO
+      # self.raw = values[-5]   # Don't keep raw data since none of these posts are modifiable
+      self.html = self.processCode(values[-5])
 
-   def processBody(self, message):
+   def processCode(self, text):
       """
-      Takes a single post line and converts it to a JSON object as follows:
-         * Lines of text separated by <br /><br /> become <p> entries.
-         * TODO: OTHERS
-         * TODO: most efficient object representation of JSON in Python
+      Takes a forum posting and converts any nested [SQUAREBRACKET] expressions
+      into their equivalent HTML statements. 
       """
-      lines = message.split('<br /><br />')
-      lines = [ l for l in lines if l != "" ]
-      for line in lines:
-         ## Make body.p objects for lines. TODO: Look for other types
-         self.body.append({'p': { "contents": line, "class": "" }})
+      text = self.processBlock(text)
+      text = self.processInline(text)
+      return text      
+
+   def processBlock(self, text):
+      """Process elements that make blocks of text in the final thread"""
+      wrap = {
+         "code": [ r'<p class="code">', r'</p>'],
+         "quote": [ r'<p class="quote">', r'</p>'],
+         "pre": [ r'<pre>', r'</pre>' ]
+      }
+      output = text
+      for block in YABB_BLOCK:
+         # support start tag with a single possible "author=username" section.
+         # then match all text in between the square brackets that doesn't
+         # match the end-tag. \s\S is required to match across newlines.
+         # NOTE: this doesn't support nested [QUOTE][QUOTE][/QUOTE][/QUOTE]. 
+         #   Make sure all posts you're copying from YaBB have been "unrolled"
+         pattern = re.compile(r'\[' + block + r'(\s*(\w+)\=(\w+))?\]((?:(?!\[\/' + block + r'\])[\s\S])*)\[/' + block + r'\]', re.IGNORECASE)
+         matchsets = re.findall(pattern, text)
+         for m in matchsets:
+            # group 0 is always keyword (author), group1 is always the username (TODO: include)
+            # group 3 is always the contents in between the square brackets
+            html = wrap[block][0] + m[3] + wrap[block][1]
+            output = re.sub(pattern, html, output, 1)
+
+      # TODO: sanitize out HTML from inside these blocks
+      return output
+
+   def processInline(self, text):
+      """
+      Any messages' block elements that can have inline smilies or URLs should
+      be processed here. Start by processing smilies, and then process URLs.
+      """
+      wrap = {
+         "smiley": [r'<img class="smiley" src=/images/smilies/', r' />'],
+            "url": [r'<a href="', r'">', r'</a>']
+      }
+      output = text
+      for smiley_name, patterns in YABB_SMILIES.iteritems():
+         for pattern in patterns:
+            matchsets = re.findall(pattern, text)
+            for m in matchsets:
+               html = wrap["smiley"][0] + smiley_name + '.gif"' + wrap["smiley"][1]
+               output = re.sub(pattern, html, output)
+      for inline in YABB_INLINE:
+         if (( inline == "smilie" ) or ( inline == "smiley" )):
+            pattern = re.compile(r'\[' + inline + r'\=(\w+)\.(\w+)\]', re.IGNORECASE)
+            matchsets = re.findall(pattern, text)
+            for m in matchsets:
+               html = wrap["smiley"][0] + m[0] + "." + m[1] + wrap["smiley"][1]
+               output = re.sub(pattern, html, output)
+               break   # All smilies of a type are the same
+         elif ( inline == "url" ):
+            pattern = re.compile(r'\[' + inline + r'\=([^\]]*)\]([^\[]*)\[/' + inline + '\]', re.IGNORECASE)
+            matchsets = re.findall(pattern, text)
+            for m in matchsets:
+               html = wrap[inline][0] + m[0] + wrap[inline][1] + m[1] + wrap[inline][2]
+               output = re.sub(pattern, html, output, 1)
+
+      return output 
 
    def to_JSON(self):
       return json.dumps(self, default=lambda o: o.__dict__, indent=2, ensure_ascii=False)
@@ -59,7 +164,6 @@ class zoo_poll:
    Individual poll object that's part of a thread. 
       .poll/.polled => something rolled into a post
    """
-   
    def __init__(self, file_prefix):
       with open(YABB_MSGDIR + "/" + file_prefix + ".poll", 'r') as pfh:
          body = pfh.read().splitlines()
