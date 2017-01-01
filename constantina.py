@@ -1384,13 +1384,13 @@ def count_ptags(processed_lines):
 
 def create_simplecard(card, next_state):
    """Simple cards with only basic text and images are drawn here.
-   This includes all headingCards and quotesCards, but possibly
+   This includes all card.heading and card.quotes, but possibly
    others as well. Do not apply any special logic to these cards -- 
    just get them drawn, whatever tags they might contain."""
    anchor = card.cfile.split('/').pop()
 
    output = ""
-   output += """<div class="%sCard" id="%s">\n""" % ( card.ctype, anchor )
+   output += """<div class="card %s" id="%s">\n""" % ( card.ctype, anchor )
 
    body_lines = card.body.splitlines()
    processed_lines = unroll_newlines(body_lines)
@@ -1434,7 +1434,7 @@ def create_textcard(card):
    # a "Read More" link for expanding the other hidden items.
 
    output = ""
-   output += """<div class="%sCard" id="%s">\n""" % ( card.ctype, anchor )
+   output += """<div class="card %s" id="%s">\n""" % ( card.ctype, anchor )
    output += """   <div class="cardTitle">\n"""
    if ( card.permalink == True ):
       output += """      <h2>%s</h2>\n""" % card.title
@@ -1541,7 +1541,7 @@ def create_imagecard(card):
    uripath = "/" + "/".join(card.cfile.split('/')[0:])
 
    output = ""
-   output += """<div class="imageCard" id="%s">\n""" % anchor
+   output += """<div class="card image" id="%s">\n""" % anchor
    output += """   <img src="%s" />\n""" % uripath
    output += """</div>\n"""
    return output
@@ -1557,7 +1557,7 @@ def create_songcard(card):
    """
 
    output = ""
-   output += """<div class="songCard">"""
+   output += """<div class="card song">"""
    for song in card.songs:
       # Songs DIR can only be TLD, followed by album, and then songname
       uripath = "/" + "/".join(song.songfile.split("/")[-3:])
