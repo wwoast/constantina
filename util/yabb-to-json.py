@@ -27,7 +27,10 @@ YABB_MEMBER = {}
 # Directories
 YABB_BOARDDIR = "./Boards"
 YABB_MSGDIR = "./Messages"
-JSON_OUTDIR = "./zoo"
+YABB_ATTACHMENTS = "./yabbfiles/Attachments"
+JSON_OUTDIR = "./zoo/messages"
+ATTACHMENTS_OUTDIR = "./zoo/uploads"
+SMILIES_DIR = "images/smilies"
 
 # Block elements
 YABB_BLOCK = ['pre', 'code', 'quote']
@@ -88,6 +91,11 @@ class zoo_post:
       # self.raw = values[-5]   # Don't keep raw data since none of these posts are modifiable
       self.html = self.processCode(values[-5])
 
+      # For now, don't process the attachments out of the yabbfiles dir
+      # Just make a note in the JSON so we can make the requests work later
+      if ( values[-1] != '' ):
+         self.attachment = values[-1]
+
    def processCode(self, text):
       """
       Takes a forum posting and converts any nested [SQUAREBRACKET] expressions
@@ -128,7 +136,7 @@ class zoo_post:
       be processed here. Start by processing smilies, and then process URLs.
       """
       wrap = {
-         "smiley": [r'<img class="smiley" src=/images/smilies/', r' />'],
+         "smiley": [r'<img class="smiley" src=' + SMILIES_DIR + "/", r' />'],
             "url": [r'<a href="', r'">', r'</a>']
       }
       output = text
