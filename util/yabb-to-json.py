@@ -111,12 +111,12 @@ class zoo_post:
          # match the end-tag. \s\S is required to match across newlines.
          # NOTE: this doesn't support nested [QUOTE][QUOTE][/QUOTE][/QUOTE]. 
          #   Make sure all posts you're copying from YaBB have been "unrolled"
-         pattern = re.compile(r'\[' + block + r'(\s*(\w+)\=(\w+))?\]((?:(?!\[\/' + block + r'\])[\s\S])*)\[/' + block + r'\]', re.IGNORECASE)
+         pattern = re.compile(r'\[' + block + r'(?:\s*(\w+)\=(\S+)\s?)*\]((?:(?!\[\/' + block + r'\])[\s\S])*)\[/' + block + r'\]', re.IGNORECASE)
          matchsets = re.findall(pattern, text)
          for m in matchsets:
             # group 0 is always keyword (author), group1 is always the username (TODO: include)
-            # group 3 is always the contents in between the square brackets
-            html = wrap[block][0] + m[3] + wrap[block][1]
+            # group 2 is always the contents in between the square brackets
+            html = wrap[block][0] + m[2] + wrap[block][1]
             output = re.sub(pattern, html, output, 1)
 
       # TODO: sanitize out HTML from inside these blocks
