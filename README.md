@@ -74,7 +74,7 @@ adjustable as well.
    Card Type	Path		Layout	Order		Indexed	Cards/Page
    ---------	----		------	-----		-------	----------
    news		news/		Fixed	Reverse-Time	Yes	10
-   images	pictures/	Random	Random		No*	3
+   images	pictures/	Random	Random		No*	4
    songs	songs/		Random	Reverse-Time	No*	1
    quotes	interjections/	Random	Random		Yes	3
    ads		gracias/	Random	Random		No	0**
