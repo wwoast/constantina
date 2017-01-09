@@ -1560,7 +1560,7 @@ def create_songcard(card):
    output += """<div class="card song">"""
    for song in card.songs:
       # Songs DIR can only be TLD, followed by album, and then songname
-      uripath = "/" + "/".join(song.songfile.split("/")[-3:])
+      uripath = "/" + "/".join(song.songfile.split("/")[-4:])
 
       output += """   <div class="cell">"""
       output += """      <p class="songName">%s</p>""" % song.songtitle
