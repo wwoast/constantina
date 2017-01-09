@@ -4,7 +4,7 @@ html {
 
 /* Cover makes the background collapse at smaller sizes */
 body {
-   background-image: url("graveyard-background.jpg");
+   background-image: url("default-wallpaper.jpg");
    background-size: cover;
    background-attachment: fixed;
    /* just for graveyard. prep other css files */
@@ -692,7 +692,7 @@ div.card.help pre {
    similar layout / resolution */
 @media screen and (max-width: 630px) {
    body {
-      background-image: url("graveyard-background-tiled.jpg");
+      background-image: url("tiled-wallpaper.jpg");
       background-size: 640px;
       background-attachment: none;
       background-repeat: repeat;
