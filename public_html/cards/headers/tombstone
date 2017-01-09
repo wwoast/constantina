@@ -1,0 +1,3 @@
+Next-page Tombstone
+
+<p id="loadButton"><a id="nextPage" href="javascript:;" onclick="addMoreContent(true);">More Reading</a></p><p id="inProgress">Loading...</p>

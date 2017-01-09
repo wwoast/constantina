@@ -477,7 +477,7 @@ class cw_page:
          syslog.syslog("***** Completely new page-load workflow *****")
          self.__get_cards()
          self.__distribute_cards()
-         self.cards.insert(0, cw_card('heading', 'basic', grab_body=True))
+         self.cards.insert(0, cw_card('heading', 'welcome', grab_body=True))
 
          if ( len(self.cards) - self.cur_len > news_items ):
             # Add a hidden card to trigger loading more data when reached
