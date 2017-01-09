@@ -1646,7 +1646,7 @@ def application(env, start_response):
 
    # Fresh new HTML, no previous state provided
    if ( page.state.in_state == None ):
-      base = open('base.html', 'r')
+      base = open('default.html', 'r')
       html = base.read()
       html = html.replace(substitute, create_page(page))
       start_response('200 OK', [('Content-Type','text/html')])
@@ -1655,7 +1655,7 @@ def application(env, start_response):
    elif (( page.state.news_permalink != None ) or
          ( page.state.features_permalink != None ) or 
          ( page.state.topics_permalink != None )): 
-      base = open('base.html', 'r')
+      base = open('default.html', 'r')
       html = base.read()
       html = html.replace(substitute, create_page(page))
       start_response('200 OK', [('Content-Type','text/html')])
