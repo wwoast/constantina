@@ -316,6 +316,7 @@ div#scrollstone, div#old_scrollstone {
    margin: 0 0 0 0;
    padding: 0 0 0 0;
    height: 0px;
+   border: 0px solid;
 }
 
 div#tombstone, div#old_tombstone, div#search_waiting {
@@ -380,6 +381,7 @@ div.card.image img {
 div.card.song p {
    margin: 0 0 0 0;
    padding: 0 0 2px 0;
+   text-align: center;
 }
 
 /* Arrange cells so that if width shrinks, the cells overflow into

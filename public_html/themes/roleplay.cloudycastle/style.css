@@ -140,15 +140,15 @@ div.card {
 }
 
 div.card.fresh.odd {
-   background-image: -webkit-radial-gradient(circle, rgba(40, 70, 40, 0.38) 0px, rgba(40, 240, 70, 0.38) 700px);
-   background-image: -moz-radial-gradient(circle, rgba(40, 70, 40, 0.38) 0px, rgba(40, 240, 70, 0.38) 700px);
-   background-image: radial-gradient(circle, rgba(40, 70, 40, 0.38) 0px, rgba(40, 240, 70, 0.38) 700px);
+   background-image: -webkit-radial-gradient(circle, rgba(40, 40, 70, 0.38) 0px, rgba(40, 70, 240, 0.38) 700px);
+   background-image: -moz-radial-gradient(circle, rgba(40, 40, 70, 0.38) 0px, rgba(40, 70, 240, 0.38) 700px);
+   background-image: radial-gradient(circle, rgba(40, 40, 70, 0.38) 0px, rgba(40, 70, 240, 0.38) 700px);
 }
 
 div.card.fresh.even {
-   background-image: -webkit-radial-gradient(circle, rgba(40, 70, 40, 0.48) 0px, rgba(40, 240, 70, 0.48) 350px);
-   background-image: -moz-radial-gradient(circle, rgba(40, 70, 40, 0.48) 0px, rgba(40, 240, 70, 0.48) 350px);
-   background-image: radial-gradient(circle, rgba(40, 70, 40, 0.48) 0px, rgba(40, 240, 70, 0.48) 350px);
+   background-image: -webkit-radial-gradient(circle, rgba(40, 40, 70, 0.48) 0px, rgba(40, 70, 240, 0.48) 700px);
+   background-image: -moz-radial-gradient(circle, rgba(40, 40, 70, 0.48) 0px, rgba(40, 70, 240, 0.48) 700px);
+   background-image: radial-gradient(circle, rgba(40, 40, 70, 0.48) 0px, rgba(40, 70, 240, 0.48) 700px);
 }
 
 div.card.rolldown {
@@ -380,6 +380,7 @@ div.card.image img {
 div.card.song p {
    margin: 0 0 0 0;
    padding: 0 0 2px 0;
+   text-align: center;
 }
 
 /* Arrange cells so that if width shrinks, the cells overflow into

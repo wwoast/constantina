@@ -380,6 +380,7 @@ div.card.image img {
 div.card.song p {
    margin: 0 0 0 0;
    padding: 0 0 2px 0;
+   text-align: center;
 }
 
 /* Arrange cells so that if width shrinks, the cells overflow into
