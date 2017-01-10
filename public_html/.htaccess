@@ -1,0 +1,8 @@
+RewriteEngine on
+
+# And all root requests should be processed through CGI
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ /cgi-bin/constantina.cgi
+
+# Compress certain files when you can.
+# AddOutputFilterByType DEFLATE text/plain text/html text/xml text/css text/javascript application/xml application/rss+xml application/xhtml+xml application/javascript application/x-javascript
