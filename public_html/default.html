@@ -1,6 +1,6 @@
 <html>
 <head>
-<link rel="stylesheet" href="default.css" />
+<link rel="stylesheet" href="themes/roleplay.graveyard/style.css" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <link rel="Shortcut Icon" href="favicon.png" />
 <link rel="apple-touch-icon" href="iphone.png" />
@@ -42,7 +42,7 @@ function addMoreContent(was_clicked) {
 
    // Add content into the page
    $.get(
-      "/cwdc/?" + state,
+      "/dev/?" + state,
        function (data) {
           $(".container").append(data);
        }
@@ -142,9 +142,9 @@ $(function() {
       query = escape(query);
 
       // Load more data
-      $("#searchForm").action = "/cwdc/?xs" + query;
+      $("#searchForm").action = "/dev/?xs" + query;
       $.get(
-         "/cwdc/?xs" + query,
+         "/dev/?xs" + query,
           function (data) {
              // hack hack hack (length check)
              if ( data.length == 200 ) {
@@ -354,7 +354,7 @@ Who would you vote for class president?
    <div class="cardQuote"><p class="quote">This is a response.</p><p class="attribution">@wumpwoast</p></div>
 <p>This is a response that has been modified once. It has a quote and a song attached.</p>
 
-<p class="attachment"><img class="attachmentIcon" src="images/attachments/audio.png" /><a href="some-attachment-file.mp3">some-attachment-file.mp3</a></p>
+<p class="attachment"><img class="attachmentIcon" src="images/mimetypes/audio.png" /><a href="some-attachment-file.mp3">some-attachment-file.mp3</a></p>
 
    <div class="cardFooter">
       <div class="bottom">
