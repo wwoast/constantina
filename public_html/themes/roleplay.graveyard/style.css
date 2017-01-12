@@ -633,11 +633,11 @@ div.card.rolldown input {
    margin-top: 3px;
 }
 
-div.card.rolldown input#threadFileInput {
+div.card.rolldown input.threadFileInput {
    float: left;
 }
 
-div.card.rolldown input#threadSubmit {
+div.card.rolldown input.threadSubmit {
    float: right;
 }
 

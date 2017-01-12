@@ -86,7 +86,7 @@ $(function() {
             shortener = last_element.querySelector('.showShort');
             if ( shortener ) { 
                if ( shortener.style.display == "none" ) {
-                  cardToggle(last_element.id);
+                  revealToggle(last_element.id);
                }
             }
             last_element.scrollIntoView();
@@ -171,9 +171,9 @@ function activateTopicLinks() {
    }
 }
 
-function cardToggle(id) {
+function revealToggle(id) {
    var card = document.getElementById(id);
-   var largeImgs = card.querySelectorAll('#imgExpand')
+   var largeImgs = card.querySelectorAll('.imgExpand')
    var expandLink = card.querySelector('.showShort')
    var expandDiv = card.querySelector('.divExpand')
    var todo = expandLink.style.display;
@@ -191,8 +191,57 @@ function cardToggle(id) {
       for ( var i = 0; i < largeImgs.length; i++ ) {
          largeImgs[i].style.display = "none";
       }
-   }   
+   }
 }
+
+function createPost(id, mode) {
+   var card = document.getElementById(id);
+   var reply = document.createElement('textarea');
+   reply.className = "newThread";
+   reply.required = true;
+
+   // If reply already clicked, get rid of previous text boxes
+   var nextElement = card.nextSibling.name;
+   if ( card.nextSibling.type == "textarea" ) {
+      card.nextSibling.remove();   // Textarea
+      card.nextSibling.remove();   // Rolldown div
+   }
+   if ( nextElement == mode ) {
+      return;   // Undraw, and call it good
+   }
+
+   if ( mode === "quote" ) {
+      // Get body of the earlier message, and format it without nested
+      // quotes. Only basic paragraphs (avoid pre/code/friends) TODO
+      reply.name = "quote";
+      quotetext = card.childNodes[3].getElementsByClassName('postBody');
+      // TODO: munge all paragraphs, and put it in a [QUOTE] tag.
+      reply.defaultValue = quotetext[0].textContent;
+
+   } else {
+      reply.name = "reply";
+      reply.placeholder = "Add Your Reply!";
+   }
+
+   // Append edit menu afterwards
+   var replyFooter = document.createElement('div');
+   // TODO: not newthread class!
+   replyFooter.className = "card rolldown newthread";
+   var attachmentButton = document.createElement('input');
+   attachmentButton.className = "threadFileInput";
+   attachmentButton.type = "file";
+   attachmentButton.name = "attachment";
+   var submitButton = document.createElement('input');
+   submitButton.className = "threadSubmit";
+   submitButton.type = "submit";
+   submitButton.name = "submit";
+   replyFooter.appendChild(attachmentButton);
+   replyFooter.appendChild(submitButton);
+
+   card.insertAdjacentElement('afterEnd', reply);
+   reply.insertAdjacentElement('afterEnd', replyFooter);
+}
+
 </script>
 </head>
 <body>
@@ -293,50 +342,38 @@ Who would you vote for class president?
   <textarea class="newThread" name="message" placeholder="Thread Title and Forum Name, one per line. Then, your message&hellip;"></textarea>
 
   <div class="card rolldown newThread">
-    <input type="file" id="threadFileInput" name="attachment"></input>
-    <input type="submit" id="threadSubmit" name="submit"></button>
+    <input type="file" class="threadFileInput" name="attachment"></input>
+    <input type="submit" class="threadSubmit" name="submit"></button>
   </div>
 </form>
 </div>
 
-<div class="card forum odd fresh" id="1476249257">
+<div class="card forum odd fresh thread-1476249257" id="1476249257")>
 <div class="cardTitle">
-  <h2><img src="cards/forum/avatars/wumpwoast.png"><a href="#1476249257" onclick="cardToggle('1476249257');">A thread that's gotten no love</a></h2>
-  <p class="subject"><a class="topicLink" href="javascript:">@wumpwoast</a>, <a class="topicLink" href="javascript:">#scrabble</a></p>
-</div>
-</div>
-
-<div class="card forum even fresh" id="1476249257">
-<div class="cardTitle">
-  <h2><img src="cards/forum/avatars/wumpwoast.png"><a href="#1476249257" onclick="cardToggle('1476249257');">Another thread just posted but remaining unread</a></h2>
-  <p class="subject"><a class="topicLink" href="javascript:">@wumpwoast</a>, <a class="topicLink" href="javascript:">#general</a></p>
-</div>
-</div>
-
-<div class="card forum odd fresh" id="1476249257")>
-<div class="cardTitle">
-  <h2><img src="cards/forum/avatars/wumpwoast.png"><a href="#1476249257" onclick="cardToggle('1476249257');">An Example Forum Thread</a></h2>
+  <h2><img src="cards/forum/avatars/wumpwoast.png"><a href="#1476249257" onclick="revealToggle('1476249257');">An Example Forum Thread</a></h2>
   <p class="subject"><a class="topicLink" href="javascript:">@wumpwoast</a>, <a class="topicLink" href="javascript:">#general</a></p>
 </div>
 
+<div class="divExpand">
 <pre>&nbsp; &nbsp; &nbsp; &nbsp; 82 letters remain<br /> &nbsp; 0 1 2 3 4 5 6 7 8 9 A B C D E<br /> &nbsp; - - - - - - - - - - - - - - -<br />0&#124; @ &nbsp; &nbsp; - &nbsp; &nbsp; &nbsp; @ &nbsp; &nbsp; &nbsp; - &nbsp; &nbsp; @ &#124;0 &nbsp;My Words:<br />1&#124; &nbsp; * &nbsp; &nbsp; &nbsp; + &nbsp; &nbsp; &nbsp; + &nbsp; &nbsp; &nbsp; * &nbsp; &#124;1 &nbsp; date(10)<br />2&#124; &nbsp; &nbsp; * &nbsp; &nbsp; &nbsp; - &nbsp; - &nbsp; &nbsp; &nbsp; * &nbsp; &nbsp; &#124;2<br />3&#124; - &nbsp; &nbsp; * &nbsp; &nbsp; &nbsp; - &nbsp; &nbsp; &nbsp; * &nbsp; &nbsp; - &#124;3<br />4&#124; &nbsp; &nbsp; &nbsp; &nbsp; * &nbsp; &nbsp; D &nbsp; &nbsp; * &nbsp; &nbsp; &nbsp; &nbsp; &#124;4<br />5&#124; &nbsp; + &nbsp; &nbsp; &nbsp; + &nbsp; A &nbsp; + &nbsp; &nbsp; &nbsp; + &nbsp; &#124;5<br />6&#124; &nbsp; &nbsp; - &nbsp; &nbsp; &nbsp; - T - &nbsp; &nbsp; &nbsp; - &nbsp; &nbsp; &#124;6<br />7&#124; @ &nbsp; &nbsp; - &nbsp; &nbsp; &nbsp; E &nbsp; &nbsp; &nbsp; - &nbsp; &nbsp; @ &#124;7<br />8&#124; &nbsp; &nbsp; - &nbsp; &nbsp; &nbsp; - &nbsp; - &nbsp; &nbsp; &nbsp; - &nbsp; &nbsp; &#124;8 &nbsp;Your Words:<br />9&#124; &nbsp; + &nbsp; &nbsp; &nbsp; + &nbsp; &nbsp; &nbsp; + &nbsp; &nbsp; &nbsp; + &nbsp; &#124;9<br />A&#124; &nbsp; &nbsp; &nbsp; &nbsp; * &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; * &nbsp; &nbsp; &nbsp; &nbsp; &#124;A<br />B&#124; - &nbsp; &nbsp; * &nbsp; &nbsp; &nbsp; - &nbsp; &nbsp; &nbsp; * &nbsp; &nbsp; - &#124;B<br />C&#124; &nbsp; &nbsp; * &nbsp; &nbsp; &nbsp; - &nbsp; - &nbsp; &nbsp; &nbsp; * &nbsp; &nbsp; &#124;C<br />D&#124; &nbsp; * &nbsp; &nbsp; &nbsp; + &nbsp; &nbsp; &nbsp; + &nbsp; &nbsp; &nbsp; * &nbsp; &#124;D<br />E&#124; @ &nbsp; &nbsp; - &nbsp; &nbsp; &nbsp; @ &nbsp; &nbsp; &nbsp; - &nbsp; &nbsp; @ &#124;E<br /> &nbsp; - - - - - - - - - - - - - - -<br /> &nbsp; 0 1 2 3 4 5 6 7 8 9 A B C D E<br /><br /> me:10 &nbsp; &nbsp; G D I N U S N &nbsp; you:0<br /></pre>
  
-<p>Sometimes failures are more interesting than successes. Last week marked the end of my focused efforts on the Gapless-5 library. Properly implemented, this library would enable a web jukebox to playing multiple songs in order, without audible gaps in between the songs. <a href="#1476249257" class="showShort" onclick="cardToggle('1476249257');" style="display: none;">(Read&nbsp;More...)</a></p>
+<p class="postBody">Sometimes failures are more interesting than successes. Last week marked the end of my focused efforts on the Gapless-5 library. Properly implemented, this library would enable a web jukebox to playing multiple songs in order, without audible gaps in between the songs. <a href="#" class="showShort"></a></p>
 
    <div class="cardFooter">
       <div class="bottom">
-         <p class="cardNav"><u><a href="#">Reply</a></u>&nbsp;<u><a href="#">Quote</a></u> <a href="/public_html/?xn1476249257">Thread</a>&nbsp;<a href="/public_html/?xn=1476249257">Post</a></p>
+         <p class="cardNav"><u><a onclick="createPost('1476249257', 'reply');">Reply</a></u>&nbsp;<u><a onclick="createPost('1476249257', 'quote');">Quote</a></u> <a href="/public_html/?xn1476249257">Thread</a>&nbsp;<a href="/public_html/?xn=1476249257">Post</a></p>
          <p class="postDate">3 days ago</p>
       </div>
    </div>
 </div>
+</div>
 
-<div class="card forum even" id="13241234">
+<div class="card forum even thread-1476249257" id="13241234a">
 <div class="cardTitle">
   <h5><img src="cards/forum/avatars/wumpwoast.png"><a href="#">@wumpwoast</a> &middot; #2/12</h5>
 </div>
 
-<p>This is a response.</p>
+<p class="postBody">This is a response.</p>
 
    <div class="cardFooter">
       <div class="bottom">
@@ -346,13 +383,13 @@ Who would you vote for class president?
    </div>
 </div>
 
-<div class="card forum odd" id="13241234">
+<div class="card forum odd thread-1476249257" id="13241234b">
 <div class="cardTitle">
   <h5><img src="cards/forum/avatars/wumpwoast.png"><a href="#">@wumpwoast</a> &middot; #3/12 (R1)</h5>
 </div>
 
    <div class="cardQuote"><p class="quote">This is a response.</p><p class="attribution">@wumpwoast</p></div>
-<p>This is a response that has been modified once. It has a quote and a song attached.</p>
+<p class="postBody">This is a response that has been modified once. It has a quote and a song attached.</p>
 
 <p class="attachment"><img class="attachmentIcon" src="images/mimetypes/audio.png" /><a href="some-attachment-file.mp3">some-attachment-file.mp3</a></p>
 
@@ -364,13 +401,13 @@ Who would you vote for class president?
    </div>
 </div>
 
-<div class="card forum odd" id="13241234">
+<div class="card forum even thread-1476249257" id="13241234c">
 <div class="cardTitle">
   <h5><img src="cards/forum/avatars/wumpwoast.png"><a href="#">@wumpwoast</a> &middot; #4/12</h5>
 </div>
 
    <div class="cardQuote"><p class="quote">This is a response, in a quote. It's really long, so you can see what the quoting style will eventually look like on a bigger card.</p><p class="attribution">@wumpwoast</p></div>
-   <p>This is a response. A really long response that could conflict or wrap around the little date tag, if we didn't have a full footer bar.</p>
+   <p class="postBody">This is a response. A really long response that could conflict or wrap around the little date tag, if we didn't have a full footer bar.</p>
 
    <div class="cardFooter">
       <div class="bottom">
@@ -380,12 +417,12 @@ Who would you vote for class president?
    </div>
 </div>
 
-<div class="card forum even" id="13241234">
+<div class="card forum odd thread-1476249257" id="13241234d">
 <div class="cardTitle">
   <h5><img src="cards/forum/avatars/wumpwoast.png"><a href="#">@wumpwoast</a> &middot; #5/12</h5>
 </div>
 
-<p>This is a response with an image attachment.</p>
+<p class="postBody">This is a response with an image attachment.</p>
 
 <p class="attachment"><img class="attachmentIcon" src="images/mimetypes/jpg.png" /><a href="cards/forum/pictures/ruined-castle-background.jpg">ruined-castle-background.jpg</a></p>
 
@@ -412,13 +449,13 @@ Who would you vote for class president?
    </div>
 </div>
 
-<div class="card forum odd" id="1476249257")>
+<div class="card forum odd thread-1476249000" id="1476249000")>
 <div class="cardTitle">
-  <h2><img src="cards/forum/avatars/wumpwoast.png" /><a href="#1476249257" onclick="cardToggle('1476249257');">Welcome to the new Codaworry forum</a></h2>
+  <h2><img src="cards/forum/avatars/wumpwoast.png" /><a href="#1476249257" onclick="revealToggle('1476249257');">Welcome to the new Codaworry forum</a></h2>
   <p class="subject"><a class="topicLink" href="javascript:">@wumpwoast</a>, <a class="topicLink" href="javascript:">#general</a></p>
 </div>
 
-<p>This is a post that has been expanded, but has no replies.</p>
+<p class="postBody">This is a post that has been expanded, but has no replies.</p>
 
    <div class="cardFooter">
       <div class="bottom">
@@ -429,14 +466,15 @@ Who would you vote for class president?
 </div>
 
 
-<div class="card forum even" id="1476249257")>
+<div class="card forum even thread-1476200000" id="1476200000")>
 <div class="cardTitle">
-  <h2><img src="cards/forum/avatars/wumpwoast.png"><a href="#1476249257" onclick="cardToggle('1476249257');">Follow the rules or else</a></h2>
+  <h2><img src="cards/forum/avatars/wumpwoast.png"><a href="#1476249257" onclick="revealToggle('1476249257');">Follow the rules or else</a></h2>
   <p class="subject"><a class="topicLink" href="javascript:">@wumpwoast</a>, <a class="topicLink" href="javascript:">#scrabble</a></p>
 </div>
 </div>
 
 
+   <!-- Contents go here -->
 
 </div>
 </body>
