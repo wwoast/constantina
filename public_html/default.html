@@ -196,30 +196,31 @@ function revealToggle(id) {
 
 function createPost(id, mode) {
    var card = document.getElementById(id);
+   var newPostCard = document.createElement('div');
+   newPostCard.className = 'newPostCard';
    var reply = document.createElement('textarea');
    reply.className = "newThread";
    reply.required = true;
 
    // If reply already clicked, get rid of previous text boxes
-   var nextElement = card.nextSibling.name;
-   if ( card.nextSibling.type == "textarea" ) {
-      card.nextSibling.remove();   // Textarea
-      card.nextSibling.remove();   // Rolldown div
+   var nextElement = card.nextElementSibling;
+   if ( nextElement.classList.contains("newPostCard") ) {
+      card.nextSibling.remove();
    }
-   if ( nextElement == mode ) {
+   if ( nextElement.classList.contains(mode) ) {
       return;   // Undraw, and call it good
    }
 
+   reply.name = mode;
+   newPostCard.classList.add(mode);
    if ( mode === "quote" ) {
       // Get body of the earlier message, and format it without nested
       // quotes. Only basic paragraphs (avoid pre/code/friends) TODO
-      reply.name = "quote";
       quotetext = card.childNodes[3].getElementsByClassName('postBody');
       // TODO: munge all paragraphs, and put it in a [QUOTE] tag.
       reply.defaultValue = quotetext[0].textContent;
 
    } else {
-      reply.name = "reply";
       reply.placeholder = "Add Your Reply!";
    }
 
@@ -238,8 +239,10 @@ function createPost(id, mode) {
    replyFooter.appendChild(attachmentButton);
    replyFooter.appendChild(submitButton);
 
-   card.insertAdjacentElement('afterEnd', reply);
-   reply.insertAdjacentElement('afterEnd', replyFooter);
+   newPostCard.appendChild(reply);
+   newPostCard.appendChild(replyFooter);
+
+   card.insertAdjacentElement('afterEnd', newPostCard);
 }
 
 </script>
