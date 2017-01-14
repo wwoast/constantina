@@ -1604,6 +1604,70 @@ def create_page(page):
    return output
 
 
+def authentication_page(start_response, in_state):
+   """
+   If Constantina is in "forum" mode, you get the authentication
+   page. You also get an authentication page when you search for
+   a @username in the search bar in "combined" mode.
+   """
+   base = open('authentication.html', 'r')
+   html = base.read()
+   start_response('200 OK', [('Content-Type','text/html')])
+   # TODO: persist in_state after login
+
+   return html
+
+
+def contents_page(start_response, in_state):
+   """
+   Three types of states:
+   1) Normal page creation (randomized elements)
+   2) A permalink page (state variable has an x in it)
+      One news or feature, footer, link to the main page
+   3) Easter eggs
+   """ 
+   substitute = '<!-- Contents go here -->'
+
+   # Instantiating all objects
+   page = cw_page(in_state)
+
+   # Fresh new HTML, no previous state provided
+   if ( page.state.in_state == None ):
+      base = open('default.html', 'r')
+      html = base.read()
+      html = html.replace(substitute, create_page(page))
+      start_response('200 OK', [('Content-Type','text/html')])
+
+   # Permalink page of some kind
+   elif (( page.state.news_permalink != None ) or
+         ( page.state.features_permalink != None ) or
+         ( page.state.topics_permalink != None )):
+      base = open('default.html', 'r')
+      html = base.read()
+      html = html.replace(substitute, create_page(page))
+      start_response('200 OK', [('Content-Type','text/html')])
+
+   # Doing a search or a filter process
+   elif (( page.state.search != None ) or
+         ( page.state.card_filter != [] )):
+      if ( page.state.search == [''] ) and ( page.state.card_filter == [] ):
+         # No search query given -- just regenerate the page
+         syslog.syslog("***** Reshuffle Page Contents *****")
+         page = cw_page()
+
+      start_response('200 OK', [('Content-Type','text/html')])
+      html = create_page(page)
+
+   # Otherwise, there is state, but no special headers.
+   else:
+      start_response('200 OK', [('Content-Type','text/html')])
+      html = create_page(page)
+
+   # Load html contents into the page with javascript
+   return html
+
+
+
 def application(env, start_response):
    """
    uwsgi entry point and main Constantina application.
@@ -1632,52 +1696,11 @@ def application(env, start_response):
    else:
       in_state = None
 
-
-   substitute = '<!-- Contents go here -->'
-
-   # Instantiating all objects
-   page = cw_page(in_state)
-
-   # Three types of states:
-   # 1) Normal page creation (randomized elements)
-   # 2) A permalink page (state variable has an x in it)
-      # One news or feature, footer, link to the main page)
-   # 3) Easter eggs
-
-   # Fresh new HTML, no previous state provided
-   if ( page.state.in_state == None ):
-      base = open('default.html', 'r')
-      html = base.read()
-      html = html.replace(substitute, create_page(page))
-      start_response('200 OK', [('Content-Type','text/html')])
-
-   # Permalink page of some kind
-   elif (( page.state.news_permalink != None ) or
-         ( page.state.features_permalink != None ) or 
-         ( page.state.topics_permalink != None )): 
-      base = open('default.html', 'r')
-      html = base.read()
-      html = html.replace(substitute, create_page(page))
-      start_response('200 OK', [('Content-Type','text/html')])
-
-   # Doing a search or a filter process
-   elif (( page.state.search != None ) or 
-         ( page.state.card_filter != [] )): 
-      if ( page.state.search == [''] ) and ( page.state.card_filter == [] ):
-         # No search query given -- just regenerate the page
-         syslog.syslog("***** Reshuffle Page Contents *****")
-         page = cw_page()
-
-      start_response('200 OK', [('Content-Type','text/html')])
-      html = create_page(page)
-
-   # Otherwise, there is state, but no special headers.
+   auth_mode = CONFIG.get("authentication", "mode")
+   if ( auth_mode == "blog" or auth_mode == "combined" ):
+      return contents_page(start_response, in_state)
    else:
-      start_response('200 OK', [('Content-Type','text/html')])
-      html = create_page(page)
-
-   # Load html contents into the page with javascript
-   return html
+      return authentication_page(start_response, in_state)
 
 
 
