@@ -8,6 +8,7 @@ from whoosh import index
 from whoosh.fields import Schema, ID, TEXT
 from whoosh.qparser import QueryParser
 import os
+from sys import stdin
 import re
 import magic
 import lxml.html
@@ -1667,6 +1668,25 @@ def contents_page(start_response, in_state):
    return html
 
 
+def authentication():
+   """
+   Super naive test authentication function just as a proof-of-concept
+   for validating my use of environment variabls and forms!
+   """
+   size = int(os.environ.get('CONTENT_LENGTH'))
+   post = {}
+   with stdin as fh:
+      # TODO: max content length, check for EOF
+      inbuf = fh.read(size)
+      for vals in inbuf.split('&'):
+         [ key, value ] = vals.split('=')
+         post[key] = value
+
+   if ( post['username'] == "justin" and post['password'] == "justin" ):
+      return True
+   else:
+      return False
+
 
 def application(env, start_response):
    """
@@ -1696,7 +1716,15 @@ def application(env, start_response):
    else:
       in_state = None
 
+   syslog.syslog("in-state:" + str(in_state))
    auth_mode = CONFIG.get("authentication", "mode")
+
+   if ( os.environ.get('REQUEST_METHOD') == 'POST' ):
+      if ( authentication() == True ):
+         return contents_page(start_response, in_state)
+      else:   
+         return authentication_page(start_response, in_state)
+
    if ( auth_mode == "blog" or auth_mode == "combined" ):
       return contents_page(start_response, in_state)
    else:
