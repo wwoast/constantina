@@ -462,7 +462,7 @@ class cw_page:
          state variable for the next AJAX load"""
       self.cur_len = 0
       self.cards = []
-      self.state = cw_state(in_state)
+      self.state = in_state
       self.out_state = ''
 
       self.search_results = ''
@@ -1611,7 +1611,7 @@ def authentication_page(start_response, in_state):
    page. You also get an authentication page when you search for
    a @username in the search bar in "combined" mode.
    """
-   base = open('authentication.html', 'r')
+   base = open('themes/roleplay.graveyard/authentication.html', 'r')
    html = base.read()
    start_response('200 OK', [('Content-Type','text/html')])
    # TODO: persist in_state after login
@@ -1619,7 +1619,7 @@ def authentication_page(start_response, in_state):
    return html
 
 
-def contents_page(start_response, in_state):
+def contents_page(start_response, state):
    """
    Three types of states:
    1) Normal page creation (randomized elements)
@@ -1630,28 +1630,28 @@ def contents_page(start_response, in_state):
    substitute = '<!-- Contents go here -->'
 
    # Instantiating all objects
-   page = cw_page(in_state)
+   page = cw_page(state)
 
    # Fresh new HTML, no previous state provided
-   if ( page.state.in_state == None ):
-      base = open('default.html', 'r')
+   if ( state.in_state == None ):
+      base = open('themes/roleplay.graveyard/contents.html', 'r')
       html = base.read()
       html = html.replace(substitute, create_page(page))
       start_response('200 OK', [('Content-Type','text/html')])
 
    # Permalink page of some kind
-   elif (( page.state.news_permalink != None ) or
-         ( page.state.features_permalink != None ) or
-         ( page.state.topics_permalink != None )):
-      base = open('default.html', 'r')
+   elif (( state.news_permalink != None ) or
+         ( state.features_permalink != None ) or
+         ( state.topics_permalink != None )):
+      base = open('themes/roleplay.graveyard/contents.html', 'r')
       html = base.read()
       html = html.replace(substitute, create_page(page))
       start_response('200 OK', [('Content-Type','text/html')])
 
    # Doing a search or a filter process
-   elif (( page.state.search != None ) or
-         ( page.state.card_filter != [] )):
-      if ( page.state.search == [''] ) and ( page.state.card_filter == [] ):
+   elif (( state.search != None ) or
+         ( state.card_filter != [] )):
+      if ( state.search == [''] ) and ( state.card_filter == [] ):
          # No search query given -- just regenerate the page
          syslog.syslog("***** Reshuffle Page Contents *****")
          page = cw_page()
@@ -1716,19 +1716,19 @@ def application(env, start_response):
    else:
       in_state = None
 
-   syslog.syslog("in-state:" + str(in_state))
+   state = cw_state(in_state)   # Create state object
    auth_mode = CONFIG.get("authentication", "mode")
 
    if ( os.environ.get('REQUEST_METHOD') == 'POST' ):
       if ( authentication() == True ):
-         return contents_page(start_response, in_state)
+         return contents_page(start_response, state)
       else:   
-         return authentication_page(start_response, in_state)
+         return authentication_page(start_response, state)
 
    if ( auth_mode == "blog" or auth_mode == "combined" ):
-      return contents_page(start_response, in_state)
+      return contents_page(start_response, state)
    else:
-      return authentication_page(start_response, in_state)
+      return authentication_page(start_response, state)
 
 
 
