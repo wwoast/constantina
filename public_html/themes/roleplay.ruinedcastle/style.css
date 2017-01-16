@@ -4,7 +4,7 @@ html {
 
 /* Cover makes the background collapse at smaller sizes */
 body {
-   background-image: url("themes/roleplay.ruinedcastle/wallpaper.jpg");
+   background-image: url("wallpaper.jpg");
    background-size: cover;
    background-attachment: fixed;
    /* just for graveyard. prep other css files */
@@ -693,7 +693,7 @@ div.card.help pre {
    similar layout / resolution */
 @media screen and (max-width: 630px) {
    body {
-      background-image: url("themes/roleplay.ruinedcastle/tiled-wallpaper.jpg");
+      background-image: url("tiled-wallpaper.jpg");
       background-size: 640px;
       background-attachment: none;
       background-repeat: repeat;

@@ -204,6 +204,21 @@ class cw_state:
       else:
          self.filtered = 0
 
+      # Default theme specified in configs (exclude the default setting)
+      if ( self.appearance != None ):
+         self.appearance = int(self.appearance[0])
+
+      theme_count = len(CONFIG.items("themes")) - 1
+      self.theme = None
+
+      syslog.syslog("appearance: " + str(self.appearance) + "  item count: " + str(theme_count))
+      if ( self.appearance == None ):
+         self.theme = CONFIG.get("themes", "default")
+      elif ( self.appearance >= theme_count ):
+         self.theme = CONFIG.get("themes", str(self.appearance % theme_count))
+      else:
+         self.theme = CONFIG.get("themes", str(self.appearance))
+
       # syslog.syslog("Random seed: " + str(self.seed))
 
 
@@ -387,6 +402,10 @@ class cw_state:
       # track the number of filtered cards in the state.
       if (( query_terms != '' ) and ( filter_terms != '' )):
          export_string = export_string + ":" + "xx" + str(filtered_count)
+
+      # If there was a appearance or theme tracked, include it in state links
+      if ( self.appearance != None ):
+         export_string = export_string + ":" + "xa" + str(self.appearance)
 
       return export_string
 
@@ -1605,13 +1624,13 @@ def create_page(page):
    return output
 
 
-def authentication_page(start_response, in_state):
+def authentication_page(start_response, state):
    """
    If Constantina is in "forum" mode, you get the authentication
    page. You also get an authentication page when you search for
    a @username in the search bar in "combined" mode.
    """
-   base = open('themes/roleplay.graveyard/authentication.html', 'r')
+   base = open(state.theme + '/authentication.html', 'r')
    html = base.read()
    start_response('200 OK', [('Content-Type','text/html')])
    # TODO: persist in_state after login
@@ -1634,7 +1653,7 @@ def contents_page(start_response, state):
 
    # Fresh new HTML, no previous state provided
    if ( state.in_state == None ):
-      base = open('themes/roleplay.graveyard/contents.html', 'r')
+      base = open(state.theme + '/contents.html', 'r')
       html = base.read()
       html = html.replace(substitute, create_page(page))
       start_response('200 OK', [('Content-Type','text/html')])
@@ -1643,7 +1662,7 @@ def contents_page(start_response, state):
    elif (( state.news_permalink != None ) or
          ( state.features_permalink != None ) or
          ( state.topics_permalink != None )):
-      base = open('themes/roleplay.graveyard/contents.html', 'r')
+      base = open(state.theme + '/contents.html', 'r')
       html = base.read()
       html = html.replace(substitute, create_page(page))
       start_response('200 OK', [('Content-Type','text/html')])
