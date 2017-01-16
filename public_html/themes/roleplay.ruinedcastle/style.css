@@ -7,8 +7,6 @@ body {
    background-image: url("wallpaper.jpg");
    background-size: cover;
    background-attachment: fixed;
-   /* just for graveyard. prep other css files */
-   background-position: 50% 100%;
    margin: 0 0 0 0;
    padding: 0 0 0 0;
    overflow-x: hidden;
