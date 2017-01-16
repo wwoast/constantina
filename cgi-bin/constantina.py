@@ -147,24 +147,15 @@ class cw_state:
    variables defined in the top of this file.
    """
    def __init__(self, state_string=None):
-      self.in_state = state_string   # Track the original state string
-      self.seed = None		     # The Random Seed for the page
+      self.in_state = state_string        # Track the original state string
+      self.process_state = state_string   # A state string we process
+      self.seed = None		          # The Random Seed for the page
 
-      self.max_items = 0             # Max items per page, based on
-                                     # counts from all card types
-      for ctype, cpp in CONFIG.items('card_counts'):
-         self.max_items = self.max_items + int(cpp)
+      # Was there an initial state string? Read it if there is.
+      # TODO: manage all the import state code
+      self.__import_state(state_string)
 
-      # For the card types in the card_counts config, create variables, i.e.
-      #   state.news.distance, state.topics.spacing
-      for ctype, card_count in CONFIG.items('card_counts'):
-         setattr(self, ctype, cw_cardtype(
-            ctype=ctype,
-            count=int(card_count),
-            distance=None,
-            filtertype=False,
-            spacing=CONFIG.getint('card_spacing', ctype)))
-
+      # TODO: (special state) import function
       # For permalink settings or search strings, define object fields as well
       #    Examples: self.search, self.news_permalink
       for spctype, spcfield in CONFIG.items("special_states"):
@@ -174,29 +165,11 @@ class cw_state:
       spcfilter = CONFIG.get("special_states", "xo")
       setattr(self, spcfilter, [])
 
-      # Was there an initial state string? Read it if there is. Then shuffle
-      # each ctype that we care about :)
-      self.__import_state(state_string)
-
-      # If there wasn't a random seed, we better generate one :)
-      if (self.seed == None):
-         self.__set_random_seed()
-
-      # For any card types we want to shuffle, do the shuffle dance
-      for ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(","):
-         getattr(self, ctype).shuffle()
+      # TODO: random seed stuff was here (the init)
 
       # If page was read in as a special state variable, use that (for search results)
-      if ( self.page != None ) and (( self.search != None ) or ( self.card_filter != None )):
-         self.page = int(self.page[0])
-
-      # Otherwise, determine our page number from the news article index reported
-      # TODO: for news articles, it's not a distance value! Its a news[] index
-      elif ( self.news.distance != None ):
-         self.page = ( int(self.news.distance) + 1 ) / CONFIG.getint('card_counts', 'news')
-
-      else:
-         self.page = 0
+      # TODO: move to __import_state
+      self.__import_page_state(self, self.in_state)
 
       # Filtered card count, tracked when we have a query type and a filter count
       if ( self.filtered != None ) and (( self.search != None ) and ( self.card_filter != None )):
@@ -218,6 +191,18 @@ class cw_state:
          self.theme = CONFIG.get("themes", str(self.appearance))
 
       # syslog.syslog("Random seed: " + str(self.seed))
+
+
+   def __find_state_variable(self, search):
+      """
+      Leveraged by all the other state functions. Find the given state
+      variable, either by state variable name, or "number" to find the 
+      random seed. Once a state variable is consumed, remove it from
+      the process_state.
+      """
+      state_vars = self.process_state.split(':')
+
+      # TODO: regex find the search parameter or find the all number
 
 
    def __import_state(self, state_string):
@@ -301,6 +286,48 @@ class cw_state:
 
          else:
             pass
+
+
+   # TODO: import functions for all complicated card types, managed from one
+   # import function.
+   def __import_content_cards(self, process_state):   
+      """
+      News cards and other content cards' state is tracked here.
+      """
+      self.max_items = 0             # Max items per page, based on
+                                     # counts from all card types
+      for ctype, cpp in CONFIG.items('card_counts'):
+         self.max_items = self.max_items + int(cpp)
+
+      # For the card types in the card_counts config, create variables, i.e.
+      #   state.news.distance, state.topics.spacing
+      for ctype, card_count in CONFIG.items('card_counts'):
+         setattr(self, ctype, cw_cardtype(
+            ctype=ctype,
+            count=int(card_count),
+            distance=None,
+            filtertype=False,
+            spacing=CONFIG.getint('card_spacing', ctype)))
+
+      # ...
+
+
+   def __import_page_state(self, process_state):
+      """
+      For subsequent page loads, we track the current page
+      """
+      # TODO: grab the xp stuff
+      # If page was read in as a special state variable, use that (for search results)
+      if ( self.page != None ) and (( self.search != None ) or ( self.card_filter != None )):
+         self.page = int(self.page[0])
+
+      # Otherwise, determine our page number from the news article index reported
+      # TODO: for news articles, it's not a distance value! Its a news[] index
+      elif ( self.news.distance != None ):
+         self.page = ( int(self.news.distance) + 1 ) / CONFIG.getint('card_counts', 'news')
+
+      else:
+         self.page = 0
 
 
    # TODO: move update_state portions to their own function?
@@ -440,18 +467,29 @@ class cw_state:
       return removeterms
 
 
-   def __set_random_seed(self):
-      """Return a consistent random seed for the shuffle function, so that
-      between page loads we can utilize the same initial random shuffle."""
-      self.seed = round(random(), 14)
-      seed(self.seed)
-      
-
-   def __import_random_seed(self, num):
+   def __import_random_seed(self, process_state):
       """Set the return seed based on a 5-digit integer from the prior_state.
       For shuffle, this has to be a float between zero and one, but for the
       state variable it should be a N-digit number."""
+      # TODO: read the number from process_state
+
+      # If there wasn't a random seed, we better generate one :)
+      if (self.seed == None):
+         self.__init_random_seed()
+
+      # For any card types we want to shuffle, do the shuffle dance
+      # TODO: the import random seed function is here
+      for ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(","):
+         getattr(self, ctype).shuffle()
+
       self.seed = float(str("0." + num))
+      seed(self.seed)
+
+
+   def __init_random_seed(self):
+      """Return a consistent random seed for the shuffle function, so that
+      between page loads we can utilize the same initial random shuffle."""
+      self.seed = round(random(), 14)
       seed(self.seed)
 
 
