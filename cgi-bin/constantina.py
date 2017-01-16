@@ -210,8 +210,6 @@ class cw_state:
 
       theme_count = len(CONFIG.items("themes")) - 1
       self.theme = None
-
-      syslog.syslog("appearance: " + str(self.appearance) + "  item count: " + str(theme_count))
       if ( self.appearance == None ):
          self.theme = CONFIG.get("themes", "default")
       elif ( self.appearance >= theme_count ):
@@ -663,7 +661,7 @@ class cw_page:
          permalink page of that type."""
       for spctype, spcfield in CONFIG.items("special_states"):
          if ( getattr(self.state, spcfield) != None ):
-            if ( spctype == "xo" ) or ( spctype == "xp" ) or ( spctype == "xx" ): 
+            if ( spctype == "xo" ) or ( spctype == "xp" ) or ( spctype == "xx" ) or ( spctype == "xa" ): 
                # TODO: make xo objects consistent with other absent states
                continue
             cnum = str(getattr(self.state, spcfield)[0])
