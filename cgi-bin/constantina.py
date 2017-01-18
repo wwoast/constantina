@@ -207,18 +207,21 @@ class cw_state:
       # Random seed is the one all-numeric state variable
       if ( search == "seed" ):
          hits = [token for token in self.state_vars if token.isdigit()]
-         output = hits[0]
+         if ( len(hits) > 0 ):
+            output = hits[0]
       # Special state variables are singleton values. Typically a
       # two-letter value starting with "x" as the first letter.
       # TODO: do we need to preserve the comma-separated crap?
       elif ( CONFIG.has_option("special_states", search) ):
          hits = [token for token in self.state_vars if token.find(search) == 0]
-         output = unquote_plus(hits[0][2:])
+         if ( len(hits) > 0 ):
+            output = unquote_plus(hits[0][2:])
       # Individual content card state variables. Each one is a distance
       # from the current page. 
       elif ( search in [s[0] for s in CONFIG.options("card_counts")] ):
          hits = [token for token in self.state_vars if token.find(search) == 0]
-         output = int(hits[0][1:])
+         if ( len(hits) > 0 ):
+            output = int(hits[0][1:])
 
       # Remove any matches for state variables, including extraneous duplicates
       [self.state_vars.remove(x) for x in hits]
