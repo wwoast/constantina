@@ -403,6 +403,7 @@ class cw_state:
       self.__import_theme_state()          # Theme settings
       self.__import_page_count_state()     # Figure out what page we're on
       self.__import_search_state()         # Search strings and filter strings
+      self.__import_filtered_card_count()  # Number of cards filtered out of prior pages
       self.__import_permalink_state()      # Permalink settings
 
 
