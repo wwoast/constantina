@@ -1,0 +1,52 @@
+<html>
+<head>
+<link rel="stylesheet" href="themes/roleplay.cloudycastle/style.css" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<link rel="Shortcut Icon" href="favicon.png" />
+<link rel="apple-touch-icon" href="iphone.png" />
+<script type="text/javascript" src="zepto.js"></script>
+<script type="text/javascript">
+(function() {
+	if ( navigator.platform === "iPad" ) {
+		var scale = 1.2;
+		document.write('<meta name="viewport" content="width=device-width; initial-scale='+scale+'; minimum-scale='+scale+'; maximum-scale='+scale+'; user-scalable=0;" />');
+
+	} else if ( navigator.platform === "iPhone" ) {
+		var scale = 1.0;
+		document.write('<meta name="viewport" content="width=device-width; initial-scale='+scale+'; minimum-scale='+scale+'; maximum-scale='+scale+'; user-scalable=0;" />');
+
+	} else if ( navigator.userAgent.indexOf("Android") != -1 ) {
+		var scale = 1.2;
+		document.write('<meta name="viewport" content="width=device-width; initial-scale-'+scale+'; minimum-scale='+scale+'; maximum-scale='+scale+'; user-scalable=0; target-densitydpi="device-dpi"; />');
+	} else {
+		return;
+	}
+})(); 
+</script>
+</head>
+<body>
+
+<div style="display: block; height: 510px; max-height: 60%; width: 100%;">
+</div>
+
+<div id="container" class="container">
+
+<div class="logo">
+   <img class="logo" src="themes/roleplay.cloudycastle/logo.png"/>
+</div>
+
+<div class="card login" id="userinfo" style="display: table; table-layout: fixed; background-color: rgba(40,40,40,0.78); text-align: center; width: 90%;">
+  <form method="POST" style="display: inline;">
+  <div style="display: table-cell; width: 70%; height: 70px; vertical-align: top;">
+    <input placeholder="Username" class="login" id="username" type="text" name="username">
+    <input placeholder="Password" class="login" id="password" type="password" name="password">
+  </div>
+  <div style="display: table-cell; width: 30%; height: 70px; vertical-align: top; margin-right: 28px;">
+    <button id="loginSubmit" type="submit">Login</button>
+  </div>
+  </form>
+</div>
+
+</div>
+</body>
+</html>
