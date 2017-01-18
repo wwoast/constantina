@@ -145,13 +145,15 @@ class cw_state:
    """
    def __init__(self, state_string=None):
       self.in_state = state_string            # Track the original state string
-      state_vars = self.in_state.split(':')   # TODO: max state params?
       self.__set_state_defaults()
 
       # Was there an initial state string? Process it if there was.
       # TODO: manage all the import state code
       if ( state_string != None ):
-         self.__import_state(state_string)
+         self.state_vars = self.in_state.split(':')   # TODO: max state params?
+      else:
+         self.state_vars = []
+      self.__import_state()
 
       # For any card types we want to shuffle, do the shuffle dance
       # TODO: must have imported all states first
@@ -185,6 +187,9 @@ class cw_state:
       for spctype, spcfield in CONFIG.items("special_states"):
          setattr(self, spcfield, None)       # All state vals are expected to exist
 
+      # TODO: refactor card_filter so this isn't necessary
+      self.card_filter = []
+
 
    def __find_state_variable(self, search):
       """
@@ -193,33 +198,34 @@ class cw_state:
       random seed. Once a state variable is consumed, remove it from
       the state_vars.
       """
-      if ( self.state_vars == [] ) return None
+      if ( self.state_vars == [] ): 
+         return None
 
       hits = []
       output = None 
 
       # Random seed is the one all-numeric state variable
       if ( search == "seed" ):
-         hits = [token for token in state_vars if token.isdigit()]
+         hits = [token for token in self.state_vars if token.isdigit()]
          output = hits[0]
       # Special state variables are singleton values. Typically a
       # two-letter value starting with "x" as the first letter.
       # TODO: do we need to preserve the comma-separated crap?
       elif ( CONFIG.has_option("special_states", search) ):
-         hits = [token for token in state_vars if token.find(search) == 0]
+         hits = [token for token in self.state_vars if token.find(search) == 0]
          output = unquote_plus(hits[0][2:])
       # Individual content card state variables. Each one is a distance
       # from the current page. 
       elif ( search in [s[0] for s in CONFIG.options("card_counts")] ):
-         hits = [token for token in state_vars if token.find(search) == 0]
+         hits = [token for token in self.state_vars if token.find(search) == 0]
          output = int(hits[0][1:])
 
       # Remove any matches for state variables, including extraneous duplicates
-      [state_vars.remove(x) for x in hits]
+      [self.state_vars.remove(x) for x in hits]
       return output
 
 
-   def __import_random_seed(self, process_state):
+   def __import_random_seed(self):
       """
       Set the return seed based on a 14-digit string from the state variable.
       As an input to seed(), this has to be a float between zero and one.
@@ -236,7 +242,7 @@ class cw_state:
       seed(self.seed)   # Now the RNG is seeded with our consistent value
 
 
-   def __import_content_card_state(self, process_state):   
+   def __import_content_card_state(self):   
       """
       News cards and other content cards' state is tracked here. Seed tracking
       between page loads means we don't need to log which content cards were
@@ -323,23 +329,24 @@ class cw_state:
 
       # First, check if any of the search terms should be processed as a 
       # cardtype and be added to the filter state instead.
-      searchterms = self.search.split(' ')
-      searchterms = filter(None, searchterms)   # remove nulls
-      self.card_filter = self.__add_filter_cardtypes(searchterms)
-      # Remove filter strings from the search state list if they exist
-      [searchterms.remove(term) for term in self.card_filter]
-
-      # Recombine the space-delimited array for processing by search funcs
-      # TODO: make self.search an array
-      self.search = " ".join(searchterms)
+      if ( self.search != None ):
+         searchterms = self.search.split(' ')
+         searchterms = filter(None, searchterms)   # remove nulls
+         self.card_filter = self.__add_filter_cardtypes(searchterms)
+         # Remove filter strings from the search state list if they exist
+         [searchterms.remove(term) for term in self.card_filter]
+         self.search = " ".join(searchterms)   # TODO: consider making self.search an array
 
       # Now, if no filter strings were found, we may need to process a set
       # of filter strings that were excised out on a previous page load.
       if ( self.card_filter == [] ):
          self.card_filter = self.__find_state_variable('xo')
          # Add-filter-cardtypes expects strings that start with #
-         hashtag_process = map(lambda x: "#" + x, getattr(self, spcfield))
-         self.card_filter = self.__add_filter_cardtypes(hashtag_process)
+         if ( self.card_filter != None ):
+            hashtag_process = map(lambda x: "#" + x, self.card_filter)
+            self.card_filter = self.__add_filter_cardtypes(hashtag_process)
+         else:
+            self.card_filter = []   # TODO: factor this out
 
 
    def __import_filtered_card_count(self):
@@ -382,18 +389,18 @@ class cw_state:
       return removeterms
 
 
-   def __import_state(self, state_string):
+   def __import_state(self):
       """
       Given a state variable string grabbed from the page, parse a
       parse into an object full of card-list properties. This will 
       be used to define which cards should be obtained for the page.
       """
-      self.__import_random_seed()            # Import the random seed first
-      self.__import_content_card_state()     # Then import the normal content cards
-      self.__import_theme_state(self)        # Theme settings
-      self.__import_page_count_state(self)   # Figure out what page we're on
-      self.__import_search_state(self)       # Search strings and filter strings
-      self.__import_permalink_state(self)    # Permalink settings
+      self.__import_random_seed()          # Import the random seed first
+      self.__import_content_card_state()   # Then import the normal content cards
+      self.__import_theme_state()          # Theme settings
+      self.__import_page_count_state()     # Figure out what page we're on
+      self.__import_search_state()         # Search strings and filter strings
+      self.__import_permalink_state()      # Permalink settings
 
 
    # TODO: move update_state portions to their own function, 
