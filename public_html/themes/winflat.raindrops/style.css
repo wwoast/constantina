@@ -85,7 +85,7 @@ input {
 input#searchSubmit {
    width: 30px;
    height: 30px;
-   background-image: url("./search.png");
+   background-image: url("search.png");
    border: solid 0px #000000; 
    cursor: pointer;
    z-index: 1;
