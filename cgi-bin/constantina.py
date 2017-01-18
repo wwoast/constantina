@@ -721,7 +721,8 @@ class cw_page:
             if ( spctype == "xo" ) or ( spctype == "xp" ) or ( spctype == "xx" ) or ( spctype == "xa" ): 
                # TODO: make xo objects consistent with other absent states
                continue
-            cnum = str(getattr(self.state, spcfield)[0])
+            cnum = str(getattr(self.state, spcfield))
+            syslog.syslog("permalink card loaded: " + str(cnum))
             # Insert a card after the first heading
             ctype = spcfield.split("_")[0]
             self.cards.append(cw_card(ctype, cnum, grab_body=True, permalink=True))
