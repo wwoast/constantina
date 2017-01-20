@@ -532,8 +532,9 @@ class cw_state:
    def fresh_mode(self):
       """Either an empty state, or just an empty state and a theme is set"""
       # syslog.syslog("initial state:" + str(self.in_state) + "  configured states: " + str(self.configured_states()))
-      if (( self.in_state == None ) or 
-          ( self.configured_states() == ['appearance'] )):
+      if (( self.page == 0 ) and 
+          (( self.in_state == None ) or 
+           ( self.configured_states() == ['appearance'] ))):
          return True
       else:
          return False
@@ -579,8 +580,8 @@ class cw_state:
    def search_mode(self):
       """Any valid state from a search mode will trigger this mode"""
       if (( self.search != None ) or
-          ( self.card_filter != None ) or 
-          ( self.filtered != None )):
+          ( self.card_filter != [] ) or 
+          ( self.filtered != 0 )):
          return True
       else:
          return False
@@ -1776,24 +1777,21 @@ def contents_page(start_response, state):
    page = cw_page(state)
 
    # Fresh new HTML, no previous state provided
-   if ( state.in_state == None ):
+   if ( state.fresh_mode() == True ):
       base = open(state.theme + '/contents.html', 'r')
       html = base.read()
       html = html.replace(substitute, create_page(page))
       start_response('200 OK', [('Content-Type','text/html')])
 
    # Permalink page of some kind
-   elif (( state.news_permalink != None ) or
-         ( state.features_permalink != None ) or
-         ( state.topics_permalink != None )):
+   elif ( state.permalink_mode() == True ):
       base = open(state.theme + '/contents.html', 'r')
       html = base.read()
       html = html.replace(substitute, create_page(page))
       start_response('200 OK', [('Content-Type','text/html')])
 
    # Doing a search or a filter process
-   elif (( state.search != None ) or
-         ( state.card_filter != [] )):
+   elif ( state.search_mode() == True ):
       if ( state.search == [''] ) and ( state.card_filter == [] ):
          # No search query given -- just regenerate the page
          syslog.syslog("***** Reshuffle Page Contents *****")
