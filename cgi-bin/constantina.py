@@ -58,7 +58,7 @@ class cw_cardtype:
       # appears again in the randomized view? This is a function
       # of the number of available cards
       if ( self.per_page == 0 ):
-         self.page_distance = 0;
+         self.page_distance = 0
       else: 
          self.page_distance = self.file_count*2 / self.per_page
 
@@ -143,13 +143,13 @@ class cw_state:
    It also provides a clean interface to global modes and settings that 
    influence what content and appearances a Constantina page can take.
    """
-   def __init__(self, state_string=None):
-      self.in_state = state_string            # Track the original state string
+   def __init__(self, in_state=None):
+      self.in_state = in_state      # Track the original state string
       self.__set_state_defaults()
 
       # Was there an initial state string? Process it if there was.
       # TODO: manage all the import state code
-      if ( state_string != None ):
+      if ( self.in_state != None ):
          self.state_vars = self.in_state.split(':')   # TODO: max state params?
       else:
          self.state_vars = []
@@ -401,10 +401,10 @@ class cw_state:
       self.__import_random_seed()          # Import the random seed first
       self.__import_content_card_state()   # Then import the normal content cards
       self.__import_theme_state()          # Theme settings
-      self.__import_page_count_state()     # Figure out what page we're on
       self.__import_search_state()         # Search strings and filter strings
       self.__import_filtered_card_count()  # Number of cards filtered out of prior pages
       self.__import_permalink_state()      # Permalink settings
+      self.__import_page_count_state()     # Figure out what page we're on
 
 
    # TODO: move update_state portions to their own function, 
@@ -518,6 +518,74 @@ class cw_state:
       return str(self.seed).replace("0.", "")
 
 
+   def configured_states(self):
+      """Check to see which special states are enabled. Return an array of 
+         either card types or special state types that are not set to None."""
+      state_names = [val[1] for val in CONFIG.items('special_states')]
+      state_names.remove('page')       # These two are set no matter what
+      state_names.remove('filtered')
+      return [state for state in state_names 
+                 if (( getattr(self, state) != None ) and 
+                     ( getattr(self, state) != [] ))]
+
+
+   def fresh_mode(self):
+      """Either an empty state, or just an empty state and a theme is set"""
+      # syslog.syslog("initial state:" + str(self.in_state) + "  configured states: " + str(self.configured_states()))
+      if (( self.in_state == None ) or 
+          ( self.configured_states() == ['appearance'] )):
+         return True
+      else:
+         return False
+
+
+   def permalink_mode(self):
+      """Is one of the permalink modes on?"""
+      if (( self.news_permalink != None ) or 
+          ( self.features_permalink != None ) or 
+          ( self.topics_permalink != None )):
+         return True
+      else:
+         return False
+
+
+   def filter_processed_mode(self):
+      """Is it a search state, and did we already convert #hashtag strings into
+         filter queries?"""
+      states = self.configured_states()
+      if (( 'search' in states ) or 
+          ( 'card_filter' in states )):
+         return True
+      else:
+         return False
+
+
+   def filter_only_mode(self):
+      """All search queries converted into card filters"""
+      if ( self.configured_states() == ['card_filter'] ):
+         return True
+      else:
+         return False
+
+
+   def search_only_mode(self):
+      """There is a search query, but no terms converted into card filters"""
+      if ( self.configured_states() == ['search'] ):
+         return True
+      else:
+         return False
+
+
+   def search_mode(self):
+      """Any valid state from a search mode will trigger this mode"""
+      if (( self.search != None ) or
+          ( self.card_filter != None ) or 
+          ( self.filtered != None )):
+         return True
+      else:
+         return False
+
+
 class cw_page:
    """
    Constantina Page Object.
@@ -547,7 +615,7 @@ class cw_page:
 
       news_items = CONFIG.getint("card_counts", "news")
 
-      if ( self.state.in_state == None ):
+      if ( self.state.fresh_mode() == True ):
          # Create a new page of randomly-assorted images and quotes,
          # along with reverse-time-order News items
          syslog.syslog("***** Completely new page-load workflow *****")
@@ -563,9 +631,7 @@ class cw_page:
          else:
             self.cards.append(cw_card('heading', 'bottom', grab_body=True))
 
-      elif (( self.state.news_permalink != None ) or 
-            ( self.state.features_permalink != None ) or 
-            ( self.state.topics_permalink != None )):
+      elif ( self.state.permalink_mode() == True ):
          # This is a permalink page request. For these, use a
          # special footer card (just a header card placed at 
          # the bottom of the page).
@@ -573,8 +639,7 @@ class cw_page:
          self.__get_permalink_card()
          self.cards.append(cw_card('heading', 'footer', grab_body=True, permalink=True))
 
-      elif (( self.state.search != None ) or 
-            ( self.state.card_filter != [] )):
+      elif ( self.state.search_mode() == True ):
          # Return search results based on the subsequent comma-separated list,
          # parsed by __import_state into self.state.search.
          # TODO: Tokenize all search parameters and remove non-alphanum characters
@@ -1377,9 +1442,11 @@ def remove_future(dirlisting):
 
 
 def opendir(ctype, hidden=False):
-   """Return either cached directory information or open a dir and
+   """
+   Return either cached directory information or open a dir and
    list all the files therein. Used for both searching and for the
-   card reading functions, so we manage it outside those."""
+   card reading functions, so we manage it outside those.
+   """
    directory = CONFIG.get("paths", ctype)
    if ( hidden == True ):
       directory += "/hidden" 
