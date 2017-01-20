@@ -706,7 +706,7 @@ class cw_page:
          if ( card_count == 0 ):
             continue
          # No data and it's not the first page? Skip this type
-         if ( getattr(self.state, ctype).clist == None ) and ( self.state.in_state != None ):
+         if ( getattr(self.state, ctype).clist == None ) and ( self.state.fresh_mode() == False ):
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
          if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
@@ -715,7 +715,7 @@ class cw_page:
          # Grab the cnum of the last inserted thing of this type
          # and then open the next one
          # If we didn't open anyting last time, start at the beginning
-         if ( self.state.in_state == None ):
+         if ( self.state.fresh_mode() == True ):
             start = 0
          # If these are previous items, calculate how many were on previous pages
          else:
