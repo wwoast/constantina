@@ -407,12 +407,15 @@ class cw_state:
       self.__import_page_count_state()     # Figure out what page we're on
 
 
-   # TODO: move update_state portions to their own function, 
-   # similar to import functions
-   # TODO: most of the update-state stuff is calculating distance
-   def export_state(self, cards, query_terms, filter_terms, filtered_count):
-      """Once all cards are read, calculate a new state variable to
-         embed in the more-contents page link."""
+   def __calculate_last_distance(self, cards):
+      """
+      The main part about state tracking in Constantina is tracking how far
+      the closest card to the beginning of a page load is.
+  
+      Prior to exporting a page state, loop over your list of cards, tracking 
+      news cards and heading cards separately, and determine how far each ctype
+      card is from the beginning of the next page that will be loaded.
+      """
       all_ctypes = CONFIG.options("card_counts")
 
       # Populate the state object, which we'll later build the
@@ -431,19 +434,19 @@ class cw_state:
       done_distance = []
       all_ctypes.sort()
 
-
       # Terminate the loop if we either get to the bottom of the
       # array, or whether we've calculated distances for all
       # possible state types
-      hidden_cards = 0   # Account for each hidden card in the distance
-                         # between here and the end of the page
-      news_last = 0      # Last news card seen, by index
-
-      # Traversing backwards, find the last card of each type shown
+      hidden_cards = 0    # Account for each hidden card in the distance
+                          # between here and the end of the page
+      news_seen = False   # Have we processed a news card yet?
+                          # TODO: how to clean deal with news_last?
+      # Traversing backwards from the end, find the last of each cardtype shown
       for i in xrange(len(cards) - 1, -1, -1):
          card = cards[i]
-         if (card.ctype == 'news') and ( news_last == 0 ):
-            news_last = card.num
+         if (card.ctype == 'news') and ( news_seen == False ):
+            getattr(self, 'news').distance = card.num   # TODO: news index, not distance!!
+            news_seen = True
             continue
          if (card.ctype == 'heading' ):
             # Either a tombstone card or a "now loading" card
@@ -465,12 +468,20 @@ class cw_state:
             break
 
 
-      # Finally, construct the state string for the next page
-      seed = self.__export_random_seed()
-      export_string = ''
-      state_tokens = []
+   def __export_random_seed(self):
+      """Export the random seed for adding to the state variable"""
+      return str(self.seed).replace("0.", "")
 
-      for ctype in all_ctypes:
+
+   def __export_content_card_state(self):
+      """
+      Construct a string representing the cards that were loaded on this
+      page, for the sake of informing the next page load.
+      """
+      state_tokens = []
+      content_string = ""
+
+      for ctype in CONFIG.options("card_counts"):
          # If no cards for this state, do not track
          if (( getattr(self, ctype).clist == [] ) or ( getattr(self, ctype).distance == None )):
             continue
@@ -481,41 +492,87 @@ class cw_state:
          state_tokens.append(stype + str(cdist))
 
       # Track page number for the next state variable by adding one to the current
+      news_last = str(getattr(self, 'news').distance)   # TODO: not distance, but news index!
       if ( state_tokens != [] ):
-         export_string = ":".join(state_tokens) + ":" + "n" + str(news_last) + ":" + str(seed)
+         content_string = ":".join(state_tokens) + ":" + "n" + news_last
       else:
-         export_string = "n" + str(news_last) + ":" + str(seed)
+         content_string = "n" + news_last
+      return content_string
 
-      # The up-to-10 search terms come after the primary state variable,
-      # letting us know that the original query was a search attempt, and that
-      # future data to insert into the page should be filtered by these 
-      # provided terms.
-      if ( filter_terms != '' ):
-         export_string = export_string + ":" + "xo" + filter_terms
-      if ( query_terms != '' ):
-         export_string = export_string + ":" + "xs" + query_terms
 
-      # If we had search results and used a page number, write an incremented page
-      # number into the next search state for loading
+   def __export_page_count_state(self, query_terms, filter_terms):
+      """
+      If we had search results and used a page number, write an incremented page
+      number into the next search state for loading
+      """
+      # TODO: don't use query_terms and filter_terms. Use the state mode checks
+      page_string = ""
       if (( query_terms != '' ) or ( filter_terms != '' )):
          export_page = int(self.page) + 1
-         export_string = export_string + ":" + "xp" + str(export_page)
+         page_string = "xp" + str(export_page)
+      return page_string      
 
-      # If any cards were excluded by filtering, and a search is in progress,
-      # track the number of filtered cards in the state.
-      if (( query_terms != '' ) and ( filter_terms != '' )):
-         export_string = export_string + ":" + "xx" + str(filtered_count)
 
-      # If there was a appearance or theme tracked, include it in state links
+   def __export_theme_state(self):
+      """
+      If there was a appearance or theme tracked, include it in state links
+      """
+      appearance_string = ""
       if ( self.appearance != None ):
-         export_string = export_string + ":" + "xa" + str(self.appearance)
+         appearance_string = "xa" + str(self.appearance)
+      return appearance_string
 
+
+   def __export_search_state(self, query_terms, filter_terms):
+      """
+      Export state related to searched cards and filtered card types.
+      """ 
+      # TODO: don't use query_terms and filter_terms. Use the state mode checks
+      filter_string = ""
+      query_string = ""
+
+      if ( filter_terms != '' ):
+         filter_string = "xo" + filter_terms
+      if ( query_terms != '' ):
+         query_string = "xs" + query_terms
+
+      search_string = ':'.join([filter_string, query_string])
+      return search_string
+
+
+   def __export_filtered_card_count(self, query_terms, filtered_terms):
+      """
+      If any cards were excluded by filtering, and a search is in progress,
+      track the number of filtered cards in the state.
+      """
+      # TODO: don't use query_terms and filter_terms. Use the state mode checks
+      filtered_count_string = ""
+      if (( query_terms != '' ) and ( filter_terms != '' )):
+         filtered_count_string = "xx" + str(filtered_count)
+      return filtered_count_string
+
+
+   def export_state(self, cards, query_terms, filter_terms, filtered_count):
+      """
+      Once all cards are read, calculate a new state variable to
+      embed in the more-contents page link.
+      """
+      # Start by calculating the distance from the next page for each
+      # card type. This updates the state.ctype.distance values
+      self.__calculate_last_distance(cards)
+
+      # Finally, construct the state string for the next page
+      # TODO: don't use query_terms and filter_terms. Use the state mode checks
+      export_parts = [ self.__export_random_seed(),
+                       self.__export_content_card_state()
+                       self.__export_search_state(query_terms, filter_terms)
+                       self.__export_filtered_card_count(query_terms, filter_terms)
+                       self.__export_page_count_state(query_terms, filter_terms)
+                       self.__export_theme_state() ]
+
+      export_parts = filter('', export_parts)
+      export_string = ':'.join(export_parts)
       return export_string
-
-
-   def __export_random_seed(self):
-      """Export the random seed for adding to the state variable"""
-      return str(self.seed).replace("0.", "")
 
 
    def configured_states(self):
