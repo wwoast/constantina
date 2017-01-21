@@ -444,9 +444,10 @@ class cw_state:
       # Traversing backwards from the end, find the last of each cardtype shown
       for i in xrange(len(cards) - 1, -1, -1):
          card = cards[i]
-         if (card.ctype == 'news') and ( news_seen == False ):
-            getattr(self, 'news').distance = card.num   # TODO: news index, not distance!!
-            news_seen = True
+         if (card.ctype == 'news'):
+            if ( news_seen == False ):
+               self.news.distance = card.num   # TODO: news index, not distance!!
+               news_seen = True
             continue
          if (card.ctype == 'heading' ):
             # Either a tombstone card or a "now loading" card
@@ -461,7 +462,7 @@ class cw_state:
          done_distance.sort()
 
          dist = len(cards) - hidden_cards - i
-         # syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" % ( card.ctype, dist, i, len(cards), len(cards) - hidden_cards))
+         syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" % ( card.ctype, dist, i, len(cards), len(cards) - hidden_cards))
          getattr(self, card.ctype).distance = str(dist)
          # Early break once we've seen all the card types
          if ( done_distance == all_ctypes ):
