@@ -1552,7 +1552,7 @@ def create_simplecard(card, next_state):
    return output
 
 
-def create_textcard(card):
+def create_textcard(card, appearance):
    """All news and features are drawn here. For condensing content, 
    wrap any nested image inside a "read more" bracket that will appear 
    after the 1st paragraph of text. Hide images behind this link too.
@@ -1660,9 +1660,13 @@ def create_textcard(card):
        ( card.search_result == False )):
       output += """   </div>\n"""
 
+   # Convert the appearance value into a string for permalinks
+   appanchor = ""
+   if ( appearance != None ):
+      appanchor += ":xa" + str(appearance)
+
    # And close the textcard
-   resource_dir = CONFIG.get("paths", "resource")
-   permanchor = "/" + resource_dir + "/?x" + card.ctype[0] + anchor
+   permanchor = "/?x" + card.ctype[0] + anchor + appanchor
 
    if ( card.permalink == False ):
       output += """   <div class="cardFooter">\n"""
@@ -1734,7 +1738,7 @@ def create_page(page):
       if (( page.cards[i].ctype == "news" ) or
           ( page.cards[i].ctype == "topics" ) or
           ( page.cards[i].ctype == "features" )):
-         output += create_textcard(page.cards[i])
+         output += create_textcard(page.cards[i], page.state.appearance)
 
       if (( page.cards[i].ctype == "quotes" ) or
           ( page.cards[i].ctype == "heading" )):
