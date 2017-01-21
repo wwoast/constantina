@@ -528,17 +528,17 @@ class cw_state:
       Export state related to searched cards and filtered card types.
       """ 
       # TODO: don't use query_terms and filter_terms. Use the state mode checks
-      filter_string = ""
-      query_string = ""
+      filter_string = None
+      query_string = None
+      search_string = None
 
       if ( filter_terms != '' ):
          filter_string = "xo" + filter_terms
       if ( query_terms != '' ):
          query_string = "xs" + query_terms
 
-      search_string = ':'.join([filter_string, query_string])
-      if ( search_string == '' ):
-         search_string = None
+      if (( filter_string != None ) or ( query_string != None )):
+         search_string = ':'.join([filter_string, query_string])
 
       return search_string
 
@@ -574,6 +574,7 @@ class cw_state:
                        self.__export_theme_state() ]
 
       export_parts = filter(None, export_parts)
+      syslog.syslog(str(export_parts))
       export_string = ':'.join(export_parts)
       return export_string
 
