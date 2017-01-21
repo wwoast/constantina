@@ -575,7 +575,6 @@ class cw_state:
                        self.__export_theme_state() ]
 
       export_parts = filter(None, export_parts)
-      syslog.syslog(str(export_parts))
       export_string = ':'.join(export_parts)
       return export_string
 
@@ -782,7 +781,7 @@ class cw_page:
             start = 0
          # If these are previous items, calculate how many were on previous pages
          else:
-            start = int(self.state.page * card_count) + 1
+            start = int(self.state.page * card_count)
 
          for i in xrange(start, start + card_count):
             card = cw_card(ctype, i, state=self.state, grab_body=True)
