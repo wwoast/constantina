@@ -479,7 +479,7 @@ class cw_state:
       page, for the sake of informing the next page load.
       """
       state_tokens = []
-      content_string = ""
+      content_string = None
 
       for ctype in CONFIG.options("card_counts"):
          # If no cards for this state, do not track
@@ -506,7 +506,7 @@ class cw_state:
       number into the next search state for loading
       """
       # TODO: don't use query_terms and filter_terms. Use the state mode checks
-      page_string = ""
+      page_string = None
       if (( query_terms != '' ) or ( filter_terms != '' )):
          export_page = int(self.page) + 1
          page_string = "xp" + str(export_page)
@@ -517,7 +517,7 @@ class cw_state:
       """
       If there was a appearance or theme tracked, include it in state links
       """
-      appearance_string = ""
+      appearance_string = None
       if ( self.appearance != None ):
          appearance_string = "xa" + str(self.appearance)
       return appearance_string
@@ -537,6 +537,9 @@ class cw_state:
          query_string = "xs" + query_terms
 
       search_string = ':'.join([filter_string, query_string])
+      if ( search_string == '' ):
+         search_string = None
+
       return search_string
 
 
@@ -546,7 +549,7 @@ class cw_state:
       track the number of filtered cards in the state.
       """
       # TODO: don't use query_terms and filter_terms. Use the state mode checks
-      filtered_count_string = ""
+      filtered_count_string = None
       if (( query_terms != '' ) and ( filter_terms != '' )):
          filtered_count_string = "xx" + str(filtered_count)
       return filtered_count_string
@@ -564,13 +567,13 @@ class cw_state:
       # Finally, construct the state string for the next page
       # TODO: don't use query_terms and filter_terms. Use the state mode checks
       export_parts = [ self.__export_random_seed(),
-                       self.__export_content_card_state()
-                       self.__export_search_state(query_terms, filter_terms)
-                       self.__export_filtered_card_count(query_terms, filter_terms)
-                       self.__export_page_count_state(query_terms, filter_terms)
+                       self.__export_content_card_state(),
+                       self.__export_search_state(query_terms, filter_terms),
+                       self.__export_filtered_card_count(query_terms, filter_terms),
+                       self.__export_page_count_state(query_terms, filter_terms),
                        self.__export_theme_state() ]
 
-      export_parts = filter('', export_parts)
+      export_parts = filter(None, export_parts)
       export_string = ':'.join(export_parts)
       return export_string
 
