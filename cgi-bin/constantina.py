@@ -493,11 +493,14 @@ class cw_state:
          state_tokens.append(stype + str(cdist))
 
       # Track page number for the next state variable by adding one to the current
-      news_last = str(getattr(self, 'news').distance)   # TODO: not distance, but news index!
+      news_last = getattr(self, 'news').distance   # TODO: not distance, but news index!
+      if ( news_last == None ):
+         news_last = 0
+
       if ( state_tokens != [] ):
-         content_string = ":".join(state_tokens) + ":" + "n" + news_last
+         content_string = ":".join(state_tokens) + ":" + "n" + str(news_last)
       else:
-         content_string = "n" + news_last
+         content_string = "n" + str(news_last)
       return content_string
 
 
