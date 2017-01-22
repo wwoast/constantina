@@ -622,8 +622,8 @@ class cw_state:
       If this returns true, it means the user either wants cards of this type, or
       that no card filtering is currently in place.
       """
-      if (( self.card_filter != None ) and
-          ( getattr(self, ctype).filtertype ) == False ):
+      if (( self.card_filter != [] ) and
+          ( getattr(self, ctype).filtertype == False )):
          return True
       else:
          return False
@@ -786,7 +786,7 @@ class cw_page:
              ( getattr(self.state, ctype).clist == None )):
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( self.state.exclude_cardtype(ctype) == False ):
+         if ( self.state.exclude_cardtype(ctype) == True ):
             continue
 
          # Grab the cnum of the last inserted thing of this type
