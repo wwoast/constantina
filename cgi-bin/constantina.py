@@ -538,13 +538,14 @@ class cw_state:
       if ( query_terms != '' ):
          query_string = "xs" + query_terms
 
-      if (( filter_string != None ) or ( query_string != None )):
-         search_string = ':'.join([filter_string, query_string])
+      search_parts = [ filter_string, query_string ]
+      search_parts = filter(None, search_parts)
+      search_string = ':'.join(search_parts)
 
       return search_string
 
 
-   def __export_filtered_card_count(self, query_terms, filtered_terms):
+   def __export_filtered_card_count(self, query_terms, filter_terms):
       """
       If any cards were excluded by filtering, and a search is in progress,
       track the number of filtered cards in the state.
