@@ -332,22 +332,33 @@ class cw_state:
       if ( self.search != None ):
          searchterms = self.search.split(' ')
          searchterms = filter(None, searchterms)   # remove nulls
-         self.card_filter = self.__add_filter_cardtypes(searchterms)
+         removeterms = self.__add_filter_cardtypes(searchterms)
          # Remove filter strings from the search state list if they exist
-         [searchterms.remove(term) for term in self.card_filter]
+         [searchterms.remove(term) for term in removeterms]
          self.search = searchterms
+         # Take off leading #-sigil for card type searches
+         self.card_filter = map(lambda x: x[1:], removeterms) 
 
-      # Now, if no filter strings were found, we may need to process a set
-      # of filter strings that were excised out on a previous page load.
+
+   def __import_filter_state(self):
+      """
+      This must run after the import_search_state!
+
+      If no filter strings were found during search, we may need to process a set
+      of filter strings that were excised out on a previous page load.
+      """
       if ( self.card_filter == None ):
          self.card_filter = self.__find_state_variable('xo')
          # Add-filter-cardtypes expects strings that start with #
          if ( self.card_filter != None ):
             hashtag_process = map(lambda x: "#" + x, self.card_filter)
-            self.card_filter = self.__add_filter_cardtypes(hashtag_process)
+            filterterms = self.__add_filter_cardtypes(hashtag_process)
+            # Take off leading #-sigil for card type searches
+            self.card_filter = map(lambda x: x[1:], filterterms) 
       
       # For all the array processing, if we were left with no card filter
       # information processed, revert this to None so emptiness checks work
+      # TODO: refactor add_filter_ctypes!!
       if ( self.card_filter == [] ):
          self.card_filter = None
 
@@ -404,7 +415,8 @@ class cw_state:
       self.__import_random_seed()          # Import the random seed first
       self.__import_content_card_state()   # Then import the normal content cards
       self.__import_theme_state()          # Theme settings
-      self.__import_search_state()         # Search strings and filter strings
+      self.__import_search_state()         # Search strings and processing out filter strings
+      self.__import_filter_state()         # Any filter strings loaded from prior pages
       self.__import_filtered_card_count()  # Number of cards filtered out of prior pages
       self.__import_permalink_state()      # Permalink settings
       self.__import_page_count_state()     # Figure out what page we're on
@@ -828,10 +840,10 @@ class cw_page:
          if ( ctype == 'topics' ):
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
-         syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype) + " card_filter_state: " + str(self.state.card_filter))
          if ( self.state.exclude_cardtype(ctype) == True ):
             continue
 
+         syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype) + " card_filter_state: " + str(self.state.card_filter))
          start = 0
          end_dist = len(self.search_results.hits[ctype])
          # No results for this search type
@@ -1363,9 +1375,6 @@ class cw_search:
       if ( safe_input == '' ):
          return 0
 
-      # syslog.syslog("unsafe input: " + unsafe_input)
-      # syslog.syslog("  safe input: " + safe_input)
-
       # Get rid of symbol instances in whatever input we're processing
       # Note this only works on ASCII symbol characters, not the special
       # double-quote characters &ldquo; and &rdquo;, as well as other
@@ -1470,6 +1479,7 @@ class cw_search:
    def __filter_cardtypes(self):
       """Get a list of cards to return, in response to a card-filter
       event. These tend to be of a single card type."""
+      # TODO: search_page can have a better query here, for multiple filter types
       self.parser = QueryParser("content", self.schema)
 
       for filter_ctype in self.filter_string.split(' '):
