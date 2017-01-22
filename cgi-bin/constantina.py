@@ -187,9 +187,6 @@ class cw_state:
       for spctype, spcfield in CONFIG.items("special_states"):
          setattr(self, spcfield, None)       # All state vals are expected to exist
 
-      # TODO: refactor card_filter so this isn't necessary
-      self.card_filter = []
-
 
    def __find_state_variable(self, search):
       """
@@ -342,14 +339,12 @@ class cw_state:
 
       # Now, if no filter strings were found, we may need to process a set
       # of filter strings that were excised out on a previous page load.
-      if ( self.card_filter == [] ):
+      if ( self.card_filter == None ):
          self.card_filter = self.__find_state_variable('xo')
          # Add-filter-cardtypes expects strings that start with #
          if ( self.card_filter != None ):
             hashtag_process = map(lambda x: "#" + x, self.card_filter)
             self.card_filter = self.__add_filter_cardtypes(hashtag_process)
-         else:
-            self.card_filter = []   # TODO: factor this out
 
 
    def __import_filtered_card_count(self):
@@ -622,7 +617,7 @@ class cw_state:
       If this returns true, it means the user either wants cards of this type, or
       that no card filtering is currently in place.
       """
-      if (( self.card_filter != [] ) and
+      if (( self.card_filter != None ) and
           ( getattr(self, ctype).filtertype == False )):
          return True
       else:
@@ -1876,7 +1871,7 @@ def contents_page(start_response, state):
 
    # Doing a search or a filter process
    elif ( state.search_mode() == True ):
-      if ( state.search == [''] ) and ( state.card_filter == [] ):
+      if ( state.search == [''] ) and ( state.card_filter == None ):
          # No search query given -- just regenerate the page
          syslog.syslog("***** Reshuffle Page Contents *****")
          page = cw_page()
