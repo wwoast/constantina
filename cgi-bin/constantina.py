@@ -349,18 +349,21 @@ class cw_state:
       """
       if ( self.card_filter == None ):
          self.card_filter = self.__find_state_variable('xo')
-         # Add-filter-cardtypes expects strings that start with #
+
          if ( self.card_filter != None ):
-            hashtag_process = map(lambda x: "#" + x, self.card_filter)
+            filterterms = self.card_filter.split(' ')
+            # Add-filter-cardtypes expects strings that start with #
+            hashtag_process = map(lambda x: "#" + x, filterterms)
             filterterms = self.__add_filter_cardtypes(hashtag_process)
             # Take off leading #-sigil for card type searches
+            # TODO: guarantee first character is sigil
             self.card_filter = map(lambda x: x[1:], filterterms) 
       
-      # For all the array processing, if we were left with no card filter
-      # information processed, revert this to None so emptiness checks work
-      # TODO: refactor add_filter_ctypes!!
-      if ( self.card_filter == [] ):
-         self.card_filter = None
+            # For all the array processing, if we were left with no card filter
+            # information processed, revert this to None so emptiness checks work
+            # TODO: refactor add_filter_ctypes!!
+            if ( self.card_filter == [] ):
+               self.card_filter = None
 
 
    def __import_filtered_card_count(self):
@@ -544,10 +547,7 @@ class cw_state:
 
 
    def __export_search_state(self, query_terms):
-      """
-      Export state related to searched cards and filtered card types.
-      """ 
-      # TODO: break this into two functions
+      """Export state related to searched cards""" 
       query_string = None
       if ( query_terms != '' ):
          query_string = "xs" + query_terms
@@ -609,7 +609,6 @@ class cw_state:
 
    def fresh_mode(self):
       """Either an empty state, or just an empty state and a theme is set"""
-      # syslog.syslog("initial state:" + str(self.in_state) + "  configured states: " + str(self.configured_states()))
       if (( self.page == 0 ) and 
           (( self.in_state == None ) or 
            ( self.configured_states() == ['appearance'] ))):
