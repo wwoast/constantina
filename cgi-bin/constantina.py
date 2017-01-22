@@ -338,7 +338,7 @@ class cw_state:
          self.card_filter = self.__add_filter_cardtypes(searchterms)
          # Remove filter strings from the search state list if they exist
          [searchterms.remove(term) for term in self.card_filter]
-         self.search = " ".join(searchterms)   # TODO: consider making self.search an array
+         self.search = searchterms
 
       # Now, if no filter strings were found, we may need to process a set
       # of filter strings that were excised out on a previous page load.
@@ -1264,20 +1264,22 @@ class cw_search:
       self.words_file = CONFIG.get('search', 'ignore_words')
       self.symobls_file = CONFIG.get('search', 'ignore_symbols')
       self.search_types = CONFIG.get("card_properties", "search").replace(" ","").split(",")
-
+      
       # Define the indexing schema. Include the mtime to track updated 
       # content in the backend, ctype so that we can manage the distribution
       # of returned search results similar to the normal pages, and the 
       # filename itself as a unique identifier (most filenames are utimes).
       self.schema = Schema(file=ID(stored=True, unique=True, sortable=True), ctype=ID(stored=True), mtime=ID(stored=True), content=TEXT)
 
+      syslog.syslog("input terms: " + str(unsafe_query_terms))
+
       # If index doesn't exist, create it
       if ( index.exists_in(self.index_dir)):
          self.index = index.open_dir(self.index_dir)
-         # print "Index exists"
+         # syslog.syslog("Index exists")
       else:
          self.index = index.create_in(self.index_dir, schema=self.schema)
-         # print "Index not found -- creating one"
+         # syslog.syslog("Index not found -- creating one")
       # Prepare for query searching (mtime update, search strings)
       self.searcher = self.index.searcher()
 
@@ -1351,6 +1353,9 @@ class cw_search:
       safe_input = self.ignore_words.sub("", unsafe_input)
       if ( safe_input == '' ):
          return 0
+
+      # syslog.syslog("unsafe input: " + unsafe_input)
+      # syslog.syslog("  safe input: " + safe_input)
 
       # Get rid of symbol instances in whatever input we're processing
       # Note this only works on ASCII symbol characters, not the special
@@ -1438,7 +1443,6 @@ class cw_search:
       self.parser = QueryParser("content", self.schema)
       self.query = self.parser.parse(unicode(self.query_string))
       self.results = self.searcher.search_page(self.query, self.page, sortedby="file", reverse=True, pagelen=self.resultcount)
-      # print self.results[0:]
 
       # Just want the utime filenames themselves? Here they are, in 
       # reverse-utime order just like we want for insert into the page
@@ -1921,8 +1925,8 @@ def application(env, start_response):
    os.chdir(root_dir + "/" + resource_dir)
    in_state = os.environ.get('QUERY_STRING')
    if ( in_state != None ) and ( in_state != '' ):
-      # Truncate state variable at 1024 characters
-      in_state = in_state[0:1024]
+      # Truncate state variable at 512 characters
+      in_state = in_state[0:512]
    else:
       in_state = None
 
