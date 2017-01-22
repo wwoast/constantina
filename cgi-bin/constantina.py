@@ -345,6 +345,11 @@ class cw_state:
          if ( self.card_filter != None ):
             hashtag_process = map(lambda x: "#" + x, self.card_filter)
             self.card_filter = self.__add_filter_cardtypes(hashtag_process)
+      
+      # For all the array processing, if we were left with no card filter
+      # information processed, revert this to None so emptiness checks work
+      if ( self.card_filter == [] ):
+         self.card_filter = None
 
 
    def __import_filtered_card_count(self):
