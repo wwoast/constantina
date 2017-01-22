@@ -531,25 +531,23 @@ class cw_state:
       return appearance_string
 
 
-   def __export_search_state(self, query_terms, filter_terms):
+   def __export_search_state(self, query_terms):
       """
       Export state related to searched cards and filtered card types.
       """ 
       # TODO: break this into two functions
-      filter_string = None
       query_string = None
-      search_string = None
-
-      if ( filter_terms != '' ):
-         filter_string = "xo" + filter_terms
       if ( query_terms != '' ):
          query_string = "xs" + query_terms
+      return query_string
 
-      search_parts = [ filter_string, query_string ]
-      search_parts = filter(None, search_parts)
-      search_string = ':'.join(search_parts)
 
-      return search_string
+   def __export_filter_state(self, filter_terms):
+      """Export state related to #ctype filtered cards"""
+      filter_string = None
+      if ( filter_terms != '' ):
+         filter_string = "xo" + filter_terms
+      return filter_string
 
 
    def __export_filtered_card_count(self, filtered_count):
@@ -568,16 +566,15 @@ class cw_state:
       Once all cards are read, calculate a new state variable to
       embed in the more-contents page link.
       """
-      # TODO: Get rid of anything other than cards here!
       # Start by calculating the distance from the next page for each
       # card type. This updates the state.ctype.distance values
       self.__calculate_last_distance(cards)
 
       # Finally, construct the state string for the next page
-      # TODO: don't use query_terms and filter_terms. Use the state mode checks
       export_parts = [ self.__export_random_seed(),
                        self.__export_content_card_state(),
-                       self.__export_search_state(query_terms, filter_terms),
+                       self.__export_search_state(query_terms),
+                       self.__export_filter_state(filter_terms),
                        self.__export_filtered_card_count(filtered_count),
                        self.__export_page_count_state(query_terms, filter_terms),
                        self.__export_theme_state() ]
@@ -662,7 +659,7 @@ class cw_state:
    def search_mode(self):
       """Any valid state from a search mode will trigger this mode"""
       if (( self.search != None ) or
-          ( self.card_filter != [] ) or 
+          ( self.card_filter != None ) or 
           ( self.filtered != 0 )):
          return True
       else:
