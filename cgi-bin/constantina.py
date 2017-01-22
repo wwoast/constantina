@@ -364,7 +364,10 @@ class cw_state:
       """
       If you type a hashtag into the search box, Constantina will do a 
       filter based on the cardtype you want. Aliases for various types
-      of cards are configured in constantina.ini
+      of cards are configured in constantina.ini.
+
+      If you need to remove terms from the search list after processing
+      here, this function returns the list of terms to remove.
       """
       removeterms = []
       filtertypes = []
@@ -527,7 +530,7 @@ class cw_state:
       """
       Export state related to searched cards and filtered card types.
       """ 
-      # TODO: don't use query_terms and filter_terms. Use the state mode checks
+      # TODO: break this into two functions
       filter_string = None
       query_string = None
       search_string = None
@@ -544,14 +547,13 @@ class cw_state:
       return search_string
 
 
-   def __export_filtered_card_count(self, query_terms, filter_terms):
+   def __export_filtered_card_count(self, filtered_count):
       """
       If any cards were excluded by filtering, and a search is in progress,
       track the number of filtered cards in the state.
       """
-      # TODO: don't use query_terms and filter_terms. Use the state mode checks
       filtered_count_string = None
-      if (( query_terms != '' ) and ( filter_terms != '' )):
+      if ( self.filter_processed_mode() == True ):
          filtered_count_string = "xx" + str(filtered_count)
       return filtered_count_string
 
@@ -561,6 +563,7 @@ class cw_state:
       Once all cards are read, calculate a new state variable to
       embed in the more-contents page link.
       """
+      # TODO: Get rid of anything other than cards here!
       # Start by calculating the distance from the next page for each
       # card type. This updates the state.ctype.distance values
       self.__calculate_last_distance(cards)
@@ -570,7 +573,7 @@ class cw_state:
       export_parts = [ self.__export_random_seed(),
                        self.__export_content_card_state(),
                        self.__export_search_state(query_terms, filter_terms),
-                       self.__export_filtered_card_count(query_terms, filter_terms),
+                       self.__export_filtered_card_count(filtered_count),
                        self.__export_page_count_state(query_terms, filter_terms),
                        self.__export_theme_state() ]
 
@@ -1276,8 +1279,6 @@ class cw_search:
       # of returned search results similar to the normal pages, and the 
       # filename itself as a unique identifier (most filenames are utimes).
       self.schema = Schema(file=ID(stored=True, unique=True, sortable=True), ctype=ID(stored=True), mtime=ID(stored=True), content=TEXT)
-
-      syslog.syslog("input terms: " + str(unsafe_query_terms))
 
       # If index doesn't exist, create it
       if ( index.exists_in(self.index_dir)):
