@@ -252,7 +252,7 @@ class cw_state:
       of each card type from the first element of the current page.
       """
       # For each content card type, populate the state variables
-      # as necessary. TODO: news distance is actually a news[] index
+      # as necessary.
       for state_var in [s[0] for s in CONFIG.options('card_counts')]:
          # NOTE: This ctype attribute naming requires each content card type to
          # begin with a unique alphanumeric character.
@@ -272,7 +272,6 @@ class cw_state:
       if ( self.page != None ) and (( self.search != None ) or ( self.card_filter != None )):
          self.page = int(self.page[0])
       # Otherwise, determine our page number from the news article index reported
-      # TODO: for news articles, it's not a distance value! Its a news[] index
       elif ( self.news.distance != None ):
          self.page = ( int(self.news.distance) + 1 ) / CONFIG.getint('card_counts', 'news')
       else:
@@ -338,6 +337,8 @@ class cw_state:
          self.search = searchterms
          # Take off leading #-sigil for card type searches
          self.card_filter = map(lambda x: x[1:], removeterms) 
+         if ( self.card_filter == [] ):
+            self.card_filter = None
 
 
    def __import_filter_state(self):
@@ -358,10 +359,6 @@ class cw_state:
             # Take off leading #-sigil for card type searches
             # TODO: guarantee first character is sigil
             self.card_filter = map(lambda x: x[1:], filterterms) 
-      
-            # For all the array processing, if we were left with no card filter
-            # information processed, revert this to None so emptiness checks work
-            # TODO: refactor add_filter_ctypes!!
             if ( self.card_filter == [] ):
                self.card_filter = None
 
@@ -390,6 +387,7 @@ class cw_state:
       """
       removeterms = []
       filtertypes = []
+      # TODO: desperately needs a refactor, ideally without more self.state values
 
       for term in searchterms:
          # syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
@@ -458,13 +456,12 @@ class cw_state:
       hidden_cards = 0    # Account for each hidden card in the distance
                           # between here and the end of the page
       news_seen = False   # Have we processed a news card yet?
-                          # TODO: how to clean deal with news_last?
       # Traversing backwards from the end, find the last of each cardtype shown
       for i in xrange(len(cards) - 1, -1, -1):
          card = cards[i]
          if (card.ctype == 'news'):
             if ( news_seen == False ):
-               self.news.distance = card.num   # TODO: news index, not distance!!
+               self.news.distance = card.num 
                news_seen = True
             continue
          if (card.ctype == 'heading' ):
@@ -1664,7 +1661,6 @@ def create_textcard(card, appearance):
    # paragraph tag with a "Expand" style that will keep that text
    # properly hidden. Then, after the end of the first paragraph, add
    # a "Read More" link for expanding the other hidden items.
-
    output = ""
    output += """<div class="card %s" id="%s">\n""" % ( card.ctype, anchor )
    output += """   <div class="cardTitle">\n"""
