@@ -484,7 +484,8 @@ class cw_state:
 
       for ctype in CONFIG.options("card_counts"):
          # If no cards for this state, do not track
-         if (( getattr(self, ctype).clist == [] ) or ( getattr(self, ctype).distance == None )):
+         if (( getattr(self, ctype).clist == [] ) or 
+             ( getattr(self, ctype).distance == None )):
             continue
 
          # Track the distance to the last-printed card in each state variable
@@ -610,6 +611,19 @@ class cw_state:
       if (( self.news_permalink != None ) or 
           ( self.features_permalink != None ) or 
           ( self.topics_permalink != None )):
+         return True
+      else:
+         return False
+
+
+   def exclude_cardtype(self, ctype):
+      """
+      Is a card filter in place, and if so, is the given card type being filtered?
+      If this returns true, it means the user either wants cards of this type, or
+      that no card filtering is currently in place.
+      """
+      if (( self.card_filter != None ) and
+          ( getattr(self, ctype).filtertype ) == False ):
          return True
       else:
          return False
@@ -758,10 +772,6 @@ class cw_page:
       Get a page's worth of news updates. Include images and
       features and other details. 
       """
-      # for i in xrange(0, len(self.cards)):
-      #    print "%s %s %s" % ( i, self.cards[i].ctype, self.cards[i].title )
-      # print self.cur_len   
- 
       # Anything with rules for cards per page, start adding them.
       # Do not grab full data for all but the most recent cards!
       # For older cards, just track their metadata
@@ -772,10 +782,11 @@ class cw_page:
          if ( card_count == 0 ):
             continue
          # No data and it's not the first page? Skip this type
-         if ( getattr(self.state, ctype).clist == None ) and ( self.state.fresh_mode() == False ):
+         if (( self.state.fresh_mode() == False ) and 
+             ( getattr(self.state, ctype).clist == None )):
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
+         if ( self.state.exclude_cardtype(ctype) == False ):
             continue
 
          # Grab the cnum of the last inserted thing of this type
@@ -818,7 +829,7 @@ class cw_page:
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
          syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype) + " card_filter_state: " + str(self.state.card_filter))
-         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
+         if ( self.state.exclude_cardtype(ctype) == True ):
             continue
 
          start = 0
@@ -895,7 +906,7 @@ class cw_page:
       # variable based on the current list of cards.
       for ctype, card_count in CONFIG.items("card_counts"):
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
+         if ( self.state.exclude_cardtype(ctype) == True ):
             continue
          dist = getattr(self.state, ctype).distance
          if (( len(getattr(self.state, ctype).clist) == 0 ) or ( dist == None )):
@@ -975,7 +986,7 @@ class cw_page:
          if ( c_redist[ctype] == [] ):
             continue   # Empty
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
+         if ( self.state.exclude_cardtype(ctype) == True ):
             continue
 
          # Max distance between cards of this type on a page
