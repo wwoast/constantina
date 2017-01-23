@@ -118,6 +118,7 @@ $(function() {
 
    // Process input into the search form
    $('#searchForm').submit(function() {
+      $('#searchEntry').blur();   // Make iOS keyboard disappear after submitting
       var query = $('#searchEntry').val().trim();
       // Remove or escape any search processing characters here like commas
       $(".container").empty();
