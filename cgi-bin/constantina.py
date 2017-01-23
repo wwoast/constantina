@@ -1860,11 +1860,9 @@ def contents_page(start_response, state):
    """ 
    substitute = '<!-- Contents go here -->'
 
-   # Instantiating all objects
-   page = cw_page(state)
-
    # Fresh new HTML, no previous state provided
    if ( state.fresh_mode() == True ):
+      page = cw_page(state)
       base = open(state.theme + '/contents.html', 'r')
       html = base.read()
       html = html.replace(substitute, create_page(page))
@@ -1872,6 +1870,7 @@ def contents_page(start_response, state):
 
    # Permalink page of some kind
    elif ( state.permalink_mode() == True ):
+      page = cw_page(state)
       base = open(state.theme + '/contents.html', 'r')
       html = base.read()
       html = html.replace(substitute, create_page(page))
@@ -1879,16 +1878,18 @@ def contents_page(start_response, state):
 
    # Doing a search or a filter process
    elif ( state.search_mode() == True ):
-      if ( state.search == [''] ) and ( state.card_filter == None ):
+      if ( state.search == [] ) and ( state.card_filter == None ):
          # No search query given -- just regenerate the page
          syslog.syslog("***** Reshuffle Page Contents *****")
-         page = cw_page()
+         state = cw_state(None)
 
+      page = cw_page(state)
       start_response('200 OK', [('Content-Type','text/html')])
       html = create_page(page)
 
    # Otherwise, there is state, but no special headers.
    else:
+      page = cw_page(state)
       start_response('200 OK', [('Content-Type','text/html')])
       html = create_page(page)
 
