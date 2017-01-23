@@ -8,6 +8,7 @@ from whoosh import index
 from whoosh.fields import Schema, ID, TEXT
 from whoosh.qparser import QueryParser
 import os
+from sys import stdin
 import re
 import magic
 import lxml.html
@@ -57,7 +58,7 @@ class cw_cardtype:
       # appears again in the randomized view? This is a function
       # of the number of available cards
       if ( self.per_page == 0 ):
-         self.page_distance = 0;
+         self.page_distance = 0
       else: 
          self.page_distance = self.file_count*2 / self.per_page
 
@@ -134,21 +135,40 @@ class cw_state:
 
    This is serialized and deserialized from a string embedded in JS
    on the page itself that describes the following details:
-      - How many of each item was displayed
-      - Which news or image items were displayed
-         - This is condensed into a range of item indexes
       - The distance from the last-displayed item of this type to the end
         of the displayed page
       - The seed number that defines the displayed random order
       - Any search strings that might have been provided in previous views
       - Whether a permalink is being viewed (feature, news, or topic page)
-   It is also a cleaner interface to grab at the global configuration
-   variables defined in the top of this file.
+   It also provides a clean interface to global modes and settings that 
+   influence what content and appearances a Constantina page can take.
    """
-   def __init__(self, state_string=None):
-      self.in_state = state_string   # Track the original state string
-      self.seed = None		     # The Random Seed for the page
+   def __init__(self, in_state=None):
+      self.in_state = in_state      # Track the original state string
+      self.__set_state_defaults()
 
+      # Was there an initial state string? Process it if there was.
+      # TODO: manage all the import state code
+      if ( self.in_state != None ):
+         self.state_vars = self.in_state.split(':')   # TODO: max state params?
+      else:
+         self.state_vars = []
+      self.__import_state()
+
+      # For any card types we want to shuffle, do the shuffle dance
+      # TODO: must have imported all states first
+      for ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(","):
+         getattr(self, ctype).shuffle()
+
+      # syslog.syslog("Random seed: " + str(self.seed))
+
+
+   def __set_state_defaults(self):
+      """
+      Set basic default values for special_state properties and normal
+      content-card properties, as well as upper limits on how many cards can
+      exist on a single Constantina page.
+      """
       self.max_items = 0             # Max items per page, based on
                                      # counts from all card types
       for ctype, cpp in CONFIG.items('card_counts'):
@@ -164,136 +184,254 @@ class cw_state:
             filtertype=False,
             spacing=CONFIG.getint('card_spacing', ctype)))
 
-      # For permalink settings or search strings, define object fields as well
-      #    Examples: self.search, self.news_permalink
       for spctype, spcfield in CONFIG.items("special_states"):
-         setattr(self, spcfield, None)
+         setattr(self, spcfield, None)       # All state vals are expected to exist
 
-      # Filter checks require an empty array here
-      spcfilter = CONFIG.get("special_states", "xo")
-      setattr(self, spcfilter, [])
 
-      # Was there an initial state string? Read it if there is. Then shuffle
-      # each ctype that we care about :)
-      self.__import_state(state_string)
+   def __find_state_variable(self, search):
+      """
+      Leveraged by all the other state functions. Find the given state
+      variable, either by state variable name, or "number" to find the 
+      random seed. Once a state variable is consumed, remove it from
+      the state_vars.
+      """
+      if ( self.state_vars == [] ): 
+         return None
 
-      # If there wasn't a random seed, we better generate one :)
+      hits = []
+      output = None 
+
+      # Random seed is the one all-numeric state variable
+      if ( search == "seed" ):
+         hits = [token for token in self.state_vars if token.isdigit()]
+         if ( len(hits) > 0 ):
+            output = hits[0]
+      # Special state variables are singleton values. Typically a
+      # two-letter value starting with "x" as the first letter.
+      # TODO: do we need to preserve the comma-separated crap?
+      elif ( CONFIG.has_option("special_states", search) ):
+         hits = [token for token in self.state_vars if token.find(search) == 0]
+         if ( len(hits) > 0 ):
+            output = unquote_plus(hits[0][2:])
+      # Individual content card state variables. Each one is a distance
+      # from the current page. 
+      elif ( search in [s[0] for s in CONFIG.options("card_counts")] ):
+         hits = [token for token in self.state_vars if token.find(search) == 0]
+         if ( len(hits) > 0 ):
+            output = int(hits[0][1:])
+
+      # Remove any matches for state variables, including extraneous duplicates
+      [self.state_vars.remove(x) for x in hits]
+      return output
+
+
+   def __import_random_seed(self):
+      """
+      Set the return seed based on a 14-digit string from the state variable.
+      As an input to seed(), this has to be a float between zero and one.
+
+      This seed is used to consistently seed the shuffle function, so that
+      between page loads, we know the shuffled card functions give the same
+      shuffle ordering.
+      """
+      self.seed = self.__find_state_variable("seed")		          
       if (self.seed == None):
-         self.__set_random_seed()
+         self.seed = round(random(), 14)
+      else:
+         self.seed = float(str("0." + self.seed))
+      seed(self.seed)   # Now the RNG is seeded with our consistent value
 
-      # For any card types we want to shuffle, do the shuffle dance
-      for ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(","):
-         getattr(self, ctype).shuffle()
+
+   def __import_content_card_state(self):   
+      """
+      News cards and other content cards' state is tracked here. Seed tracking
+      between page loads means we don't need to log which content cards were
+      shown on a previous page. 
+
+      However, to preserve card spacing rules, we do need to track the distance
+      of each card type from the first element of the current page.
+      """
+      # For each content card type, populate the state variables
+      # as necessary.
+      for state_var in [s[0] for s in CONFIG.options('card_counts')]:
+         # NOTE: This ctype attribute naming requires each content card type to
+         # begin with a unique alphanumeric character.
+         ctype = [value for value in CONFIG.options("card_counts") if value[0] == state_var][0]
+         distance = self.__find_state_variable(state_var)
+         getattr(self, ctype).distance = distance
+         
+
+   def __import_page_count_state(self):
+      """
+      For all subsequent "infinite-scroll AJAX" content after the initial page
+      load, we track the current page number of content.
+      """
+      self.page = self.__find_state_variable('xp')
 
       # If page was read in as a special state variable, use that (for search results)
       if ( self.page != None ) and (( self.search != None ) or ( self.card_filter != None )):
          self.page = int(self.page[0])
-
       # Otherwise, determine our page number from the news article index reported
-      # TODO: for news articles, it's not a distance value! Its a news[] index
       elif ( self.news.distance != None ):
          self.page = ( int(self.news.distance) + 1 ) / CONFIG.getint('card_counts', 'news')
-
       else:
          self.page = 0
 
-      # Filtered card count, tracked when we have a query type and a filter count
+
+   def __import_theme_state(self):
+      """
+      In the state object, we track an appearance variable, which corresponds
+      to the exact state variable imported (and exported) for the appearance.
+
+      The appearance value lets us look up which theme we display for the user.
+      This theme value is a path fragment to a theme's images and stylesheets.
+      """
+      self.appearance = self.__find_state_variable('xa')
+
+      # Default theme specified in configs (exclude the default setting)
+      if ( self.appearance != None ):
+         self.appearance = int(self.appearance[0])
+
+      theme_count = len(CONFIG.items("themes")) - 1
+      self.theme = None
+      if ( self.appearance == None ):
+         self.theme = CONFIG.get("themes", "default")
+      elif ( self.appearance >= theme_count ):
+         self.theme = CONFIG.get("themes", str(self.appearance % theme_count))
+      else:
+         self.theme = CONFIG.get("themes", str(self.appearance))
+
+
+   def __import_permalink_state(self):
+      """
+      Any card type that can be displayed on its own is a permalink-type
+      card, and will have state that describes which permalink page should
+      be loaded.
+      """
+      permalink_states = [sv[0] for sv in CONFIG.items("special_states") if sv[1].find("permalink") != -1]
+      for state in permalink_states:
+         value = self.__find_state_variable(state)
+         if value != None:
+            attrib = CONFIG.get("special_states", state)
+            setattr(self, attrib, value)
+            return   # Only one permalink state per page. First one takes precedence
+
+
+   def __import_search_state(self):
+      """
+      Import the search terms that were used on previous page loads
+
+      Some of these terms may be prefixed with a #, which makes them either cardtypes or 
+      channel names. 
+      """	
+      self.search = self.__find_state_variable('xs')
+
+      # First, check if any of the search terms should be processed as a 
+      # cardtype and be added to the filter state instead.
+      if ( self.search != None ):
+         searchterms = self.search.split(' ')
+         searchterms = filter(None, searchterms)   # remove nulls
+         removeterms = self.__add_filter_cardtypes(searchterms)
+         # Remove filter strings from the search state list if they exist
+         [searchterms.remove(term) for term in removeterms]
+         self.search = searchterms
+         # Take off leading #-sigil for card type searches
+         self.card_filter = map(lambda x: x[1:], removeterms) 
+         if ( self.card_filter == [] ):
+            self.card_filter = None
+
+
+   def __import_filter_state(self):
+      """
+      This must run after the import_search_state!
+
+      If no filter strings were found during search, we may need to process a set
+      of filter strings that were excised out on a previous page load.
+      """
+      if ( self.card_filter == None ):
+         self.card_filter = self.__find_state_variable('xo')
+
+         if ( self.card_filter != None ):
+            filterterms = self.card_filter.split(' ')
+            # Add-filter-cardtypes expects strings that start with #
+            hashtag_process = map(lambda x: "#" + x, filterterms)
+            filterterms = self.__add_filter_cardtypes(hashtag_process)
+            # Take off leading #-sigil for card type searches
+            # TODO: guarantee first character is sigil
+            self.card_filter = map(lambda x: x[1:], filterterms) 
+            if ( self.card_filter == [] ):
+               self.card_filter = None
+
+
+   def __import_filtered_card_count(self):
+      """
+      Filtered card count, tracked when we have a query type and a filter count
+      and cards on previous pages were omitted from being displayed. Tracking
+      this allows you to fix the page count to represent reality better.
+      """
+      self.filtered = self.__find_state_variable('xx')
       if ( self.filtered != None ) and (( self.search != None ) and ( self.card_filter != None )):
          self.filtered = int(self.filtered[0])
       else:
          self.filtered = 0
+   
 
-      # syslog.syslog("Random seed: " + str(self.seed))
+   def __add_filter_cardtypes(self, searchterms):
+      """
+      If you type a hashtag into the search box, Constantina will do a 
+      filter based on the cardtype you want. Aliases for various types
+      of cards are configured in constantina.ini.
 
+      If you need to remove terms from the search list after processing
+      here, this function returns the list of terms to remove.
+      """
+      removeterms = []
+      filtertypes = []
+      # TODO: desperately needs a refactor, ideally without more self.state values
 
-   def __import_state(self, state_string):
-      """Given a state variable string grabbed from the page, parse a
-         parse into an object full of card-list properties. This will 
-         be used to define which cards should be obtained for the page."""
-      valid_tokens = {}
-      last_parsed = []
+      for term in searchterms:
+         # syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
+         if term[0] == '#':
+            for ctype, filterlist in CONFIG.items("card_filters"):
+               filternames = filterlist.replace(" ", "").split(',')
+               for filtername in filternames:
+                  if term == '#' + filtername:
+                     # Toggle this cardtype as one we'll filter on
+                     getattr(self, ctype).filtertype = True
+                     # Page filtering by type is enabled
+                     # Add to the list of filterterms, and prepare to
+                     # remove any filter tags from the search state.
+                     filtertypes.append(ctype)
+                     removeterms.append(term)
 
-      # No prior state? Nothing to worry about
-      if ( state_string == None ):
-         return
-
-      # State types are the same as the first letter of each card type
-      for ctype in CONFIG.options("card_counts"):
-         valid_tokens[ctype[0]] = ctype
-
-      # Special two-letter states may be processed as well
-      for spctype, spcfield in CONFIG.items("special_states"):
-         valid_tokens[spctype] = spcfield
-
-      # Parse each colon-separated item that matches a state type
-      for token in state_string.split(':'):
-         # Non-special tokens just track the distance (in cards looking back)
-         # to last card of that type on the previous page
-         syslog.syslog("%s" % token )
-         if token[0] in valid_tokens and token[0] not in last_parsed:
-            ctype = valid_tokens[token[0]]  
-            getattr(self, ctype).distance = int(token[1:])
-            last_parsed.append(token[0])   # Add to the parsed stack
-
-         # Special two-character tokens don't denote typical state
-         # Just post whatever comma-separated items we have, up to 
-         # the first ten.
-         elif token[0:2] in valid_tokens and token[0:2] not in last_parsed:
-            try:
-               item_str = unquote_plus(token[2:])
-               max_params = CONFIG.getint("miscellaneous", "max_state_parameters") 
-               items = item_str.split(',')[0:max_params]
-            except:
-               continue
-
-            # Search parameters with hashtags are treated as card filter types
-            # and are moved from search state to filter state tracking.
-            if token[0:2] == 'xs' and 'xo' not in last_parsed:
-               searchterms = items[0].split(' ')         # single-space delimited terms
-               searchterms = filter(None, searchterms)   # remove null search submits
-               filterterms = self.__add_filter_cardtypes(searchterms)
-               # Remove search filters from the search state list
-               if ( filterterms != [] ):
-                  for term in filterterms:
-                     searchterms.remove(term)
-                  last_parsed.append("xo")
-
-               # Recombine the space-delimited array for processing by search funcs
-               items = [" ".join(searchterms)]
-
-            # Populate state object for this generic special state value
-            # Account for processing items into the filter list -- if no search
-            # items, then we don't count that as part of the state. 
-            if ( items != '' ):
-               spcfield = CONFIG.get("special_states", token[0:2])
-               syslog.syslog("setting special_state: " + token[0:2] + " : " + spcfield)
-               setattr(self, spcfield, [])
-               for i in items:
-                  getattr(self, spcfield).append(i)
-            last_parsed.append(token[0:2])   # Add to the parsed stack
-
-            # For paged searches, add xo state to filter cardtypes
-            if token[0:2] == 'xo':
-               spcfield = CONFIG.get("special_states", token[0:2])
-               # Add-filter-cardtypes expects strings that start with #
-               hashtag_process = map(lambda x: "#" + x, getattr(self, spcfield)) 
-               self.__add_filter_cardtypes(hashtag_process)
+      return removeterms
 
 
-         # If the token can be interpreted as a float when putting 0. in front,
-         # this will become our random seed for shuffling
-         elif ( token.isdigit() ):
-            self.__import_random_seed(token)
+   def __import_state(self):
+      """
+      Given a state variable string grabbed from the page, parse a
+      parse into an object full of card-list properties. This will 
+      be used to define which cards should be obtained for the page.
+      """
+      self.__import_random_seed()          # Import the random seed first
+      self.__import_content_card_state()   # Then import the normal content cards
+      self.__import_theme_state()          # Theme settings
+      self.__import_search_state()         # Search strings and processing out filter strings
+      self.__import_filter_state()         # Any filter strings loaded from prior pages
+      self.__import_filtered_card_count()  # Number of cards filtered out of prior pages
+      self.__import_permalink_state()      # Permalink settings
+      self.__import_page_count_state()     # Figure out what page we're on
 
-         else:
-            pass
 
-
-   # TODO: move update_state portions to their own function?
-   # TODO: most of the update-state stuff is calculating distance
-   def export_state(self, cards, query_terms, filter_terms, filtered_count):
-      """Once all cards are read, calculate a new state variable to
-         embed in the more-contents page link."""
+   def __calculate_last_distance(self, cards):
+      """
+      The main part about state tracking in Constantina is tracking how far
+      the closest card to the beginning of a page load is.
+  
+      Prior to exporting a page state, loop over your list of cards, tracking 
+      news cards and heading cards separately, and determine how far each ctype
+      card is from the beginning of the next page that will be loaded.
+      """
       all_ctypes = CONFIG.options("card_counts")
 
       # Populate the state object, which we'll later build the
@@ -312,19 +450,19 @@ class cw_state:
       done_distance = []
       all_ctypes.sort()
 
-
       # Terminate the loop if we either get to the bottom of the
       # array, or whether we've calculated distances for all
       # possible state types
-      hidden_cards = 0   # Account for each hidden card in the distance
-                         # between here and the end of the page
-      news_last = 0      # Last news card seen, by index
-
-      # Traversing backwards, find the last card of each type shown
+      hidden_cards = 0    # Account for each hidden card in the distance
+                          # between here and the end of the page
+      news_seen = False   # Have we processed a news card yet?
+      # Traversing backwards from the end, find the last of each cardtype shown
       for i in xrange(len(cards) - 1, -1, -1):
          card = cards[i]
-         if (card.ctype == 'news') and ( news_last == 0 ):
-            news_last = card.num
+         if (card.ctype == 'news'):
+            if ( news_seen == False ):
+               self.news.distance = card.num 
+               news_seen = True
             continue
          if (card.ctype == 'heading' ):
             # Either a tombstone card or a "now loading" card
@@ -339,21 +477,30 @@ class cw_state:
          done_distance.sort()
 
          dist = len(cards) - hidden_cards - i
-         # syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" % ( card.ctype, dist, i, len(cards), len(cards) - hidden_cards))
+         syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" % ( card.ctype, dist, i, len(cards), len(cards) - hidden_cards))
          getattr(self, card.ctype).distance = str(dist)
          # Early break once we've seen all the card types
          if ( done_distance == all_ctypes ):
             break
 
 
-      # Finally, construct the state string for the next page
-      seed = self.__export_random_seed()
-      export_string = ''
-      state_tokens = []
+   def __export_random_seed(self):
+      """Export the random seed for adding to the state variable"""
+      return str(self.seed).replace("0.", "")
 
-      for ctype in all_ctypes:
+
+   def __export_content_card_state(self):
+      """
+      Construct a string representing the cards that were loaded on this
+      page, for the sake of informing the next page load.
+      """
+      state_tokens = []
+      content_string = None
+
+      for ctype in CONFIG.options("card_counts"):
          # If no cards for this state, do not track
-         if (( getattr(self, ctype).clist == [] ) or ( getattr(self, ctype).distance == None )):
+         if (( getattr(self, ctype).clist == [] ) or 
+             ( getattr(self, ctype).distance == None )):
             continue
 
          # Track the distance to the last-printed card in each state variable
@@ -362,84 +509,169 @@ class cw_state:
          state_tokens.append(stype + str(cdist))
 
       # Track page number for the next state variable by adding one to the current
+      news_last = getattr(self, 'news').distance   # TODO: not distance, but news index!
+      if ( news_last == None ):
+         news_last = 0
+
       if ( state_tokens != [] ):
-         export_string = ":".join(state_tokens) + ":" + "n" + str(news_last) + ":" + str(seed)
+         content_string = ":".join(state_tokens) + ":" + "n" + str(news_last)
       else:
-         export_string = "n" + str(news_last) + ":" + str(seed)
+         content_string = "n" + str(news_last)
+      return content_string
 
-      # The up-to-10 search terms come after the primary state variable,
-      # letting us know that the original query was a search attempt, and that
-      # future data to insert into the page should be filtered by these 
-      # provided terms.
-      if ( filter_terms != '' ):
-         export_string = export_string + ":" + "xo" + filter_terms
-      if ( query_terms != '' ):
-         export_string = export_string + ":" + "xs" + query_terms
 
-      # If we had search results and used a page number, write an incremented page
-      # number into the next search state for loading
+   def __export_page_count_state(self, query_terms, filter_terms):
+      """
+      If we had search results and used a page number, write an incremented page
+      number into the next search state for loading
+      """
+      # TODO: don't use query_terms and filter_terms. Use the state mode checks
+      page_string = None
       if (( query_terms != '' ) or ( filter_terms != '' )):
          export_page = int(self.page) + 1
-         export_string = export_string + ":" + "xp" + str(export_page)
+         page_string = "xp" + str(export_page)
+      return page_string      
 
-      # If any cards were excluded by filtering, and a search is in progress,
-      # track the number of filtered cards in the state.
-      if (( query_terms != '' ) and ( filter_terms != '' )):
-         export_string = export_string + ":" + "xx" + str(filtered_count)
 
+   def __export_theme_state(self):
+      """
+      If there was a appearance or theme tracked, include it in state links
+      """
+      appearance_string = None
+      if ( self.appearance != None ):
+         appearance_string = "xa" + str(self.appearance)
+      return appearance_string
+
+
+   def __export_search_state(self, query_terms):
+      """Export state related to searched cards""" 
+      query_string = None
+      if ( query_terms != '' ):
+         query_string = "xs" + query_terms
+      return query_string
+
+
+   def __export_filter_state(self, filter_terms):
+      """Export state related to #ctype filtered cards"""
+      filter_string = None
+      if ( filter_terms != '' ):
+         filter_string = "xo" + filter_terms
+      return filter_string
+
+
+   def __export_filtered_card_count(self, filtered_count):
+      """
+      If any cards were excluded by filtering, and a search is in progress,
+      track the number of filtered cards in the state.
+      """
+      filtered_count_string = None
+      if ( self.filter_processed_mode() == True ):
+         filtered_count_string = "xx" + str(filtered_count)
+      return filtered_count_string
+
+
+   def export_state(self, cards, query_terms, filter_terms, filtered_count):
+      """
+      Once all cards are read, calculate a new state variable to
+      embed in the more-contents page link.
+      """
+      # Start by calculating the distance from the next page for each
+      # card type. This updates the state.ctype.distance values
+      self.__calculate_last_distance(cards)
+
+      # Finally, construct the state string for the next page
+      export_parts = [ self.__export_random_seed(),
+                       self.__export_content_card_state(),
+                       self.__export_search_state(query_terms),
+                       self.__export_filter_state(filter_terms),
+                       self.__export_filtered_card_count(filtered_count),
+                       self.__export_page_count_state(query_terms, filter_terms),
+                       self.__export_theme_state() ]
+
+      export_parts = filter(None, export_parts)
+      export_string = ':'.join(export_parts)
       return export_string
 
 
-   def __add_filter_cardtypes(self, searchterms):
-      """If you type a hashtag into the search box, Constantina will do a 
-         filter based on the cardtype you want. Aliases for various types
-         of cards are configured in constantina.ini"""
-      removeterms = []
-      filtertypes = []
-
-      for term in searchterms:
-         # syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
-         if term[0] == '#':
-            for ctype, filterlist in CONFIG.items("card_filters"):
-               filternames = filterlist.replace(" ", "").split(',')
-               for filtername in filternames:
-                  if term == '#' + filtername:
-                     # Toggle this cardtype as one we'll filter on
-                     getattr(self, ctype).filtertype = True
-                     # Page filtering by type is enabled
-                     # Add to the list of filterterms, and prepare to
-                     # remove any filter tags from the search state.
-                     filtertypes.append(ctype)
-                     removeterms.append(term)
-
-      # Add the types we're filtering on to the filter state.
-      # This gets rid of stupid #-prefixed things in the URI potentially
-      if filtertypes != []:
-         for ctype in filtertypes:
-            spcfilter = CONFIG.get("special_states", "xo")
-            getattr(self, spcfilter).append(ctype)
-
-      return removeterms
+   def configured_states(self):
+      """Check to see which special states are enabled. Return an array of 
+         either card types or special state types that are not set to None."""
+      state_names = [val[1] for val in CONFIG.items('special_states')]
+      state_names.remove('page')       # These two are set no matter what
+      state_names.remove('filtered')
+      return [state for state in state_names 
+                 if (( getattr(self, state) != None ) and 
+                     ( getattr(self, state) != [] ))]
 
 
-   def __set_random_seed(self):
-      """Return a consistent random seed for the shuffle function, so that
-      between page loads we can utilize the same initial random shuffle."""
-      self.seed = round(random(), 14)
-      seed(self.seed)
-      
-
-   def __import_random_seed(self, num):
-      """Set the return seed based on a 5-digit integer from the prior_state.
-      For shuffle, this has to be a float between zero and one, but for the
-      state variable it should be a N-digit number."""
-      self.seed = float(str("0." + num))
-      seed(self.seed)
+   def fresh_mode(self):
+      """Either an empty state, or just an empty state and a theme is set"""
+      if (( self.page == 0 ) and 
+          (( self.in_state == None ) or 
+           ( self.configured_states() == ['appearance'] ))):
+         return True
+      else:
+         return False
 
 
-   def __export_random_seed(self):
-      """Export the random seed for adding to the state variable"""
-      return str(self.seed).replace("0.", "")
+   def permalink_mode(self):
+      """Is one of the permalink modes on?"""
+      if (( self.news_permalink != None ) or 
+          ( self.features_permalink != None ) or 
+          ( self.topics_permalink != None )):
+         return True
+      else:
+         return False
+
+
+   def exclude_cardtype(self, ctype):
+      """
+      Is a card filter in place, and if so, is the given card type being filtered?
+      If this returns true, it means the user either wants cards of this type, or
+      that no card filtering is currently in place.
+      """
+      if (( self.card_filter != None ) and
+          ( getattr(self, ctype).filtertype == False )):
+         return True
+      else:
+         return False
+
+
+   def filter_processed_mode(self):
+      """Is it a search state, and did we already convert #hashtag strings into
+         filter queries?"""
+      states = self.configured_states()
+      if (( 'search' in states ) or 
+          ( 'card_filter' in states )):
+         return True
+      else:
+         return False
+
+
+   def filter_only_mode(self):
+      """All search queries converted into card filters"""
+      if ( self.configured_states() == ['card_filter'] ):
+         return True
+      else:
+         return False
+
+
+   def search_only_mode(self):
+      """There is a search query, but no terms converted into card filters"""
+      if ( self.configured_states() == ['search'] ):
+         return True
+      else:
+         return False
+
+
+   def search_mode(self):
+      """Any valid state from a search mode will trigger this mode"""
+      if (( self.search != None ) or
+          ( self.card_filter != None ) or 
+          ( self.filtered != 0 )):
+         return True
+      else:
+         return False
 
 
 class cw_page:
@@ -461,7 +693,7 @@ class cw_page:
          state variable for the next AJAX load"""
       self.cur_len = 0
       self.cards = []
-      self.state = cw_state(in_state)
+      self.state = in_state
       self.out_state = ''
 
       self.search_results = ''
@@ -471,13 +703,13 @@ class cw_page:
 
       news_items = CONFIG.getint("card_counts", "news")
 
-      if ( self.state.in_state == None ):
+      if ( self.state.fresh_mode() == True ):
          # Create a new page of randomly-assorted images and quotes,
          # along with reverse-time-order News items
          syslog.syslog("***** Completely new page-load workflow *****")
          self.__get_cards()
          self.__distribute_cards()
-         self.cards.insert(0, cw_card('heading', 'basic', grab_body=True))
+         self.cards.insert(0, cw_card('heading', 'welcome', grab_body=True))
 
          if ( len(self.cards) - self.cur_len > news_items ):
             # Add a hidden card to trigger loading more data when reached
@@ -487,9 +719,7 @@ class cw_page:
          else:
             self.cards.append(cw_card('heading', 'bottom', grab_body=True))
 
-      elif (( self.state.news_permalink != None ) or 
-            ( self.state.features_permalink != None ) or 
-            ( self.state.topics_permalink != None )):
+      elif ( self.state.permalink_mode() == True ):
          # This is a permalink page request. For these, use a
          # special footer card (just a header card placed at 
          # the bottom of the page).
@@ -497,8 +727,7 @@ class cw_page:
          self.__get_permalink_card()
          self.cards.append(cw_card('heading', 'footer', grab_body=True, permalink=True))
 
-      elif (( self.state.search != None ) or 
-            ( self.state.card_filter != [] )):
+      elif ( self.state.search_mode() == True ):
          # Return search results based on the subsequent comma-separated list,
          # parsed by __import_state into self.state.search.
          # TODO: Tokenize all search parameters and remove non-alphanum characters
@@ -551,10 +780,6 @@ class cw_page:
       Get a page's worth of news updates. Include images and
       features and other details. 
       """
-      # for i in xrange(0, len(self.cards)):
-      #    print "%s %s %s" % ( i, self.cards[i].ctype, self.cards[i].title )
-      # print self.cur_len   
- 
       # Anything with rules for cards per page, start adding them.
       # Do not grab full data for all but the most recent cards!
       # For older cards, just track their metadata
@@ -565,16 +790,17 @@ class cw_page:
          if ( card_count == 0 ):
             continue
          # No data and it's not the first page? Skip this type
-         if ( getattr(self.state, ctype).clist == None ) and ( self.state.in_state != None ):
+         if (( self.state.fresh_mode() == False ) and 
+             ( getattr(self.state, ctype).clist == None )):
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
+         if ( self.state.exclude_cardtype(ctype) == True ):
             continue
 
          # Grab the cnum of the last inserted thing of this type
          # and then open the next one
          # If we didn't open anyting last time, start at the beginning
-         if ( self.state.in_state == None ):
+         if ( self.state.fresh_mode() == True ):
             start = 0
          # If these are previous items, calculate how many were on previous pages
          else:
@@ -596,7 +822,7 @@ class cw_page:
       """
       # Treat topics cards special. If there's an exact match between the name
       # of an encyclopedia entry and the search query, return that as the first
-      # page of the results. TOPIC articles must be filenamed lowercase!!
+      # card of the results. TOPIC articles must be filenamed lowercase!!
       # HOWEVER if we're beyond the first page of search results, don't add
       # the encyclopedia page again! Use image count as a heuristic for page count.
       if ( self.query_terms.lower() in opendir('topics')):
@@ -610,10 +836,10 @@ class cw_page:
          if ( ctype == 'topics' ):
             continue
          # Are we doing cardtype filtering, and this isn't an included card type?
-         syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype) + " card_filter_state: " + str(self.state.card_filter))
-         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
+         if ( self.state.exclude_cardtype(ctype) == True ):
             continue
 
+         syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype) + " card_filter_state: " + str(self.state.card_filter))
          start = 0
          end_dist = len(self.search_results.hits[ctype])
          # No results for this search type
@@ -643,10 +869,11 @@ class cw_page:
          permalink page of that type."""
       for spctype, spcfield in CONFIG.items("special_states"):
          if ( getattr(self.state, spcfield) != None ):
-            if ( spctype == "xo" ) or ( spctype == "xp" ) or ( spctype == "xx" ): 
+            if ( spctype == "xo" ) or ( spctype == "xp" ) or ( spctype == "xx" ) or ( spctype == "xa" ): 
                # TODO: make xo objects consistent with other absent states
                continue
-            cnum = str(getattr(self.state, spcfield)[0])
+            cnum = str(getattr(self.state, spcfield))
+            syslog.syslog("permalink card loaded: " + str(cnum))
             # Insert a card after the first heading
             ctype = spcfield.split("_")[0]
             self.cards.append(cw_card(ctype, cnum, grab_body=True, permalink=True))
@@ -687,7 +914,7 @@ class cw_page:
       # variable based on the current list of cards.
       for ctype, card_count in CONFIG.items("card_counts"):
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
+         if ( self.state.exclude_cardtype(ctype) == True ):
             continue
          dist = getattr(self.state, ctype).distance
          if (( len(getattr(self.state, ctype).clist) == 0 ) or ( dist == None )):
@@ -767,7 +994,7 @@ class cw_page:
          if ( c_redist[ctype] == [] ):
             continue   # Empty
          # Are we doing cardtype filtering, and this isn't an included card type?
-         if ( getattr(self.state, ctype).filtertype == False ) and ( len(self.state.card_filter) > 0 ):
+         if ( self.state.exclude_cardtype(ctype) == True ):
             continue
 
          # Max distance between cards of this type on a page
@@ -1056,7 +1283,7 @@ class cw_search:
       self.words_file = CONFIG.get('search', 'ignore_words')
       self.symobls_file = CONFIG.get('search', 'ignore_symbols')
       self.search_types = CONFIG.get("card_properties", "search").replace(" ","").split(",")
-
+      
       # Define the indexing schema. Include the mtime to track updated 
       # content in the backend, ctype so that we can manage the distribution
       # of returned search results similar to the normal pages, and the 
@@ -1066,10 +1293,10 @@ class cw_search:
       # If index doesn't exist, create it
       if ( index.exists_in(self.index_dir)):
          self.index = index.open_dir(self.index_dir)
-         # print "Index exists"
+         # syslog.syslog("Index exists")
       else:
          self.index = index.create_in(self.index_dir, schema=self.schema)
-         # print "Index not found -- creating one"
+         # syslog.syslog("Index not found -- creating one")
       # Prepare for query searching (mtime update, search strings)
       self.searcher = self.index.searcher()
 
@@ -1230,7 +1457,6 @@ class cw_search:
       self.parser = QueryParser("content", self.schema)
       self.query = self.parser.parse(unicode(self.query_string))
       self.results = self.searcher.search_page(self.query, self.page, sortedby="file", reverse=True, pagelen=self.resultcount)
-      # print self.results[0:]
 
       # Just want the utime filenames themselves? Here they are, in 
       # reverse-utime order just like we want for insert into the page
@@ -1249,6 +1475,7 @@ class cw_search:
    def __filter_cardtypes(self):
       """Get a list of cards to return, in response to a card-filter
       event. These tend to be of a single card type."""
+      # TODO: search_page can have a better query here, for multiple filter types
       self.parser = QueryParser("content", self.schema)
 
       for filter_ctype in self.filter_string.split(' '):
@@ -1300,9 +1527,11 @@ def remove_future(dirlisting):
 
 
 def opendir(ctype, hidden=False):
-   """Return either cached directory information or open a dir and
+   """
+   Return either cached directory information or open a dir and
    list all the files therein. Used for both searching and for the
-   card reading functions, so we manage it outside those."""
+   card reading functions, so we manage it outside those.
+   """
    directory = CONFIG.get("paths", ctype)
    if ( hidden == True ):
       directory += "/hidden" 
@@ -1407,7 +1636,7 @@ def create_simplecard(card, next_state):
    return output
 
 
-def create_textcard(card):
+def create_textcard(card, appearance):
    """All news and features are drawn here. For condensing content, 
    wrap any nested image inside a "read more" bracket that will appear 
    after the 1st paragraph of text. Hide images behind this link too.
@@ -1432,7 +1661,6 @@ def create_textcard(card):
    # paragraph tag with a "Expand" style that will keep that text
    # properly hidden. Then, after the end of the first paragraph, add
    # a "Read More" link for expanding the other hidden items.
-
    output = ""
    output += """<div class="card %s" id="%s">\n""" % ( card.ctype, anchor )
    output += """   <div class="cardTitle">\n"""
@@ -1515,9 +1743,13 @@ def create_textcard(card):
        ( card.search_result == False )):
       output += """   </div>\n"""
 
+   # Convert the appearance value into a string for permalinks
+   appanchor = ""
+   if ( appearance != None ):
+      appanchor += ":xa" + str(appearance)
+
    # And close the textcard
-   resource_dir = CONFIG.get("paths", "resource")
-   permanchor = "/" + resource_dir + "/?x" + card.ctype[0] + anchor
+   permanchor = "/?x" + card.ctype[0] + anchor + appanchor
 
    if ( card.permalink == False ):
       output += """   <div class="cardFooter">\n"""
@@ -1560,7 +1792,7 @@ def create_songcard(card):
    output += """<div class="card song">"""
    for song in card.songs:
       # Songs DIR can only be TLD, followed by album, and then songname
-      uripath = "/" + "/".join(song.songfile.split("/")[-3:])
+      uripath = "/" + "/".join(song.songfile.split("/")[-4:])
 
       output += """   <div class="cell">"""
       output += """      <p class="songName">%s</p>""" % song.songtitle
@@ -1589,7 +1821,7 @@ def create_page(page):
       if (( page.cards[i].ctype == "news" ) or
           ( page.cards[i].ctype == "topics" ) or
           ( page.cards[i].ctype == "features" )):
-         output += create_textcard(page.cards[i])
+         output += create_textcard(page.cards[i], page.state.appearance)
 
       if (( page.cards[i].ctype == "quotes" ) or
           ( page.cards[i].ctype == "heading" )):
@@ -1602,6 +1834,87 @@ def create_page(page):
          output += create_songcard(page.cards[i])
 
    return output
+
+
+def authentication_page(start_response, state):
+   """
+   If Constantina is in "forum" mode, you get the authentication
+   page. You also get an authentication page when you search for
+   a @username in the search bar in "combined" mode.
+   """
+   base = open(state.theme + '/authentication.html', 'r')
+   html = base.read()
+   start_response('200 OK', [('Content-Type','text/html')])
+   # TODO: persist in_state after login
+
+   return html
+
+
+def contents_page(start_response, state):
+   """
+   Three types of states:
+   1) Normal page creation (randomized elements)
+   2) A permalink page (state variable has an x in it)
+      One news or feature, footer, link to the main page
+   3) Easter eggs
+   """ 
+   substitute = '<!-- Contents go here -->'
+
+   # Fresh new HTML, no previous state provided
+   if ( state.fresh_mode() == True ):
+      page = cw_page(state)
+      base = open(state.theme + '/contents.html', 'r')
+      html = base.read()
+      html = html.replace(substitute, create_page(page))
+      start_response('200 OK', [('Content-Type','text/html')])
+
+   # Permalink page of some kind
+   elif ( state.permalink_mode() == True ):
+      page = cw_page(state)
+      base = open(state.theme + '/contents.html', 'r')
+      html = base.read()
+      html = html.replace(substitute, create_page(page))
+      start_response('200 OK', [('Content-Type','text/html')])
+
+   # Doing a search or a filter process
+   elif ( state.search_mode() == True ):
+      if ( state.search == [] ) and ( state.card_filter == None ):
+         # No search query given -- just regenerate the page
+         syslog.syslog("***** Reshuffle Page Contents *****")
+         state = cw_state(None)
+
+      page = cw_page(state)
+      start_response('200 OK', [('Content-Type','text/html')])
+      html = create_page(page)
+
+   # Otherwise, there is state, but no special headers.
+   else:
+      page = cw_page(state)
+      start_response('200 OK', [('Content-Type','text/html')])
+      html = create_page(page)
+
+   # Load html contents into the page with javascript
+   return html
+
+
+def authentication():
+   """
+   Super naive test authentication function just as a proof-of-concept
+   for validating my use of environment variabls and forms!
+   """
+   size = int(os.environ.get('CONTENT_LENGTH'))
+   post = {}
+   with stdin as fh:
+      # TODO: max content length, check for EOF
+      inbuf = fh.read(size)
+      for vals in inbuf.split('&'):
+         [ key, value ] = vals.split('=')
+         post[key] = value
+
+   if ( post['username'] == "justin" and post['password'] == "justin" ):
+      return True
+   else:
+      return False
 
 
 def application(env, start_response):
@@ -1627,57 +1940,24 @@ def application(env, start_response):
    os.chdir(root_dir + "/" + resource_dir)
    in_state = os.environ.get('QUERY_STRING')
    if ( in_state != None ) and ( in_state != '' ):
-      # Truncate state variable at 1024 characters
-      in_state = in_state[0:1024]
+      # Truncate state variable at 512 characters
+      in_state = in_state[0:512]
    else:
       in_state = None
 
+   state = cw_state(in_state)   # Create state object
+   auth_mode = CONFIG.get("authentication", "mode")
 
-   substitute = '<!-- Contents go here -->'
+   if ( os.environ.get('REQUEST_METHOD') == 'POST' ):
+      if ( authentication() == True ):
+         return contents_page(start_response, state)
+      else:   
+         return authentication_page(start_response, state)
 
-   # Instantiating all objects
-   page = cw_page(in_state)
-
-   # Three types of states:
-   # 1) Normal page creation (randomized elements)
-   # 2) A permalink page (state variable has an x in it)
-      # One news or feature, footer, link to the main page)
-   # 3) Easter eggs
-
-   # Fresh new HTML, no previous state provided
-   if ( page.state.in_state == None ):
-      base = open('base.html', 'r')
-      html = base.read()
-      html = html.replace(substitute, create_page(page))
-      start_response('200 OK', [('Content-Type','text/html')])
-
-   # Permalink page of some kind
-   elif (( page.state.news_permalink != None ) or
-         ( page.state.features_permalink != None ) or 
-         ( page.state.topics_permalink != None )): 
-      base = open('base.html', 'r')
-      html = base.read()
-      html = html.replace(substitute, create_page(page))
-      start_response('200 OK', [('Content-Type','text/html')])
-
-   # Doing a search or a filter process
-   elif (( page.state.search != None ) or 
-         ( page.state.card_filter != [] )): 
-      if ( page.state.search == [''] ) and ( page.state.card_filter == [] ):
-         # No search query given -- just regenerate the page
-         syslog.syslog("***** Reshuffle Page Contents *****")
-         page = cw_page()
-
-      start_response('200 OK', [('Content-Type','text/html')])
-      html = create_page(page)
-
-   # Otherwise, there is state, but no special headers.
+   if ( auth_mode == "blog" or auth_mode == "combined" ):
+      return contents_page(start_response, state)
    else:
-      start_response('200 OK', [('Content-Type','text/html')])
-      html = create_page(page)
-
-   # Load html contents into the page with javascript
-   return html
+      return authentication_page(start_response, state)
 
 
 

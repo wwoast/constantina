@@ -1,0 +1,516 @@
+html {
+    -webkit-text-size-adjust: 100%; /* Prevent font scaling in landscape */
+}
+
+/* Cover makes the background collapse at smaller sizes */
+body {
+   background-image: url("wallpaper.png");
+   background-size: cover;
+   background-position: 50% 50%;
+   background-attachment: fixed;
+   margin: 0 0 0 0;
+   padding: 0 0 0 0;
+   overflow-x: hidden;
+   font-family: "Avenir Next Medium", "Avenir Next", "Ubuntu", "Segoe UI", "Palatino Linotype", sans-serif;
+   line-height: 1.4;
+   font-size: 14pt;
+   color: white;
+}
+
+div.header, div.container {
+   position: relative;
+   margin-left: auto;
+   margin-right: auto;
+}
+
+/* Shared CSS info for headers and footers. Note that these try and
+   estimate widths in order to help "pin" the container ratio to the
+   background ratio, and then switch at specific points. */
+/* Largest screen, with borders at screen edges */
+@media screen and (min-width: 630px) {
+   div.header, div.container {
+      max-width: 62.5%;
+      min-width: 630px;
+   }
+}
+
+   
+/* Page header is followed by a page container, so that the header
+   parts don't have to fuss with the flow of the others. Note that you
+   can't give this a low z-order if you want clickable input fields! */
+div.header { 
+   width: 100%;
+   height: 60px;
+   margin-bottom: 16px;
+   padding: 0px 0px 20px 0px;
+}   
+
+/* Shadow the logos to pop against the background. */
+div.search, div.searchHalo, div.logo, div.logoHalo, div.searchInput, div.header form {
+   display: inline;
+   position: absolute;
+}
+
+div.search {
+   left: 6px;
+   top: 5px;
+}
+
+div.searchInput {
+   left: 38px;
+   top: 2px;
+}
+
+img.searchBar {
+   display: inline;
+   position: absolute;
+   width: 169px;
+   height: 30px;
+}
+
+input {
+   display: inline;
+   position: absolute;
+   border: none;
+   margin: 0 0 0 0;
+   padding: 0 0 0 0;
+   height: 30px;
+   background-color: transparent;
+   color: white;
+   z-index: 1;
+   font-size: 16pt;
+   font-family: "Palatino Linotype", sans-serif;
+}
+
+input#searchSubmit {
+   width: 30px;
+   height: 30px;
+   background-image: url("search.png");
+   border: solid 0px #000000; 
+   cursor: pointer;
+   z-index: 1;
+}
+
+input#searchEntry {
+   width: 139px;
+   z-index: 2;
+}
+
+div.searchHalo {
+   z-index: -4;
+   width: 230px;
+   height: 100px;
+   background-image: -webkit-radial-gradient(top, rgba(0,0,0,1.0) 0%, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.0) 70%);
+   background-image: -moz-radial-gradient(top, rgba(0,0,0,1.0) 0%, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.0) 70%);
+   background-image: radial-gradient(top, rgba(0,0,0,1.0) 0%, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.0) 70%);
+}
+
+div.logo {
+   right: 0px;
+   z-index: -2;
+}
+
+img.logo {
+   margin-top: 4px;
+   width: 316px;
+}
+
+div.logoHalo { 
+   z-index: -3;
+   right: 0px;
+   width: 316px;
+   height: 220px;
+   background-image: -webkit-radial-gradient(top, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.0) 70%);
+   background-image: -moz-radial-gradient(top, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.0) 70%);
+   background-image: radial-gradient(top, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.0) 70%);
+}
+
+/* Page container is centered with the background image */
+div.container {
+   margin-bottom: 0px;
+}
+
+div.card { 
+   width: 90%;
+   margin-left: auto;
+   margin-right: auto;
+   margin-bottom: 20px;
+   overflow-y: hidden;
+}
+
+div.card.store, div.card.heading { 
+   background-color: rgba(30, 164, 20, 0.78);
+   padding: 0px 20px 0px 20px;
+}
+
+div.card.quotes {
+   background-color: rgba(93, 21, 115, 0.78);
+   padding: 0px 20px 0px 20px
+}
+
+div.card.news {
+   background-color: rgba(21,134,134,0.78);
+   padding: 10px 20px 10px 20px;
+}
+
+div.card.topics {
+   background-color: rgba(21,21,134,0.78);
+   padding: 10px 20px 10px 20px;
+}
+
+div.card.features { 
+   background-color: rgba(30, 164, 20, 0.78);
+   padding: 10px 20px 10px 20px;
+}
+
+div.card p, div.card a, div.card h2, div.card h5 {
+   color: white;
+   text-align: justify;
+   text-justify: auto; 
+   text-justify-last: none;
+}
+
+div.cardTitle, div.cardFooter {
+   display: table;
+   text-align: left;
+   text-justify: none;
+   width: 100%;
+}
+
+div.cardTitle h2 {
+   float: left;
+   margin: 0 0 0 0;
+}
+
+div.cardTitle h2 a {
+   text-decoration: none;
+}
+
+div.cardTitle p.subject {
+   float: right;
+   margin: 0 0 0 0;
+}
+
+/* For small screensizes, ensure good left-padding so that paragraph
+   text doesn't start merging into the subjects */
+div.cardTitle p.subject {
+   margin: 0 0 0 0;
+   padding-top: 0px;
+   padding-bottom: 0px;
+   padding-left: 0px;
+   padding-right: 8px;
+   text-align: right;
+}
+
+img.InlineNewsLeft {
+   float: left;
+   margin-right: 1.5em;
+   margin-top: 2.2ex;
+}
+
+img.InlineNewsRight {
+   float: right;
+   margin-left: 1.5em;
+   margin-top: 2.2ex;
+}
+
+img.InlineNewsCenterFocus {
+   position: relative;
+   display: block;
+   width: 100%;
+   border-color: #AAAAAA;
+   margin-top: 10px;
+   margin-bottom: 10px;
+}
+
+img.InlineNewsCenter {
+   margin-top: 10px;
+   margin-bottom: 10px;
+   display: block;
+   text-align: center;
+} 
+
+/* For news-image captions */
+h5 {
+   margin-top: 0px;
+   padding-top: 0px;
+}
+
+div.cardFooter div.bottom {
+   display: table;
+   width: 100%;
+}
+
+div.bottom p.cardNav {
+   display: table-cell;
+   margin: 0 0 0 0;
+   padding: 0 0 0 0;
+   font-weight: bold;
+   padding-top: 9px;
+   width: 25%;
+   text-align: left;
+}
+
+p.cardNav a {
+   text-decoration: none;
+}
+
+div.bottom p.postDate {
+   display: table-cell;
+   margin: 0 0 0 0;
+   padding: 0 0 0 0;
+   color: #cccccc;
+   padding-top: 9px;
+   font-size: 9pt;
+   width: 25%;
+   font-weight: bold;
+   text-align: right;
+}
+
+a.expand {
+   font-style: italic;
+}
+
+div.cardFooter {
+   margin-top: 1ex;
+}
+
+/* Special heading cards that allow pagination */
+/* If zero-height and display: block, I can calculate its relative position
+   in the document with offsetHeight :) */
+div#scrollstone, div#old_scrollstone {
+   background-color: rgba(190, 124, 20, 0.78);
+   display: block;
+   margin: 0 0 0 0;
+   padding: 0 0 0 0;
+   height: 0px;
+}
+
+div#tombstone, div#old_tombstone, div#search_waiting {
+   background-color: rgba(190, 124, 20, 0.78);
+   font-weight: bold;
+   text-justify: none;
+}
+
+div#tombstone p#state, div#old_tombstone p#state {
+   display: none;
+}
+
+div.card.heading a#nextPage {
+   display: block;
+   text-decoration: none;
+   text-align: center;
+   font-weight: bold;
+}
+
+div.card.heading p#loadButton, div.card.heading p#inProgress {
+   text-decoration: none;
+   text-align: center;
+   text-justify: none;
+   font-weight: bold;
+}
+
+div.card.heading p#inProgress {
+   display: none;
+}
+
+div.card.image {
+   background-color: rgba(226,237,93,0.78);
+   padding: 5px 20px 5px 20px;
+   text-align: center;
+   color: black;
+}
+
+div.card.image h2, div.card.image p, div.card.image a {
+   color: black;
+}
+
+
+/* Do not adjust the widths of the cells inside the table.
+   All should be the same fixed length and spacing. Also, 
+   all cells in this div should be center-aligned. */
+div.card.song {
+   background-color: rgba(162,18,32,0.78);
+   padding: 5px 20px 5px 20px;
+   text-align: center;
+} 
+
+div.card.song p, div.card.song a {
+   color: white;
+}
+
+div.card.image img {
+   margin-top: 2.5%;
+   margin-bottom: 2.5%;
+   width: 95%;
+}
+
+div.card.song p {
+   margin: 0 0 0 0;
+   padding: 0 0 2px 0;
+   text-align: center;
+}
+
+/* Arrange cells so that if width shrinks, the cells overflow into
+   the next row. Also, align cells with a middle-line. */
+div.cell {
+   display: inline-block;
+   text-align: center;
+   width: 32.4%;
+   max-width: 280px;
+   min-width: 140px;
+   vertical-align: middle;
+   margin-top: 3px;
+   margin-bottom: 3px;
+}
+
+/* For long song titles, just hide them. Insist on some of these 
+   style overrides so the mobile queries look the same as before
+   doing the double-class stuff. */
+div.card.song p.songName {
+   font-weight: bold;
+   overflow: hidden;
+   font-size: 14pt;
+   word-spacing: normal;
+   letter-spacing: normal;
+}
+
+@media screen and (min-width: 520px) and (max-width:712px) {
+   div.cell {
+      max-width: 100%;
+      width: 42.4%;
+   }
+}
+
+@media screen and (max-width: 520px) {
+   div.cell {
+      max-width: 100%;
+      width: 80%;
+   }
+}
+
+#imgExpand, .divExpand {
+   display: none;
+}
+
+.showShort {
+   font-style: italic;
+   font-weight: bold;
+   text-decoration: none;
+   font-size: 12pt;
+   line-height: 1.7; 
+}
+
+/* Styling for Encyclopedia pages */
+ol.trackListing {
+   margin-left: 0.5em;
+   font-weight: bold;
+}
+
+ul.quiet {
+   font-size: 12pt;
+}
+
+
+/* Portrait mode, default for iPhones and for frames that are in a 
+   similar layout / resolution */
+@media screen and (max-width: 630px) {
+   body {
+      background-image: url("tiled-wallpaper.png");
+      background-size: 1024px;
+      background-attachment: none;
+      background-repeat: repeat;
+   }
+
+   div.searchHalo {
+      background-image: -webkit-radial-gradient(top left, rgba(0,0,0,1.0) 0%, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.0) 70%);
+      background-image: -moz-radial-gradient(top left, rgba(0,0,0,1.0) 0%, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.0) 70%);
+      background-image: radial-gradient(top left, rgba(0,0,0,1.0) 0%, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.0) 70%);
+   }
+
+   div.header, div.container, div.card.heading, div.card.quotes, div.card.news, div.card.features, div.card.store, div.card.image, div.card.song, div.card.topics { 
+      position: relative;
+      max-width: 100%;
+      width: 100%;
+      padding-left: 0px;
+      padding-right: 0px;
+   }
+
+   div.card p, div.card h2, div.card h5 {
+      margin-left: 14px;
+      margin-right: 8px;
+      text-align: left;
+      text-justify: none; 
+      text-justify-last: none;
+      letter-spacing: 0.8px;
+      word-spacing: 2px;
+   }
+
+   div.cardTitle h2 {
+      position: relative;
+      margin-top: 0px;
+      margin-bottom: 0px;
+      margin-left: 14px;
+      margin-right: 8px;
+      padding: 0 0 0 0;
+      float: left;
+   }
+
+   div.cardTitle p.subject {
+      position: relative;
+      margin-top: 0px;
+      margin-bottom: 0px;
+      margin-left: 14px;
+      padding: 0 0 0 0;
+      float: left;
+   }
+
+   div.bottom p.cardNav, div.bottom p.postDate {
+      margin-bottom: 0px;
+      padding-bottom: 0px;
+      font-size: 9pt;
+   }
+
+   div.bottom p.cardNav {
+      padding-left: 14px;
+   }
+
+   div.bottom p.postDate { 
+      padding-right: 8px;
+      letter-spacing: normal;
+   }
+
+   div.card p {
+      font-size: 12pt;
+   }
+
+   img.InlineNewsLeft, img.InlineNewsRight, img.InlineNewsCenterFocus {
+      position: relative;
+      display: block;
+      text-align: center;
+      clear: both;
+      margin-left: auto;
+      margin-right: auto;
+      float: none;
+      margin-top: 1ex;
+      margin-bottom: 1ex;
+   }
+
+   .showShort {
+      font-size: 10pt;
+      line-height: 1.9;
+   }
+}
+
+/* iPad background scaling */
+@media only screen 
+and (min-device-width : 768px) 
+and (max-device-width : 1024px)  { 
+   body {
+      background-image: url("tiled-wallpaper.png");
+      background-size: 800px 1414px;
+      background-attachment: none;
+      background-repeat: repeat;
+      background-position: center top;
+   }
+}
