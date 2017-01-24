@@ -148,15 +148,13 @@ class cw_state:
       self.__set_state_defaults()
 
       # Was there an initial state string? Process it if there was.
-      # TODO: manage all the import state code
       if ( self.in_state != None ):
          self.state_vars = self.in_state.split(':')   # TODO: max state params?
       else:
          self.state_vars = []
       self.__import_state()
 
-      # For any card types we want to shuffle, do the shuffle dance
-      # TODO: must have imported all states first
+      # Now that we've imported, shuffle any card types we want to shuffle
       for ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(","):
          getattr(self, ctype).shuffle()
 
@@ -534,9 +532,7 @@ class cw_state:
 
 
    def __export_theme_state(self):
-      """
-      If there was a appearance or theme tracked, include it in state links
-      """
+      """If tracking an appearance or theme, include it in state links"""
       appearance_string = None
       if ( self.appearance != None ):
          appearance_string = "xa" + str(self.appearance)
@@ -674,6 +670,22 @@ class cw_state:
          return False
 
 
+   def out_of_content(self, card_count):
+      """
+      Count the number of cards that are part of our page counting. If we've
+      already displayed this number of cards, we are out of content.
+      """
+      card_limit = 0
+      for ctype in CONFIG.get("card_properties", "pagecount").replace(" ","").split(","):
+         card_limit = card_limit + getattr(self, ctype).file_count
+      syslog.syslog("card_limit: " + str(card_limit) + "   card_count: " + str(card_count))
+      if ( card_count >= card_limit ):
+         return True
+      else:
+         return False
+
+
+
 class cw_page:
    """
    Constantina Page Object.
@@ -711,13 +723,13 @@ class cw_page:
          self.__distribute_cards()
          self.cards.insert(0, cw_card('heading', 'welcome', grab_body=True))
 
-         if ( len(self.cards) - self.cur_len > news_items ):
+         if ( self.state.out_of_content(len(self.cards)) == True ):
+            self.cards.append(cw_card('heading', 'bottom', grab_body=True))
+         else:
             # Add a hidden card to trigger loading more data when reached
             self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
             # Finally, add the "next page" tombstone to load more content
             self.cards.append(cw_card('heading', 'tombstone', grab_body=True))
-         else:
-            self.cards.append(cw_card('heading', 'bottom', grab_body=True))
 
       elif ( self.state.permalink_mode() == True ):
          # This is a permalink page request. For these, use a
@@ -741,7 +753,8 @@ class cw_page:
          self.__distribute_cards()
        
          # If the results have filled up the page, try and load more results
-         syslog.syslog("page:%d  maxitems:%d  max-filter:%d  cardlen:%d" % (self.state.page, self.state.max_items, self.state.max_items - self.filtered, len(self.cards))) 
+         syslog.syslog("page:%d  maxitems:%d  max-filter:%d  cardlen:%d" % (self.state.page, self.state.max_items, self.state.max_items - self.filtered, len(self.cards)))
+         # TODO: this logic has issues 
          if (( self.state.max_items - self.filtered ) * ( self.state.page + 1 ) <= len(self.cards)):
             # Add a hidden card to trigger loading more data when reached
             self.cards.insert(len(self.cards) - 7, cw_card('heading', 'scrollstone', grab_body=True))
