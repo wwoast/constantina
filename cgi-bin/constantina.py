@@ -300,6 +300,36 @@ class cw_state:
          self.theme = CONFIG.get("themes", str(self.appearance))
 
 
+   def __import_random_theme_state(self):
+      """
+      If random theme state is enabled, set a random appearance and load
+      the corresponding theme. 
+      """
+      self.random_theme = self.__find_state_variable('xr')
+
+      # Catches no random theme, and if there hasn't been random state yet
+      if ( self.random_theme == None ):
+         default_theme = CONFIG.get("themes", "default")
+         theme_count = len(CONFIG.items("themes")) - 1
+         if ( default_theme == "random.per-page" ):
+            self.random_theme = 0
+         if ( default_theme == "random.per-session"):
+            self.random_theme = 1
+
+      # Catches if the random theme state has been set
+      if ( self.random_theme != None ):
+         self.random_theme = int(self.random_theme[0])
+         if ( self.random_theme == 0 ):
+            seed()   # Enable non-seeded choice
+            self.appearance = randint(0, theme_count)
+            self.theme = CONFIG.get("themes", str(self.appearance)) 
+            if ( self.seed ):   # Re-enable seeded nonrandom choice
+               seed(self.seed)
+         if ( self.random_theme == 1 ):
+            self.appearance = int((self.seed * 1000) % theme_count )
+            self.theme = CONFIG.get("themes", str(self.appearance))
+
+
    def __import_permalink_state(self):
       """
       Any card type that can be displayed on its own is a permalink-type
@@ -414,6 +444,7 @@ class cw_state:
       self.__import_random_seed()          # Import the random seed first
       self.__import_content_card_state()   # Then import the normal content cards
       self.__import_theme_state()          # Theme settings
+      self.__import_random_theme_state()   # Randomly chosen themes are possible
       self.__import_search_state()         # Search strings and processing out filter strings
       self.__import_filter_state()         # Any filter strings loaded from prior pages
       self.__import_filtered_card_count()  # Number of cards filtered out of prior pages
@@ -539,6 +570,13 @@ class cw_state:
       return appearance_string
 
 
+   def __export_random_theme_state(self):
+      random_theme_string = None
+      if ( self.random_theme != None ):
+         random_theme_string = "xr" + str(self.random_theme)
+      return random_theme_string
+
+
    def __export_search_state(self, query_terms):
       """Export state related to searched cards""" 
       query_string = None
@@ -582,7 +620,8 @@ class cw_state:
                        self.__export_filter_state(filter_terms),
                        self.__export_filtered_card_count(filtered_count),
                        self.__export_page_count_state(query_terms, filter_terms),
-                       self.__export_theme_state() ]
+                       self.__export_theme_state(),
+                       self.__export_random_theme_state() ]
 
       export_parts = filter(None, export_parts)
       export_string = ':'.join(export_parts)
@@ -1649,7 +1688,7 @@ def create_simplecard(card, next_state):
    return output
 
 
-def create_textcard(card, appearance):
+def create_textcard(card, appearance, random_theme):
    """All news and features are drawn here. For condensing content, 
    wrap any nested image inside a "read more" bracket that will appear 
    after the 1st paragraph of text. Hide images behind this link too.
@@ -1760,6 +1799,8 @@ def create_textcard(card, appearance):
    appanchor = ""
    if ( appearance != None ):
       appanchor += ":xa" + str(appearance)
+   if ( random_theme != None ):
+      appanchor += ":xr" + str(random_theme)
 
    # And close the textcard
    permanchor = "/?x" + card.ctype[0] + anchor + appanchor
@@ -1834,7 +1875,7 @@ def create_page(page):
       if (( page.cards[i].ctype == "news" ) or
           ( page.cards[i].ctype == "topics" ) or
           ( page.cards[i].ctype == "features" )):
-         output += create_textcard(page.cards[i], page.state.appearance)
+         output += create_textcard(page.cards[i], page.state.appearance, page.state,random_theme)
 
       if (( page.cards[i].ctype == "quotes" ) or
           ( page.cards[i].ctype == "heading" )):
