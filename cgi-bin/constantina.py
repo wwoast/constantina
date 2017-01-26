@@ -326,7 +326,7 @@ class cw_state:
             if ( self.seed ):   # Re-enable seeded nonrandom choice
                seed(self.seed)
          if ( self.random_theme == 1 ):
-            self.appearance = int((self.seed * 1000) % theme_count )
+            self.appearance = int(self.seed * 1000) % theme_count
             self.theme = CONFIG.get("themes", str(self.appearance))
 
 
@@ -1690,7 +1690,7 @@ def create_simplecard(card, next_state):
    return output
 
 
-def create_textcard(card, appearance, random_theme):
+def create_textcard(card, state):
    """All news and features are drawn here. For condensing content, 
    wrap any nested image inside a "read more" bracket that will appear 
    after the 1st paragraph of text. Hide images behind this link too.
@@ -1799,10 +1799,12 @@ def create_textcard(card, appearance, random_theme):
 
    # Convert the appearance value into a string for permalinks
    appanchor = ""
-   if ( appearance != None ):
-      appanchor += ":xa" + str(appearance)
-   if ( random_theme != None ):
-      appanchor += ":xr" + str(random_theme)
+   if ( state.appearance != None ):
+      appanchor += ":xa" + str(state.appearance)
+   if ( state.random_theme != None ):
+      appanchor += ":xr" + str(state.random_theme)
+   if ( state.seed != None ):
+      appanchor += ":" + str(state.see
 
    # And close the textcard
    permanchor = "/?x" + card.ctype[0] + anchor + appanchor
@@ -1877,7 +1879,7 @@ def create_page(page):
       if (( page.cards[i].ctype == "news" ) or
           ( page.cards[i].ctype == "topics" ) or
           ( page.cards[i].ctype == "features" )):
-         output += create_textcard(page.cards[i], page.state.appearance, page.state.random_theme)
+         output += create_textcard(page.cards[i], page.state)
 
       if (( page.cards[i].ctype == "quotes" ) or
           ( page.cards[i].ctype == "heading" )):
