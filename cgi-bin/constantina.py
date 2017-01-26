@@ -306,11 +306,11 @@ class cw_state:
       the corresponding theme. 
       """
       self.random_theme = self.__find_state_variable('xr')
+      theme_count = len(CONFIG.items("themes")) - 1
 
       # Catches no random theme, and if there hasn't been random state yet
       if ( self.random_theme == None ):
          default_theme = CONFIG.get("themes", "default")
-         theme_count = len(CONFIG.items("themes")) - 1
          if ( default_theme == "random.per-page" ):
             self.random_theme = 0
          if ( default_theme == "random.per-session"):
@@ -318,7 +318,7 @@ class cw_state:
 
       # Catches if the random theme state has been set
       if ( self.random_theme != None ):
-         self.random_theme = int(self.random_theme[0])
+         self.random_theme = int(self.random_theme)
          if ( self.random_theme == 0 ):
             seed()   # Enable non-seeded choice
             self.appearance = randint(0, theme_count)
@@ -921,7 +921,9 @@ class cw_page:
          permalink page of that type."""
       for spctype, spcfield in CONFIG.items("special_states"):
          if ( getattr(self.state, spcfield) != None ):
-            if ( spctype == "xo" ) or ( spctype == "xp" ) or ( spctype == "xx" ) or ( spctype == "xa" ): 
+            if (( spctype == "xo" ) or ( spctype == "xp" ) or 
+                ( spctype == "xx" ) or ( spctype == "xa" ) or 
+                ( spctype == "xr" )): 
                # TODO: make xo objects consistent with other absent states
                continue
             cnum = str(getattr(self.state, spcfield))
@@ -1875,7 +1877,7 @@ def create_page(page):
       if (( page.cards[i].ctype == "news" ) or
           ( page.cards[i].ctype == "topics" ) or
           ( page.cards[i].ctype == "features" )):
-         output += create_textcard(page.cards[i], page.state.appearance, page.state,random_theme)
+         output += create_textcard(page.cards[i], page.state.appearance, page.state.random_theme)
 
       if (( page.cards[i].ctype == "quotes" ) or
           ( page.cards[i].ctype == "heading" )):
