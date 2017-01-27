@@ -321,7 +321,7 @@ class cw_state:
          self.random_theme = int(self.random_theme)
          if ( self.random_theme == 0 ):
             seed()   # Enable non-seeded choice
-            self.appearance = randint(0, theme_count)
+            self.appearance = randint(0, theme_count - 1)
             self.theme = CONFIG.get("themes", str(self.appearance)) 
             if ( self.seed ):   # Re-enable seeded nonrandom choice
                seed(self.seed)
