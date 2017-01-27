@@ -628,6 +628,16 @@ class cw_state:
       return export_string
 
 
+   def export_display_state(self):
+      """Just export enough state for links in textcards that preserve theme"""
+      export_parts = [ self.__export_random_seed(),
+                       self.__export_theme_state(),
+                       self.__export_random_theme_state() ]
+      export_parts = filter(None, export_parts)
+      export_display = ':'.join(export_parts)
+      return export_display
+
+
    def configured_states(self):
       """Check to see which special states are enabled. Return an array of 
          either card types or special state types that are not set to None."""
@@ -1690,7 +1700,7 @@ def create_simplecard(card, next_state):
    return output
 
 
-def create_textcard(card, state):
+def create_textcard(card, display_state):
    """All news and features are drawn here. For condensing content, 
    wrap any nested image inside a "read more" bracket that will appear 
    after the 1st paragraph of text. Hide images behind this link too.
@@ -1798,16 +1808,11 @@ def create_textcard(card, state):
       output += """   </div>\n"""
 
    # Convert the appearance value into a string for permalinks
-   appanchor = ""
-   if ( state.appearance != None ):
-      appanchor += ":xa" + str(state.appearance)
-   if ( state.random_theme != None ):
-      appanchor += ":xr" + str(state.random_theme)
-   if ( state.seed != None ):
-      appanchor += ":" + str(state.see
-
    # And close the textcard
-   permanchor = "/?x" + card.ctype[0] + anchor + appanchor
+   if ( display_state != None ):
+      permanchor = "/?x" + card.ctype[0] + anchor + ":" + display_state
+   else:
+      permanchor = "/?x" + card.ctype[0] + anchor
 
    if ( card.permalink == False ):
       output += """   <div class="cardFooter">\n"""
@@ -1879,7 +1884,7 @@ def create_page(page):
       if (( page.cards[i].ctype == "news" ) or
           ( page.cards[i].ctype == "topics" ) or
           ( page.cards[i].ctype == "features" )):
-         output += create_textcard(page.cards[i], page.state)
+         output += create_textcard(page.cards[i], page.state.export_display_state())
 
       if (( page.cards[i].ctype == "quotes" ) or
           ( page.cards[i].ctype == "heading" )):
