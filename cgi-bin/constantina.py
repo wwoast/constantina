@@ -157,7 +157,7 @@ class cw_state:
 
         # Was there an initial state string? Process it if there was.
         if self.in_state is not None:
-            self.state_vars = self.in_state.split(':')   # TODO: max state params?
+            self.state_vars = self.in_state.split(':')
         else:
             self.state_vars = []
         self.__import_state()
@@ -1345,6 +1345,9 @@ class cw_search:
         # message, or provide context on the search results shown.
         # Array of ctypes, each with an array of filename hits
         self.hits = {}
+        # Upper limit on the permitted number of searchable items.
+        # Since we use this as an array slice, add one to support N-1 elements
+        self.max_query_count = CONFIG.getint("miscellaneous", "max_state_parameters") + 1
 
         # Whoosh object defaults
         self.schema = ''
@@ -1390,7 +1393,8 @@ class cw_search:
 
         # Process the filter strings first, in case that's all we have
         if (unsafe_filter_terms is not None):
-            self.__process_input(' '.join(unsafe_filter_terms), returning="filter")
+            self.__process_input(' '.join(unsafe_filter_terms[0:self.max_query_count]), 
+                                     returning="filter")
 
         # Double check if the query terms exist or not
         if (unsafe_query_terms is None):
@@ -1405,7 +1409,7 @@ class cw_search:
         # If the query string is null after processing, don't do anything else.
         # Feed our input as a space-delimited set of terms. NOTE that we limit
         # this in the __import_state function in cw_state.
-        if not (self.__process_input(' '.join(unsafe_query_terms))):
+        if not (self.__process_input(' '.join(unsafe_query_terms[0:self.max_query_count]))):
             if (self.filter_string != ''):
                 self.__filter_cardtypes()
                 self.searcher.close()
@@ -1445,14 +1449,14 @@ class cw_search:
 
         # Then remove them from whatever input we're processing
         safe_input = self.ignore_words.sub("", unsafe_input)
-        if (safe_input == ''):
+        if safe_input == '':
             return 0
 
         # Get rid of symbol instances in whatever input we're processing
         # Note this only works on ASCII symbol characters, not the special
         # double-quote characters &ldquo; and &rdquo;, as well as other
         # lxml.html converted &-escaped HTML characters
-        if (self.ignore_symbols == ''):
+        if self.ignore_symbols == '':
             with open(self.symbols_file, 'r') as sfile:
                 for character in sfile.read().splitlines():
                     self.ignore_symbols.push(character)
@@ -1463,10 +1467,10 @@ class cw_search:
 
         # Did we sanitize a query, or a round of content? Infer by what
         # we're setting in the object itself.
-        if (safe_input != ''):
-            if (returning == "query"):
+        if safe_input != '':
+            if returning == "query":
                 self.query_string = safe_input
-            elif (returning == "filter"):
+            elif returning == "filter":
                 self.filter_string = safe_input
             else:
                 self.content = safe_input
