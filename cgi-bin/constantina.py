@@ -71,7 +71,7 @@ class cw_cardtype:
       self.__mark_uneven_distribution()
       # syslog.syslog("Marked list of " + self.ctype + ": " + str(self.clist))
       self.__replace_marked()
-      syslog.syslog("Final list of " + self.ctype + ": " + str(self.clist))
+      # syslog.syslog("Final list of " + self.ctype + ": " + str(self.clist))
             
 
    def __shuffle_files(self):
@@ -284,11 +284,11 @@ class cw_state:
       The appearance value lets us look up which theme we display for the user.
       This theme value is a path fragment to a theme's images and stylesheets.
       """
-      self.appearance = self.__find_state_variable('xa')
+      appearance_state = self.__find_state_variable('xa')
 
       # Default theme specified in configs (exclude the default setting)
-      if ( self.appearance != None ):
-         self.appearance = int(self.appearance[0])
+      if ( appearance_state != None ):
+         self.appearance = int(appearance_state[0])
 
       theme_count = len(CONFIG.items("themes")) - 1
       self.theme = None
@@ -299,35 +299,22 @@ class cw_state:
       else:
          self.theme = CONFIG.get("themes", str(self.appearance))
 
+      # If the configuration supports a random theme, and we didn't have a
+      # theme provided in the initial state, let's choose one randomly
+      if (( appearance_state == None ) and 
+         (( self.theme == "random.per-session" ) or 
+          ( self.theme == "random.per-page" ))):
 
-   def __import_random_theme_state(self):
-      """
-      If random theme state is enabled, set a random appearance and load
-      the corresponding theme. 
-      """
-      self.random_theme = self.__find_state_variable('xr')
-      theme_count = len(CONFIG.items("themes")) - 1
-
-      # Catches no random theme, and if there hasn't been random state yet
-      if ( self.random_theme == None ):
-         default_theme = CONFIG.get("themes", "default")
-         if ( default_theme == "random.per-page" ):
-            self.random_theme = 0
-         if ( default_theme == "random.per-session"):
-            self.random_theme = 1
-
-      # Catches if the random theme state has been set
-      if ( self.random_theme != None ):
-         self.random_theme = int(self.random_theme)
-         if ( self.random_theme == 0 ):
+         if ( self.theme == "random.per-page" ):
             seed()   # Enable non-seeded choice
-            self.appearance = randint(0, theme_count - 1)
-            self.theme = CONFIG.get("themes", str(self.appearance)) 
+            choice = randint(0, theme_count - 1)
+            self.theme = CONFIG.get("themes", str(choice)) 
             if ( self.seed ):   # Re-enable seeded nonrandom choice
                seed(self.seed)
-         if ( self.random_theme == 1 ):
-            self.appearance = int(self.seed * 1000) % theme_count
-            self.theme = CONFIG.get("themes", str(self.appearance))
+
+         else:   # random.per-session
+            choice = int(self.seed * 1000) % theme_count
+            self.theme = CONFIG.get("themes", str(choice))
 
 
    def __import_permalink_state(self):
@@ -353,6 +340,10 @@ class cw_state:
       channel names. 
       """	
       self.search = self.__find_state_variable('xs')
+      if ( self.search == '' ):
+         self.reshuffle = True
+      else:
+         self.reshuffle = False
 
       # First, check if any of the search terms should be processed as a 
       # cardtype and be added to the filter state instead.
@@ -444,7 +435,6 @@ class cw_state:
       self.__import_random_seed()          # Import the random seed first
       self.__import_content_card_state()   # Then import the normal content cards
       self.__import_theme_state()          # Theme settings
-      self.__import_random_theme_state()   # Randomly chosen themes are possible
       self.__import_search_state()         # Search strings and processing out filter strings
       self.__import_filter_state()         # Any filter strings loaded from prior pages
       self.__import_filtered_card_count()  # Number of cards filtered out of prior pages
@@ -570,13 +560,6 @@ class cw_state:
       return appearance_string
 
 
-   def __export_random_theme_state(self):
-      random_theme_string = None
-      if ( self.random_theme != None ):
-         random_theme_string = "xr" + str(self.random_theme)
-      return random_theme_string
-
-
    def __export_search_state(self, query_terms):
       """Export state related to searched cards""" 
       query_string = None
@@ -620,8 +603,7 @@ class cw_state:
                        self.__export_filter_state(filter_terms),
                        self.__export_filtered_card_count(filtered_count),
                        self.__export_page_count_state(query_terms, filter_terms),
-                       self.__export_theme_state(),
-                       self.__export_random_theme_state() ]
+                       self.__export_theme_state() ]
 
       export_parts = filter(None, export_parts)
       export_string = ':'.join(export_parts)
@@ -631,8 +613,7 @@ class cw_state:
    def export_display_state(self):
       """Just export enough state for links in textcards that preserve theme"""
       export_parts = [ self.__export_random_seed(),
-                       self.__export_theme_state(),
-                       self.__export_random_theme_state() ]
+                       self.__export_theme_state() ]
       export_parts = filter(None, export_parts)
       export_display = ':'.join(export_parts)
       return export_display
@@ -652,6 +633,7 @@ class cw_state:
    def fresh_mode(self):
       """Either an empty state, or just an empty state and a theme is set"""
       if (( self.page == 0 ) and 
+          ( self.reshuffle == False ) and 
           (( self.in_state == None ) or 
            ( self.configured_states() == ['appearance'] ))):
          return True
@@ -1928,6 +1910,7 @@ def contents_page(start_response, state):
 
    # Fresh new HTML, no previous state provided
    if ( state.fresh_mode() == True ):
+      syslog.syslog("in new page response: " + str(state.configured_states()))
       page = cw_page(state)
       base = open(state.theme + '/contents.html', 'r')
       html = base.read()
@@ -1936,6 +1919,7 @@ def contents_page(start_response, state):
 
    # Permalink page of some kind
    elif ( state.permalink_mode() == True ):
+      syslog.syslog("in permalink response: " + str(state.configured_states()))
       page = cw_page(state)
       base = open(state.theme + '/contents.html', 'r')
       html = base.read()
@@ -1949,12 +1933,14 @@ def contents_page(start_response, state):
          syslog.syslog("***** Reshuffle Page Contents *****")
          state = cw_state(None)
 
+      syslog.syslog("in search response: " + str(state.configured_states()))
       page = cw_page(state)
       start_response('200 OK', [('Content-Type','text/html')])
       html = create_page(page)
 
    # Otherwise, there is state, but no special headers.
    else:
+      syslog.syslog("no special headers: " + str(state.configured_states()))
       page = cw_page(state)
       start_response('200 OK', [('Content-Type','text/html')])
       html = create_page(page)
