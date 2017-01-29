@@ -172,7 +172,7 @@ class cw_state:
     def __int_translate(self, checkval, width, default):
         """Take a string of digits and convert width chars into an integer"""
         if checkval.isdigit():
-            checkval = int(appearance_state[0:width])
+            checkval = int(checkval[0:width])
         else:   # Invalid input gets a chosen default 
             checkval = default
         return checkval
@@ -558,14 +558,13 @@ class cw_state:
         return content_string
 
 
-    def __export_page_count_state(self, query_terms, filter_terms):
+    def __export_page_count_state(self):
         """
         If we had search results and used a page number, write an incremented page
         number into the next search state for loading
         """
-        # TODO: don't use query_terms and filter_terms. Use the state mode checks
         page_string = None
-        if (query_terms != '') or (filter_terms != ''):
+        if (self.search_mode() == True):
             export_page = int(self.page) + 1
             page_string = "xp" + str(export_page)
         return page_string
@@ -621,7 +620,7 @@ class cw_state:
                         self.__export_search_state(query_terms),
                         self.__export_filter_state(filter_terms),
                         self.__export_filtered_card_count(filtered_count),
-                        self.__export_page_count_state(query_terms, filter_terms),
+                        self.__export_page_count_state(),
                         self.__export_theme_state()]
 
         export_parts = filter(None, export_parts)
