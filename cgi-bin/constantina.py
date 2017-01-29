@@ -280,6 +280,8 @@ class cw_state:
         """
         For all subsequent "infinite-scroll AJAX" content after the initial page
         load, we track the current page number of content.
+
+        Output must be an integer.
         """
         self.page = self.__find_state_variable('xp')
 
@@ -331,6 +333,8 @@ class cw_state:
         Any card type that can be displayed on its own is a permalink-type
         card, and will have state that describes which permalink page should
         be loaded.
+
+        Output is either string (filename, as utime), or None.
         """
         permalink_states = [sv[0] for sv in CONFIG.items("special_states") 
                                   if sv[1].find("permalink") != -1]
@@ -344,10 +348,11 @@ class cw_state:
 
     def __import_search_state(self):
         """
-        Import the search terms that were used on previous page loads
+        Import the search terms that were used on previous page loads.
+        Some of these terms may be prefixed with a #, which makes them either 
+        cardtypes or channel names.
 
-        Some of these terms may be prefixed with a #, which makes them either cardtypes or
-        channel names.
+        Output is either strings of search/filter terms, or None
         """
         self.search = self.__find_state_variable('xs')
         if self.search == '':
@@ -397,12 +402,14 @@ class cw_state:
         Filtered card count, tracked when we have a query type and a filter count
         and cards on previous pages were omitted from being displayed. Tracking
         this allows you to fix the page count to represent reality better.
+
+        Output must be an integer.
         """
         self.filtered = self.__find_state_variable('xx')
         if ((self.filtered is not None) and
             (self.search is not None) and 
             (self.card_filter is not None)):
-            self.filtered = int(self.filtered[0])
+            self.filtered = self.__int_translate(self.filtered, 1, 0)
         else:
             self.filtered = 0
 
@@ -439,9 +446,10 @@ class cw_state:
 
     def __import_state(self):
         """
-        Given a state variable string grabbed from the page, parse a
-        parse into an object full of card-list properties. This will
-        be used to define which cards should be obtained for the page.
+        Given a state variable string grabbed from the page, fill out the 
+        state object with properties relevant to the card list we'll be
+        loading. The order that state components are loaded is significant,
+        as is the output type of each state import function.
         """
         self.__import_random_seed()          # Import the random seed first
         self.__import_content_card_state()   # Then import the normal content cards
