@@ -628,6 +628,16 @@ class cw_state:
       else:
          return False
 
+   
+   def reshuffle_mode(self):
+      """An empty search was given, so reshuffle the page"""
+      if (( self.search != None ) and 
+          ( self.reshuffle == True ) and 
+          ( self.card_filter == None )): 
+         return True
+      else:
+         return False
+
 
    def permalink_mode(self):
       """Is one of the permalink modes on?"""
@@ -1898,7 +1908,6 @@ def contents_page(start_response, state):
 
    # Fresh new HTML, no previous state provided
    if ( state.fresh_mode() == True ):
-      syslog.syslog("in new page response: " + str(state.configured_states()))
       page = cw_page(state)
       base = open(state.theme + '/contents.html', 'r')
       html = base.read()
@@ -1907,31 +1916,31 @@ def contents_page(start_response, state):
 
    # Permalink page of some kind
    elif ( state.permalink_mode() == True ):
-      syslog.syslog("in permalink response: " + str(state.configured_states()))
       page = cw_page(state)
       base = open(state.theme + '/contents.html', 'r')
       html = base.read()
       html = html.replace(substitute, create_page(page))
       start_response('200 OK', [('Content-Type','text/html')])
 
+   # Did we get an empty search? If so, reshuffle
+   elif ( state.reshuffle_mode() == True ):
+      syslog.syslog("***** Reshuffle Page Contents *****")
+      state = cw_state(None)
+      page = cw_page(state)
+      html = create_page(page)
+      start_response('200 OK', [('Content-Type','text/html')])
+
    # Doing a search or a filter process
    elif ( state.search_mode() == True ):
-      if ( state.search == [] ) and ( state.card_filter == None ):
-         # No search query given -- just regenerate the page
-         syslog.syslog("***** Reshuffle Page Contents *****")
-         state = cw_state(None)
-
-      syslog.syslog("in search response: " + str(state.configured_states()))
       page = cw_page(state)
-      start_response('200 OK', [('Content-Type','text/html')])
       html = create_page(page)
+      start_response('200 OK', [('Content-Type','text/html')])
 
    # Otherwise, there is state, but no special headers.
    else:
-      syslog.syslog("no special headers: " + str(state.configured_states()))
       page = cw_page(state)
-      start_response('200 OK', [('Content-Type','text/html')])
       html = create_page(page)
+      start_response('200 OK', [('Content-Type','text/html')])
 
    # Load html contents into the page with javascript
    return html
