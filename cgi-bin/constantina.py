@@ -57,7 +57,7 @@ class cw_cardtype:
         # How many ctype cards should we see before the same card
         # appears again in the randomized view? This is a function
         # of the number of available cards
-        if (self.per_page == 0):
+        if self.per_page == 0:
             self.page_distance = 0
         else:
             self.page_distance = self.file_count*2 / self.per_page
@@ -100,16 +100,16 @@ class cw_cardtype:
         between pages is a function of the number of possible elements.
         """
         for i in range(0, len(self.clist)):
-            if (self.clist[i] == 'x'):
+            if self.clist[i] == 'x':
                 continue
 
             part_end = i + self.page_distance
-            if (i + part_end > len(self.clist)):
+            if i + part_end > len(self.clist):
                 part_end = len(self.clist)
 
             # Mark array items for removal
             for j in range(i+1, part_end):
-                if (self.clist[i] == self.clist[j]):
+                if self.clist[i] == self.clist[j]:
                     self.clist[j] = 'x'
 
 
@@ -119,20 +119,20 @@ class cw_cardtype:
         replacement values.
         """
         for i in range(0, len(self.clist)):
-            if (self.clist[i] != 'x'):
+            if self.clist[i] != 'x':
                 continue
 
             part_start = i - self.page_distance
-            if (i - part_start < 0):
-                part_start = 0;
+            if i - part_start < 0:
+                part_start = 0
             part_end = i + self.page_distance
-            if (i + part_end > len(self.clist)):
+            if i + part_end > len(self.clist):
                 part_end = len(self.clist)
 
             choices = range(0, self.file_count)
             shuffle(choices)
             for k in choices:
-                if (k not in self.clist[part_start:part_end]):
+                if k not in self.clist[part_start:part_end]:
                     self.clist[i] = k
                     break
 
@@ -156,14 +156,14 @@ class cw_state:
         self.__set_state_defaults()
 
         # Was there an initial state string? Process it if there was.
-        if (self.in_state is not None):
+        if self.in_state is not None:
             self.state_vars = self.in_state.split(':')   # TODO: max state params?
         else:
             self.state_vars = []
         self.__import_state()
 
         # Now that we've imported, shuffle any card types we want to shuffle
-        for ctype in CONFIG.get("card_properties", "randomize").replace(" ","").split(","):
+        for ctype in CONFIG.get("card_properties", "randomize").replace(" ", "").split(","):
             getattr(self, ctype).shuffle()
 
         # syslog.syslog("Random seed: " + str(self.seed))
@@ -201,27 +201,27 @@ class cw_state:
         random seed. Once a state variable is consumed, remove it from
         the state_vars.
         """
-        if (self.state_vars == []):
+        if self.state_vars == []:
             return None
         hits = []
         output = None
 
         # Random seed is the one all-numeric state variable
-        if (search == "seed"):
+        if search == "seed":
             hits = [token for token in self.state_vars if token.isdigit()]
-            if (len(hits) > 0):
+            if len(hits) > 0:
                 output = hits[0]
         # Special state variables are singleton values. Typically a
         # two-letter value starting with "x" as the first letter.
-        elif (CONFIG.has_option("special_states", search)):
+        elif CONFIG.has_option("special_states", search):
             hits = [token for token in self.state_vars if token.find(search) == 0]
-            if (len(hits) > 0):
+            if len(hits) > 0:
                 output = unquote_plus(hits[0][2:])
         # Individual content card state variables. Each one is a distance
         # from the current page.
-        elif (search in [s[0] for s in CONFIG.options("card_counts")]):
+        elif search in [s[0] for s in CONFIG.options("card_counts")]:
             hits = [token for token in self.state_vars if token.find(search) == 0]
-            if (len(hits) > 0):
+            if len(hits) > 0:
                 output = int(hits[0][1:])
 
         # Remove any matches for state variables, including extraneous duplicates
@@ -239,7 +239,7 @@ class cw_state:
         shuffle ordering.
         """
         self.seed = self.__find_state_variable("seed")
-        if (self.seed is None):
+        if self.seed is None:
             self.seed = round(random(), 14)
         else:
             self.seed = float(str("0." + self.seed))
@@ -273,11 +273,11 @@ class cw_state:
         self.page = self.__find_state_variable('xp')
 
         # If page was read in as a special state variable, use that (for search results)
-        if ((self.page is not None) and 
+        if ((self.page is not None) and
             ((self.search is not None) or (self.card_filter is not None))):
             self.page = int(self.page[0])
         # Otherwise, determine our page number from the news article index reported
-        elif (self.news.distance is not None):
+        elif self.news.distance is not None:
             self.page = (int(self.news.distance) + 1) / CONFIG.getint('card_counts', 'news')
         else:
             self.page = 0
@@ -293,27 +293,26 @@ class cw_state:
         """
         appearance_state = self.__find_state_variable('xa')
 
-        if (appearance_state is not None):
-            if (appearance_state.isdigit()):
+        if appearance_state is not None:
+            if appearance_state.isdigit():
                 self.appearance = int(appearance_state[0])
 
         theme_count = len(CONFIG.items("themes")) - 1
         self.theme = None
-        if (self.appearance is None):
+        if self.appearance is None:
             self.theme = CONFIG.get("themes", "default")
-        elif (self.appearance >= theme_count):
+        elif self.appearance >= theme_count:
             self.theme = CONFIG.get("themes", str(self.appearance % theme_count))
         else:
             self.theme = CONFIG.get("themes", str(self.appearance))
 
         # If the configuration supports a random theme, and we didn't have a
         # theme provided in the initial state, let's choose one randomly
-        if ((appearance_state is not None) and
-            (self.theme == "random")):
+        if (appearance_state is None) and (self.theme == "random"):
             seed()   # Enable non-seeded choice
             choice = randint(0, theme_count - 1)
             self.theme = CONFIG.get("themes", str(choice))
-            if (self.seed):   # Re-enable seeded nonrandom choice
+            if self.seed:   # Re-enable seeded nonrandom choice
                 seed(self.seed)
 
 
@@ -323,7 +322,8 @@ class cw_state:
         card, and will have state that describes which permalink page should
         be loaded.
         """
-        permalink_states = [sv[0] for sv in CONFIG.items("special_states") if sv[1].find("permalink") != -1]
+        permalink_states = [sv[0] for sv in CONFIG.items("special_states") 
+                                  if sv[1].find("permalink") != -1]
         for state in permalink_states:
             value = self.__find_state_variable(state)
             if value != None:
@@ -340,14 +340,14 @@ class cw_state:
         channel names.
         """
         self.search = self.__find_state_variable('xs')
-        if (self.search == ''):
+        if self.search == '':
             self.reshuffle = True
         else:
             self.reshuffle = False
 
         # First, check if any of the search terms should be processed as a
         # cardtype and be added to the filter state instead.
-        if (self.search is not None):
+        if self.search is not None:
             searchterms = self.search.split(' ')
             searchterms = filter(None, searchterms)   # remove nulls
             removeterms = self.__add_filter_cardtypes(searchterms)
@@ -356,7 +356,7 @@ class cw_state:
             self.search = searchterms
             # Take off leading #-sigil for card type searches
             self.card_filter = map(lambda x: x[1:], removeterms)
-            if (self.card_filter == []):
+            if self.card_filter == []:
                 self.card_filter = None
 
 
@@ -367,10 +367,10 @@ class cw_state:
         If no filter strings were found during search, we may need to process a set
         of filter strings that were excised out on a previous page load.
         """
-        if (self.card_filter is None):
+        if self.card_filter is None:
             self.card_filter = self.__find_state_variable('xo')
 
-            if (self.card_filter is not None):
+            if self.card_filter is not None:
                 filterterms = self.card_filter.split(' ')
                 # Add-filter-cardtypes expects strings that start with #
                 hashtag_process = map(lambda x: "#" + x, filterterms)
@@ -378,7 +378,7 @@ class cw_state:
                 # Take off leading #-sigil for card type searches
                 # TODO: guarantee first character is sigil
                 self.card_filter = map(lambda x: x[1:], filterterms)
-                if (self.card_filter == []):
+                if self.card_filter == []:
                    self.card_filter = None
 
 
@@ -462,7 +462,7 @@ class cw_state:
                 continue
             # For adding into a string later, make card.num a string too
             getattr(self, card.ctype).clist.append(str(card.num))
-            if (card.ctype not in all_ctypes):
+            if card.ctype not in all_ctypes:
                 all_ctypes.append(card.ctype)
 
         # Add distance values to the end of each state_hash
@@ -479,17 +479,17 @@ class cw_state:
         # Traversing backwards from the end, find the last of each cardtype shown
         for i in xrange(len(cards) - 1, -1, -1):
             card = cards[i]
-            if (card.ctype == 'news'):
-                if (news_seen == False):
+            if card.ctype == 'news':
+                if news_seen == False:
                     self.news.distance = card.num
                     news_seen = True
                 continue
-            if (card.ctype == 'heading'):
+            if card.ctype == 'heading':
                 # Either a tombstone card or a "now loading" card
                 # Subtract one from the distance of "shown cards"
                 hidden_cards = hidden_cards + 1
                 continue
-            if (card.ctype in done_distance):
+            if card.ctype in done_distance:
                 continue
 
             # We've now tracked this card type
@@ -500,7 +500,7 @@ class cw_state:
             # syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" % ( card.ctype, dist, i, len(cards), len(cards) - hidden_cards))
             getattr(self, card.ctype).distance = str(dist)
             # Early break once we've seen all the card types
-            if (done_distance == all_ctypes):
+            if done_distance == all_ctypes:
                 break
 
 
@@ -530,10 +530,10 @@ class cw_state:
 
         # Track page number for the next state variable by adding one to the current
         news_last = getattr(self, 'news').distance
-        if (news_last is None):
+        if news_last is None:
             news_last = 0
 
-        if (state_tokens != []):
+        if state_tokens != []:
             content_string = ":".join(state_tokens) + ":" + "n" + str(news_last)
         else:
             content_string = "n" + str(news_last)
@@ -547,7 +547,7 @@ class cw_state:
         """
         # TODO: don't use query_terms and filter_terms. Use the state mode checks
         page_string = None
-        if ((query_terms != '') or (filter_terms != '')):
+        if (query_terms != '') or (filter_terms != ''):
             export_page = int(self.page) + 1
             page_string = "xp" + str(export_page)
         return page_string
@@ -556,7 +556,7 @@ class cw_state:
     def __export_theme_state(self):
         """If tracking an appearance or theme, include it in state links"""
         appearance_string = None
-        if (self.appearance is not None):
+        if self.appearance is not None:
             appearance_string = "xa" + str(self.appearance)
         return appearance_string
 
@@ -564,7 +564,7 @@ class cw_state:
     def __export_search_state(self, query_terms):
         """Export state related to searched cards"""
         query_string = None
-        if (query_terms != ''):
+        if query_terms != '':
             query_string = "xs" + query_terms
         return query_string
 
@@ -572,7 +572,7 @@ class cw_state:
     def __export_filter_state(self, filter_terms):
         """Export state related to #ctype filtered cards"""
         filter_string = None
-        if (filter_terms != ''):
+        if filter_terms != '':
             filter_string = "xo" + filter_terms
         return filter_string
 
@@ -583,7 +583,7 @@ class cw_state:
         track the number of filtered cards in the state.
         """
         filtered_count_string = None
-        if (self.filter_processed_mode() == True):
+        if self.filter_processed_mode() == True:
             filtered_count_string = "xx" + str(filtered_count)
         return filtered_count_string
 
@@ -687,7 +687,7 @@ class cw_state:
 
     def filter_only_mode(self):
         """All search queries converted into card filters"""
-        if (self.configured_states() == ['card_filter']):
+        if self.configured_states() == ['card_filter']:
             return True
         else:
             return False
@@ -695,7 +695,7 @@ class cw_state:
 
     def search_only_mode(self):
         """There is a search query, but no terms converted into card filters"""
-        if (self.configured_states() == ['search']):
+        if self.configured_states() == ['search']:
             return True
         else:
             return False
@@ -717,10 +717,10 @@ class cw_state:
         already displayed this number of cards, we are out of content.
         """
         card_limit = 0
-        for ctype in CONFIG.get("card_properties", "pagecount").replace(" ","").split(","):
+        for ctype in CONFIG.get("card_properties", "pagecount").replace(" ", "").split(","):
             card_limit = card_limit + getattr(self, ctype).file_count
         # syslog.syslog("card_limit: " + str(card_limit) + "   card_count: " + str(card_count))
-        if (card_count >= card_limit):
+        if card_count >= card_limit:
             return True
         else:
             return False
@@ -884,7 +884,7 @@ class cw_page:
             self.cards.append(encyclopedia)
 
         # Other types of search results come afterwards
-        search_types = CONFIG.get("card_properties", "search").replace(" ","").split(",")
+        search_types = CONFIG.get("card_properties", "search").replace(" ", "").split(",")
         for ctype in search_types:
             # Manage the encyclopedia cards separately
             if (ctype == 'topics'):
@@ -1164,7 +1164,7 @@ class cw_card:
         # Find the utime value in the array if the number given isn't an array index.
         # If we're inserting cards into an active page, the state variable will be
         # given, and should be represented by a shuffled value.
-        random_types = CONFIG.get("card_properties", "randomize").replace(" ","").split(",")
+        random_types = CONFIG.get("card_properties", "randomize").replace(" ", "").split(",")
 
         # Even if we have cards of a type, don't run this logic if cards array is []
         if ((self.ctype in random_types) and
@@ -1347,7 +1347,7 @@ class cw_search:
         self.index_dir = CONFIG.get('search', 'index_dir')
         self.words_file = CONFIG.get('search', 'ignore_words')
         self.symobls_file = CONFIG.get('search', 'ignore_symbols')
-        self.search_types = CONFIG.get("card_properties", "search").replace(" ","").split(",")
+        self.search_types = CONFIG.get("card_properties", "search").replace(" ", "").split(",")
 
         # Define the indexing schema. Include the mtime to track updated
         # content in the backend, ctype so that we can manage the distribution
