@@ -1198,7 +1198,6 @@ class cw_card:
                 # syslog.syslog(str(DIR_INDEX.keys()))
                 hidden_cards = xrange(0, len(DIR_INDEX[self.ctype + "/hidden"]))
                 self.num = hidden_cards[randint(0, len(hidden_cards)-1)]
-                # TODO: totally random selected card (unset seed)
                 # syslog.syslog("open hidden file: " + str(self.num) + "/" + str(hidden_cards))
                 which_file = self.num
             else:
@@ -1280,7 +1279,7 @@ class cw_card:
                 # Single-song orphan cards
                 if ((("mpeg" in ftype) and ("layer iii" in ftype)) and
                      (CONFIG.get("paths", "songs") in cfile.name)):
-                    self.title = fpath      # TODO: filename from title
+                    self.title = fpath            # TODO: filename from title
                     self.topics.append("Songs")   # TODO: include the album
                     self.body = fpath
                     self.__songfiles()   # Read song metadata
@@ -1356,7 +1355,7 @@ class cw_search:
 
         # Max search results per page is equal to the number of cards that would
         # be shown on a normal news page. And while whoosh expects pages starting
-        # at one, the page state counting will be from zero (possible TODO)
+        # at one, the page state counting will be from zero
         self.page = page + 1
         self.resultcount = resultcount
         self.filtered = previous_filtered
@@ -1483,8 +1482,8 @@ class cw_search:
         text out of the tags, processes the input to remove banal words
         and symbols, and then adds it to the index.
         """
-        # Enable writing to our chosen index
-        # TODO: Should we only open the writer once, in a different scope?
+        # Enable writing to our chosen index. To limit the index
+        # locking, this is the only function that writes to the index.
         writer = self.index.writer()
         card_path = CONFIG.get("paths", ctype)
 
