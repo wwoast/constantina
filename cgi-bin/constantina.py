@@ -296,6 +296,8 @@ class cw_state:
         if appearance_state is not None:
             if appearance_state.isdigit():
                 self.appearance = int(appearance_state[0])
+            else:   # Invalid theme gets the first theme
+                self.appearance = 0
 
         theme_count = len(CONFIG.items("themes")) - 1
         self.theme = None
