@@ -1,4 +1,4 @@
-from math import ceil, floor
+from math import floor
 from random import random, randint, seed, shuffle
 from cgi import FieldStorage
 from PIL import Image
@@ -292,9 +292,9 @@ class cw_state:
         """
         appearance_state = self.__find_state_variable('xa')
 
-        # Default theme specified in configs (exclude the default setting)
         if (appearance_state != None):
-            self.appearance = int(appearance_state[0])
+            if (appearance_state.isdigit()):
+                self.appearance = int(appearance_state[0])
 
         theme_count = len(CONFIG.items("themes")) - 1
         self.theme = None
