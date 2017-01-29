@@ -938,12 +938,10 @@ class cw_page:
         """
         Given a utime or card filename, return a permalink page of that type.
         """
-        for spctype, spcfield in CONFIG.items("special_states"):
-            if (getattr(self.state, spcfield) is not None):
-                if ((spctype == "xo") or (spctype == "xp") or
-                    (spctype == "xx") or (spctype == "xa")):
-                    # TODO: make xo objects consistent with other absent states
-                    continue
+        permalink_fields = [sv[1] for sv in CONFIG.items("special_states") 
+                                  if sv[1].find("permalink") != -1]
+        for spcfield in permalink_fields:
+            if getattr(self.state, spcfield) is not None:
                 cnum = str(getattr(self.state, spcfield))
                 syslog.syslog("permalink card loaded: " + str(cnum))
                 # Insert a card after the first heading
