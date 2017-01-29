@@ -316,16 +316,21 @@ class cw_state:
          if ( default_theme == "random.per-session"):
             self.random_theme = 1
 
-      # Catches if the random theme state has been set
+      # Catches if the random theme state has been set. 
       if ( self.random_theme != None ):
          self.random_theme = int(self.random_theme)
+         # random.per-page chooses a random theme regardless of any
+         # appearance variable settings! Chaos!
          if ( self.random_theme == 0 ):
             seed()   # Enable non-seeded choice
             self.appearance = randint(0, theme_count - 1)
-            self.theme = CONFIG.get("themes", str(self.appearance)) 
+            self.theme = CONFIG.get("themes", str(self.appearance))
             if ( self.seed ):   # Re-enable seeded nonrandom choice
                seed(self.seed)
-         if ( self.random_theme == 1 ):
+            
+         # If an appearance variable was set before, it overrides
+         # the randomn.per-session choice.
+         if (( self.random_theme == 1 ) and ( self.appearance == None)):
             self.appearance = int(self.seed * 1000) % theme_count
             self.theme = CONFIG.get("themes", str(self.appearance))
 
@@ -644,16 +649,16 @@ class cw_state:
       state_names = [val[1] for val in CONFIG.items('special_states')]
       state_names.remove('page')       # These two are set no matter what
       state_names.remove('filtered')
-      return [state for state in state_names 
-                 if (( getattr(self, state) != None ) and 
-                     ( getattr(self, state) != [] ))]
+      return sorted([state for state in state_names 
+                          if (( getattr(self, state) != None ) and 
+                              ( getattr(self, state) != [] ))])
 
 
    def fresh_mode(self):
       """Either an empty state, or just an empty state and a theme is set"""
       if (( self.page == 0 ) and 
-          (( self.in_state == None ) or 
-           ( self.configured_states() == ['appearance'] ))):
+          (( self.in_state == None ) or
+           ( self.configured_states() == ['appearance'] ))): 
          return True
       else:
          return False
