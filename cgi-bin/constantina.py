@@ -1,6 +1,5 @@
 from math import floor
 from random import random, randint, seed, shuffle
-from cgi import FieldStorage
 from PIL import Image
 from mad import MadFile
 from datetime import datetime
@@ -773,8 +772,6 @@ class cw_page:
         self.query_terms = ''    # Use this locally, in case we happen not to create a search object
         self.filter_terms = ''   # For filtering based on cardtypes
         self.filtered = 0        # Cards excluded from search results by filtering
-
-        news_items = CONFIG.getint("card_counts", "news")
 
         if self.state.fresh_mode() is True:
             # Create a new page of randomly-assorted images and quotes,
