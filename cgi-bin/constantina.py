@@ -169,6 +169,15 @@ class cw_state:
         # syslog.syslog("Random seed: " + str(self.seed))
 
 
+    def __int_translate(self, checkval, width, default):
+        """Take a string of digits and convert width chars into an integer"""
+        if checkval.isdigit():
+            checkval = int(appearance_state[0:width])
+        else:   # Invalid input gets a chosen default 
+            checkval = default
+        return checkval
+
+
     def __set_state_defaults(self):
         """
         Set basic default values for special_state properties and normal
@@ -254,6 +263,8 @@ class cw_state:
 
         However, to preserve card spacing rules, we do need to track the distance
         of each card type from the first element of the current page.
+
+        Output is an integer or None.
         """
         # For each content card type, populate the state variables
         # as necessary.
@@ -273,9 +284,8 @@ class cw_state:
         self.page = self.__find_state_variable('xp')
 
         # If page was read in as a special state variable, use that (for search results)
-        if ((self.page is not None) and
-            ((self.search is not None) or (self.card_filter is not None))):
-            self.page = int(self.page[0])
+        if (self.page is not None) and (self.search_mode() == True):
+            self.page = self.__int_translate(self.page, 1, 0)
         # Otherwise, determine our page number from the news article index reported
         elif self.news.distance is not None:
             self.page = (int(self.news.distance) + 1) / CONFIG.getint('card_counts', 'news')
@@ -293,11 +303,9 @@ class cw_state:
         """
         appearance_state = self.__find_state_variable('xa')
 
-        if appearance_state is not None:
-            if appearance_state.isdigit():
-                self.appearance = int(appearance_state[0])
-            else:   # Invalid theme gets the first theme
-                self.appearance = 0
+        if appearance_state is not None:   
+            # Read in single char of theme state value
+            self.appearance = self.__int_translate(appearance_state, 1, 0)
 
         theme_count = len(CONFIG.items("themes")) - 1
         self.theme = None
