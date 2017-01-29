@@ -1671,7 +1671,7 @@ def unroll_newlines(body_lines):
             continue
 
         if this_line.find('<p>') == 0:
-            if not (pro_line.isspace()) or (pro_line == ''):
+            if not ((pro_line.isspace()) or (pro_line == '')):
                 processed_lines.append(pro_line)
             pro_line = this_line
         elif (this_line.find('<img') != -1):
