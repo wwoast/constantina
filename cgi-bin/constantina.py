@@ -156,7 +156,7 @@ class cw_state:
         self.__set_state_defaults()
 
         # Was there an initial state string? Process it if there was.
-        if (self.in_state != None):
+        if (self.in_state is not None):
             self.state_vars = self.in_state.split(':')   # TODO: max state params?
         else:
             self.state_vars = []
@@ -239,7 +239,7 @@ class cw_state:
         shuffle ordering.
         """
         self.seed = self.__find_state_variable("seed")
-        if (self.seed == None):
+        if (self.seed is None):
             self.seed = round(random(), 14)
         else:
             self.seed = float(str("0." + self.seed))
@@ -273,10 +273,11 @@ class cw_state:
         self.page = self.__find_state_variable('xp')
 
         # If page was read in as a special state variable, use that (for search results)
-        if (self.page != None) and ((self.search != None) or (self.card_filter != None)):
+        if ((self.page is not None) and 
+            ((self.search is not None) or (self.card_filter is not None))):
             self.page = int(self.page[0])
         # Otherwise, determine our page number from the news article index reported
-        elif (self.news.distance != None):
+        elif (self.news.distance is not None):
             self.page = (int(self.news.distance) + 1) / CONFIG.getint('card_counts', 'news')
         else:
             self.page = 0
@@ -292,13 +293,13 @@ class cw_state:
         """
         appearance_state = self.__find_state_variable('xa')
 
-        if (appearance_state != None):
+        if (appearance_state is not None):
             if (appearance_state.isdigit()):
                 self.appearance = int(appearance_state[0])
 
         theme_count = len(CONFIG.items("themes")) - 1
         self.theme = None
-        if (self.appearance == None):
+        if (self.appearance is None):
             self.theme = CONFIG.get("themes", "default")
         elif (self.appearance >= theme_count):
             self.theme = CONFIG.get("themes", str(self.appearance % theme_count))
@@ -307,7 +308,7 @@ class cw_state:
 
         # If the configuration supports a random theme, and we didn't have a
         # theme provided in the initial state, let's choose one randomly
-        if ((appearance_state == None) and
+        if ((appearance_state is not None) and
             (self.theme == "random")):
             seed()   # Enable non-seeded choice
             choice = randint(0, theme_count - 1)
@@ -346,7 +347,7 @@ class cw_state:
 
         # First, check if any of the search terms should be processed as a
         # cardtype and be added to the filter state instead.
-        if (self.search != None):
+        if (self.search is not None):
             searchterms = self.search.split(' ')
             searchterms = filter(None, searchterms)   # remove nulls
             removeterms = self.__add_filter_cardtypes(searchterms)
@@ -366,10 +367,10 @@ class cw_state:
         If no filter strings were found during search, we may need to process a set
         of filter strings that were excised out on a previous page load.
         """
-        if (self.card_filter == None):
+        if (self.card_filter is None):
             self.card_filter = self.__find_state_variable('xo')
 
-            if (self.card_filter != None):
+            if (self.card_filter is not None):
                 filterterms = self.card_filter.split(' ')
                 # Add-filter-cardtypes expects strings that start with #
                 hashtag_process = map(lambda x: "#" + x, filterterms)
@@ -388,8 +389,9 @@ class cw_state:
         this allows you to fix the page count to represent reality better.
         """
         self.filtered = self.__find_state_variable('xx')
-        if ((self.filtered != None) and
-           ((self.search != None) and (self.card_filter != None))):
+        if ((self.filtered is not None) and
+            (self.search is not None) and 
+            (self.card_filter is not None)):
             self.filtered = int(self.filtered[0])
         else:
             self.filtered = 0
@@ -518,7 +520,7 @@ class cw_state:
         for ctype in CONFIG.options("card_counts"):
             # If no cards for this state, do not track
             if ((getattr(self, ctype).clist == []) or
-                (getattr(self, ctype).distance == None)):
+                (getattr(self, ctype).distance is None)):
                 continue
 
             # Track the distance to the last-printed card in each state variable
@@ -528,7 +530,7 @@ class cw_state:
 
         # Track page number for the next state variable by adding one to the current
         news_last = getattr(self, 'news').distance
-        if (news_last == None):
+        if (news_last is None):
             news_last = 0
 
         if (state_tokens != []):
@@ -554,7 +556,7 @@ class cw_state:
     def __export_theme_state(self):
         """If tracking an appearance or theme, include it in state links"""
         appearance_string = None
-        if (self.appearance != None):
+        if (self.appearance is not None):
             appearance_string = "xa" + str(self.appearance)
         return appearance_string
 
@@ -629,7 +631,7 @@ class cw_state:
 
     def fresh_mode(self):
         """Either an empty state, or just an empty state and a theme is set"""
-        if (((self.in_state == None) or (self.configured_states() == ['appearance'])) and
+        if (((self.in_state is None) or (self.configured_states() == ['appearance'])) and
             (self.page == 0) and
             (self.reshuffle == False)):
             return True
@@ -639,9 +641,9 @@ class cw_state:
 
     def reshuffle_mode(self):
         """An empty search was given, so reshuffle the page"""
-        if ((self.search != None) and
+        if ((self.search is not None) and
             (self.reshuffle == True) and
-            (self.card_filter == None)):
+            (self.card_filter is None)):
             return True
         else:
             return False
@@ -649,9 +651,9 @@ class cw_state:
 
     def permalink_mode(self):
         """Is one of the permalink modes on?"""
-        if ((self.news_permalink != None) or
-            (self.features_permalink != None) or
-            (self.topics_permalink != None)):
+        if ((self.news_permalink is not None) or
+            (self.features_permalink is not None) or
+            (self.topics_permalink is not None)):
             return True
         else:
             return False
@@ -663,7 +665,7 @@ class cw_state:
         If this returns true, it means the user either wants cards of this type, or
         that no card filtering is currently in place.
         """
-        if ((self.card_filter != None) and
+        if ((self.card_filter is not None) and
             (getattr(self, ctype).filtertype == False)):
             return True
         else:
@@ -701,8 +703,8 @@ class cw_state:
 
     def search_mode(self):
         """Any valid state from a search mode will trigger this mode"""
-        if ((self.search != None) or
-            (self.card_filter != None) or
+        if ((self.search is not None) or
+            (self.card_filter is not None) or
             (self.filtered != 0)):
             return True
         else:
@@ -844,7 +846,7 @@ class cw_page:
                 continue
             # No data and it's not the first page? Skip this type
             if ((self.state.fresh_mode() == False) and
-                (getattr(self.state, ctype).clist == None)):
+                (getattr(self.state, ctype).clist is None)):
                 continue
             # Are we doing cardtype filtering, and this isn't an included card type?
             if (self.state.exclude_cardtype(ctype) == True):
@@ -920,7 +922,7 @@ class cw_page:
         Given a utime or card filename, return a permalink page of that type.
         """
         for spctype, spcfield in CONFIG.items("special_states"):
-            if (getattr(self.state, spcfield) != None):
+            if (getattr(self.state, spcfield) is not None):
                 if ((spctype == "xo") or (spctype == "xp") or
                     (spctype == "xx") or (spctype == "xa")):
                     # TODO: make xo objects consistent with other absent states
@@ -949,7 +951,7 @@ class cw_page:
         contents by distributing news articles such that the
         card-type distances are properly represented.
         """
-        if (self.state.news.distance != None):
+        if (self.state.news.distance is not None):
             news_items = int(self.state.news.distance)
         else:
             news_items = 0
@@ -972,7 +974,7 @@ class cw_page:
             if (self.state.exclude_cardtype(ctype) == True):
                 continue
             dist = getattr(self.state, ctype).distance
-            if ((len(getattr(self.state, ctype).clist) == 0) or (dist == None)):
+            if ((len(getattr(self.state, ctype).clist) == 0) or (dist is None)):
                 continue
             # syslog.syslog("ctype, len, and dist: " + str(ctype) + " " + str(len(self.cards)) + " " + str(dist))
             put = len(self.cards) - 1 - int(dist)
@@ -1007,7 +1009,7 @@ class cw_page:
             # strict card spacing rules from the config file, plus jitter
             spacing = int(spacing)
             distance = getattr(self.state, ctype).distance
-            if (distance == None):
+            if (distance is None):
                 distance = 0
 
             if (distance >= spacing):   # Prev page ctype card not close
@@ -1369,11 +1371,11 @@ class cw_search:
             self.hits[ctype] = []
 
         # Process the filter strings first, in case that's all we have
-        if (unsafe_filter_terms != None):
+        if (unsafe_filter_terms is not None):
             self.__process_input(' '.join(unsafe_filter_terms), returning="filter")
 
         # Double check if the query terms exist or not
-        if (unsafe_query_terms == None):
+        if (unsafe_query_terms is None):
             if (self.filter_string != ''):
                 self.__filter_cardtypes()
                 self.searcher.close()
@@ -1819,7 +1821,7 @@ def create_textcard(card, display_state):
 
     # Convert the appearance value into a string for permalinks
     # And close the textcard
-    if (display_state != None):
+    if (display_state is not None):
         permanchor = "/?x" + card.ctype[0] + anchor + ":" + display_state
     else:
         permanchor = "/?x" + card.ctype[0] + anchor
@@ -2016,7 +2018,7 @@ def application(env, start_response):
 
     os.chdir(root_dir + "/" + resource_dir)
     in_state = os.environ.get('QUERY_STRING')
-    if (in_state != None) and ( in_state != ''):
+    if (in_state is not None) and ( in_state != ''):
         # Truncate state variable at 512 characters
         in_state = in_state[0:512]
     else:
