@@ -1169,11 +1169,15 @@ class cw_card:
       # If we're inserting cards into an active page, the state variable will be
       # given, and should be represented by a shuffled value.
       random_types = CONFIG.get("card_properties", "randomize").replace(" ","").split(",")
-      if (( self.ctype in random_types ) and ( self.state != False )
-                                         and ( self.search_result == False )
-                                         and ( self.hidden == False )):
-         cycle = len(getattr(self.state, self.ctype).clist)
-         which_file = getattr(self.state, self.ctype).clist[self.num % cycle]
+
+      # Even if we have cards of a type, don't run this logic if cards array is []
+      if (( self.ctype in random_types ) and 
+          ( self.state != False ) and 
+          ( self.search_result == False ) and 
+          ( self.hidden == False ) and 
+          ( getattr(self.state, self.ctype).clist != [] )):
+         card_count = len(getattr(self.state, self.ctype).clist)
+         which_file = getattr(self.state, self.ctype).clist[self.num % card_count]
 
          # Logic for hidden files, which only works because it's inside the
          # random_types check
@@ -1187,7 +1191,6 @@ class cw_card:
             # syslog.syslog("open hidden file: " + str(self.num) + "/" + str(hidden_cards))
             which_file = self.num
          else:
-            # syslog.syslog("open file: " + str(self.num) + "/" + str(cycle))
             pass
 
       else:
