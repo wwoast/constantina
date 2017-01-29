@@ -1144,7 +1144,7 @@ class cw_card:
         self.hidden = False
         # Don't hit the filesystem if we're just tracking which cards have
         # been previously opened (cw_page.__get_previous_cards)
-        if ( grab_body == True ):
+        if (grab_body == True):
             self.cfile = self.__openfile()
 
 
@@ -1162,17 +1162,17 @@ class cw_card:
         random_types = CONFIG.get("card_properties", "randomize").replace(" ","").split(",")
 
         # Even if we have cards of a type, don't run this logic if cards array is []
-        if (( self.ctype in random_types ) and 
-             ( self.state != False ) and 
-             ( self.search_result == False ) and 
-             ( self.hidden == False ) and 
-             ( getattr(self.state, self.ctype).clist != [] )):
+        if ((self.ctype in random_types) and 
+            (self.state != False) and 
+            (self.search_result == False) and 
+            (self.hidden == False) and 
+            (getattr(self.state, self.ctype).clist != [])):
             card_count = len(getattr(self.state, self.ctype).clist)
             which_file = getattr(self.state, self.ctype).clist[self.num % card_count]
 
             # Logic for hidden files, which only works because it's inside the
             # random_types check
-            if ( which_file == 'x' ):
+            if (which_file == 'x'):
                 self.hidden = True
                 type_files = opendir(self.ctype, self.hidden)
                 # syslog.syslog(str(DIR_INDEX.keys()))
@@ -1188,8 +1188,8 @@ class cw_card:
             which_file = self.num
 
         # News files: convert utime filename to the "Nth" item in the folder
-        if ( which_file >= len(type_files)): 
-            if ( self.num in type_files):
+        if (which_file >= len(type_files)): 
+            if (self.num in type_files):
                 which_file = type_files.index(self.num)
                 self.num = which_file
             else:
@@ -1220,7 +1220,7 @@ class cw_card:
         magi = magic.Magic(mime=True)
 
         base_path = CONFIG.get("paths", self.ctype)
-        if ( self.hidden == True ):
+        if (self.hidden == True):
             fpath = base_path + "/hidden/" + thisfile
         else: 
             fpath = base_path + "/" + thisfile
@@ -1229,46 +1229,46 @@ class cw_card:
             with open(fpath, 'r') as cfile:
                 ftype = magi.from_file(fpath)
                 # News entries or features are processed the same way
-                if (( "text" in ftype ) and 
-                    (( CONFIG.get("paths", "news") in cfile.name ) or
-                     ( CONFIG.get("paths", "heading") in cfile.name ) or 
-                     ( CONFIG.get("paths", "quotes") in cfile.name ) or 
-                     ( CONFIG.get("paths", "topics") in cfile.name ) or 
-                     ( CONFIG.get("paths", "features") in cfile.name ))):
-                   self.title = cfile.readline().replace("\n", "")
-                   rawtopics = cfile.readline().replace("\n", "")
-                   for item in rawtopics.split(', '):
-                      self.topics.append(item)
-                   self.body = cfile.read()
+                if (("text" in ftype) and 
+                    ((CONFIG.get("paths", "news") in cfile.name) or
+                     (CONFIG.get("paths", "heading") in cfile.name) or 
+                     (CONFIG.get("paths", "quotes") in cfile.name) or 
+                     (CONFIG.get("paths", "topics") in cfile.name) or 
+                     (CONFIG.get("paths", "features") in cfile.name))):
+                    self.title = cfile.readline().replace("\n", "")
+                    rawtopics = cfile.readline().replace("\n", "")
+                    for item in rawtopics.split(', '):
+                        self.topics.append(item)
+                    self.body = cfile.read()
     
                 # Multiple-song playlists
-                if (( "text" in ftype ) and
-                    ( CONFIG.get("paths", "songs") in cfile.name )):
-                   self.title = fpath
-                   self.topics.append("Song Playlist")
-                   self.body = cfile.read()
-                   self.__songfiles()   # Read song metadata
+                if (("text" in ftype) and
+                    (CONFIG.get("paths", "songs") in cfile.name)):
+                    self.title = fpath
+                    self.topics.append("Song Playlist")
+                    self.body = cfile.read()
+                    self.__songfiles()   # Read song metadata
     
                 # Single-image cards
-                if ((( "jpeg" in ftype ) or ( "png" in ftype)) and 
-                     ( CONFIG.get("paths", "images") in cfile.name )):
-                   # TODO: alt/img metadata
-                   self.title = fpath
-                   self.topics.append("Images")
-                   self.body = fpath
+                if ((("jpeg" in ftype) or ("png" in ftype)) and 
+                     (CONFIG.get("paths", "images") in cfile.name)):
+                    # TODO: alt/img metadata
+                    self.title = fpath
+                    self.topics.append("Images")
+                    self.body = fpath
     
                 # Single-song orphan cards
-                if ((( "mpeg" in ftype ) and ( "layer iii" in ftype)) and
-                     ( CONFIG.get("paths", "songs") in cfile.name )):
-                   self.title = fpath      # TODO: filename from title
-                   self.topics.append("Songs")   # TODO: include the album
-                   self.body = fpath
-                   self.__songfiles()   # Read song metadata      
+                if ((("mpeg" in ftype) and ("layer iii" in ftype)) and
+                     (CONFIG.get("paths", "songs") in cfile.name)):
+                    self.title = fpath      # TODO: filename from title
+                    self.topics.append("Songs")   # TODO: include the album
+                    self.body = fpath
+                    self.__songfiles()   # Read song metadata      
     
             # If the filename is in unix-time format, track the creation date
-            if ( thisfile.isdigit() ):
-                if ( int(thisfile) > 1141161200 ):
-                   self.cdate = datetime.fromtimestamp(int(thisfile)).strftime("%B %-d, %Y") 
+            if (thisfile.isdigit()):
+                if (int(thisfile) > 1141161200):
+                    self.cdate = datetime.fromtimestamp(int(thisfile)).strftime("%B %-d, %Y") 
             else:
                 fnmtime = os.path.getmtime(fpath)
                 self.cdate = datetime.fromtimestamp(int(fnmtime)).strftime("%B %-d, %Y")
@@ -1278,15 +1278,16 @@ class cw_card:
         except:   # File got moved in between dirlist caching and us reading it
             return CONFIG.get("card_defaults", "file")
 
-        if ( self.hidden == True ):
-             return CONFIG.get("paths", self.ctype) + "/hidden/" + thisfile
+        if (self.hidden == True):
+            return CONFIG.get("paths", self.ctype) + "/hidden/" + thisfile
         else:
-             return CONFIG.get("paths", self.ctype) + "/" + thisfile
+            return CONFIG.get("paths", self.ctype) + "/" + thisfile
 
 
 
 class cw_search:
-    """Constantina search object -- anything input into the search bar
+    """
+    Constantina search object -- anything input into the search bar
     will run through the data managed by this object and the Whoosh index.
     News objects and Features will both be indexed, along with their last- 
     modified date at the time of indexing.
@@ -1304,7 +1305,8 @@ class cw_search:
 
     Finally, there is an "index-tree" list where if specific search terms
     are queried, all related terms are pulled in as well. If the user requests
-    the related phrases can be turned off."""
+    the related phrases can be turned off.
+    """
     def __init__(self, page, resultcount, unsafe_query_terms, unsafe_filter_terms, previous_filtered):
         # List of symbols to filter out in the unsafe input
         self.ignore_symbols = []
@@ -1349,7 +1351,7 @@ class cw_search:
         self.schema = Schema(file=ID(stored=True, unique=True, sortable=True), ctype=ID(stored=True), mtime=ID(stored=True), content=TEXT)
 
         # If index doesn't exist, create it
-        if ( index.exists_in(self.index_dir)):
+        if (index.exists_in(self.index_dir)):
             self.index = index.open_dir(self.index_dir)
             # syslog.syslog("Index exists")
         else:
@@ -1364,12 +1366,12 @@ class cw_search:
             self.hits[ctype] = []
 
         # Process the filter strings first, in case that's all we have
-        if ( unsafe_filter_terms != None ):
+        if (unsafe_filter_terms != None):
             self.__process_input(' '.join(unsafe_filter_terms), returning="filter")
 
         # Double check if the query terms exist or not
-        if ( unsafe_query_terms == None ):
-            if ( self.filter_string != '' ):
+        if (unsafe_query_terms == None):
+            if (self.filter_string != ''):
                 self.__filter_cardtypes()
                 self.searcher.close()
                 return
@@ -1380,8 +1382,8 @@ class cw_search:
         # If the query string is null after processing, don't do anything else.
         # Feed our input as a space-delimited set of terms. NOTE that we limit
         # this in the __import_state function in cw_state.
-        if not ( self.__process_input(' '.join(unsafe_query_terms))):
-            if ( self.filter_string != '' ):
+        if not (self.__process_input(' '.join(unsafe_query_terms))):
+            if (self.filter_string != ''):
                 self.__filter_cardtypes()
                 self.searcher.close()
                 return
@@ -1395,17 +1397,11 @@ class cw_search:
             # reindex all the modified files
             self.__add_ctype_to_index(ctype)
 
- 
-        # TODO: Prior to searching, __parse_input to allow union searches
-        # with "word1 + word2" or negative searches (word1 - word2)
-        # TODO: Save these results to query_string somehow
-
         # Return only up to CARD_COUNT items per page for each type of returned
         # search result query. We calculate the max sum of all returned items,
         # and then we'll later determine which of these results we'll display
         # on the returned search results page.
         self.__search_index()
-
         self.searcher.close()
 
 
@@ -1418,7 +1414,7 @@ class cw_search:
             1: valid query 
         """
         # Make a or-regex of all the words in the wordlist
-        if ( self.ignore_words == '' ):
+        if (self.ignore_words == ''):
             with open(self.words_file, 'r') as wfile:
                 words = wfile.read().splitlines()
                 remove = '|'.join(words)
@@ -1426,18 +1422,18 @@ class cw_search:
 
         # Then remove them from whatever input we're processing
         safe_input = self.ignore_words.sub("", unsafe_input)
-        if ( safe_input == '' ):
+        if (safe_input == ''):
             return 0
 
         # Get rid of symbol instances in whatever input we're processing
         # Note this only works on ASCII symbol characters, not the special
         # double-quote characters &ldquo; and &rdquo;, as well as other
         # lxml.html converted &-escaped HTML characters
-        if ( self.ignore_symbols == '' ):
+        if (self.ignore_symbols == ''):
             with open(self.symbols_file, 'r') as sfile:
                 for character in sfile.read().splitlines():
-                   self.ignore_symbols.push(character)
-                   safe_input = safe_input.replace(character, " ")               
+                    self.ignore_symbols.push(character)
+                    safe_input = safe_input.replace(character, " ")               
         else:
             for character in self.ignore_symbols:
                 safe_input = safe_input.replace(character, " ")               
@@ -1445,9 +1441,9 @@ class cw_search:
         # Did we sanitize a query, or a round of content? Infer by what 
         # we're setting in the object itself.
         if (safe_input != '' ):
-            if ( returning == "query" ):
+            if (returning == "query"):
                 self.query_string = safe_input
-            elif ( returning == "filter" ):
+            elif (returning == "filter"):
                 self.filter_string = safe_input
             else:
                 self.content = safe_input
@@ -1458,9 +1454,11 @@ class cw_search:
 
 
     def __add_file_to_index(self, fnmtime, filename, ctype="news"):
-        """Reads in a file, processes it into lines, lxml.html grabs 
+        """
+        Reads in a file, processes it into lines, lxml.html grabs 
         text out of the tags, processes the input to remove banal words
-        and symbols, and then adds it to the index."""
+        and symbols, and then adds it to the index.
+        """
         # Enable writing to our chosen index
         # TODO: Should we only open the writer once, in a different scope?
         writer = self.index.writer()
@@ -1472,8 +1470,8 @@ class cw_search:
             unrolled = unroll_newlines(lines)
             for line in unrolled:
                 e = lxml.html.fromstring(line)
-                if ( e.tag == 'p' ):
-                   body += e.text_content() + " "
+                if (e.tag == 'p'):
+                    body += e.text_content() + " "
             self.__process_input(body, returning="contents")
             # Update wraps add if the document hasn't been inserted, and 
             # replaces current indexed data if it has been inserted. This
@@ -1504,14 +1502,15 @@ class cw_search:
                 lastmtime = 0
             # If small revisions were made after the fact, the indexes won't
             # be accurate unless we reindex this file now
-            if ( lastmtime < fnmtime ):
-                # print "%s was updated or not in the index. Consistentifying..." % filename
+            if (lastmtime < fnmtime):
                 self.__add_file_to_index(fnmtime, filename, ctype)
 
 
     def __search_index(self):
-        """Given a list of search paramters, look for any of them in the 
-        indexes. For now don't return more than 200 hits"""
+        """
+        Given a list of search paramters, look for any of them in the 
+        indexes. Don't return the Nth pge of resultcount hits.
+        """
         self.parser = QueryParser("content", self.schema)
         self.query = self.parser.parse(unicode(self.query_string))
         self.results = self.searcher.search_page(self.query, self.page, sortedby="file", reverse=True, pagelen=self.resultcount)
@@ -1521,18 +1520,20 @@ class cw_search:
         for result in self.results:
             ctype = result['ctype']
             # Account for filter strings
-            if ( self.filter_string != '' ):
-                if result['ctype'] in self.filter_string.split(' '):
-                   self.hits[ctype].append(result['file'])
+            if (self.filter_string != ''):
+                if (result['ctype'] in self.filter_string.split(' ')):
+                    self.hits[ctype].append(result['file'])
                 else:
-                   self.filtered = self.filtered + 1
+                    self.filtered = self.filtered + 1
             else:
                 self.hits[ctype].append(result['file'])
 
 
     def __filter_cardtypes(self):
-        """Get a list of cards to return, in response to a card-filter
-        event. These tend to be of a single card type."""
+        """
+        Get a list of cards to return, in response to a card-filter
+        event. These tend to be of a single card type.
+        """
         # TODO: search_page can have a better query here, for multiple filter types
         self.parser = QueryParser("content", self.schema)
 
@@ -1545,15 +1546,16 @@ class cw_search:
             for result in self.results:
                 ctype = result['ctype']
                 # Account for filter strings
-                if result['ctype'] in self.filter_string.split(' '):
-                   self.hits[ctype].append(result['file'])
+                if (result['ctype'] in self.filter_string.split(' ')):
+                    self.hits[ctype].append(result['file'])
                 else:
-                   self.filtered = self.filtered + 1
+                    self.filtered = self.filtered + 1
 
 
 
 class cw_song:
-    """Basic grouping of song-related properties with a filename.
+    """
+    Basic grouping of song-related properties with a filename.
     Use pymad to determine the length of each song that appears
     in the page itself. 
     """
@@ -1576,7 +1578,7 @@ def remove_future(dirlisting):
     for testpath in dirlisting:
         date = datetime.fromtimestamp(int(testpath)).strftime("%s") 
         current = datetime.strftime(datetime.now(), "%s")
-        if ( date > current ):
+        if (date > current):
             dirlisting.remove(testpath)
         else:
             break
@@ -1591,23 +1593,23 @@ def opendir(ctype, hidden=False):
     card reading functions, so we manage it outside those.
     """
     directory = CONFIG.get("paths", ctype)
-    if ( hidden == True ):
+    if (hidden == True):
         directory += "/hidden" 
         ctype += "/hidden"
 
     # If the directory wasn't previously cached
-    if ( ctype not in DIR_INDEX.keys() ):
+    if (ctype not in DIR_INDEX.keys()):
         # Default value. If no files, keep the empty array
         DIR_INDEX[ctype] = []
 
         dirlisting = os.listdir(directory)
-        if ( dirlisting == [] ):
+        if (dirlisting == []):
             return DIR_INDEX[ctype]
 
         # Any newly-generated list of paths should be weeded out
         # so that subdirectories don't get fopen'ed later
         for testpath in dirlisting:
-            if os.path.isfile(os.path.join(directory, testpath)):
+            if (os.path.isfile(os.path.join(directory, testpath))):
                 DIR_INDEX[ctype].append(testpath)
 
         # Sort the output. Most directories should use
@@ -1617,16 +1619,18 @@ def opendir(ctype, hidden=False):
         DIR_INDEX[ctype].reverse()
 
         # For news items, remove any items newer than the current time
-        if ( ctype == "news" ):
+        if (ctype == "news"):
             DIR_INDEX[ctype] = remove_future(DIR_INDEX[ctype])
 
     return DIR_INDEX[ctype]
 
 
 def unroll_newlines(body_lines):
-    """Given lines of text, remove all newlines that occur within an
+    """
+    Given lines of text, remove all newlines that occur within an
     HTML element. Anything that we parse with lxml.html will inevitably
-    start trying to use this utility function."""
+    start trying to use this utility function.
+    """
     processed_lines = []
     pro_line = ""
     i = 0
@@ -1634,22 +1638,22 @@ def unroll_newlines(body_lines):
     # For processing purposes, if no p tag at the beginning of a line, combine
     # it with the next line. This guarantees one HTML tag per line for the 
     # later per-element processing
-    while ( i < len(body_lines)):
+    while (i < len(body_lines)):
         # Add a space back to the end of each line so
         # they don't clump together when reconstructed
         this_line = body_lines[i].strip() + " "
         # Don't parse empty or whitespace lines
-        if (( this_line.isspace() ) or ( this_line == '' )):
+        if ((this_line.isspace()) or (this_line == '')):
             i = i + 1
             continue
 
-        if ( this_line.find('<p>') == 0 ):
-            if not (( pro_line.isspace() ) or ( pro_line == '' )):
+        if (this_line.find('<p>') == 0):
+            if not ((pro_line.isspace()) or (pro_line == '')):
                 processed_lines.append(pro_line)
             pro_line = this_line
-        elif ( this_line.find('<img') != -1 ):
-            if not (( pro_line.isspace() ) or ( pro_line == '' )):
-              processed_lines.append(pro_line)
+        elif (this_line.find('<img') != -1):
+            if not ((pro_line.isspace()) or (pro_line == '')):
+                processed_lines.append(pro_line)
             pro_line = this_line
         else:
             pro_line += this_line
@@ -1660,20 +1664,24 @@ def unroll_newlines(body_lines):
 
 
 def count_ptags(processed_lines):
-    """ Count all the <p> tags. If there's less than three paragraphs, the
-    create_card logic may opt to disable the card's "Read More" link."""
+    """
+    Count all the <p> tags. If there's less than three paragraphs, the
+    create_card logic may opt to disable the card's "Read More" link.
+    """
     ptags = 0
     for line in processed_lines: 
-        if line.find('<p>') >= 0:
+        if (line.find('<p>') >= 0):
             ptags = ptags + 1
     return ptags
 
 
 def create_simplecard(card, next_state):
-    """Simple cards with only basic text and images are drawn here.
+    """
+    Simple cards with only basic text and images are drawn here.
     This includes all card.heading and card.quotes, but possibly
     others as well. Do not apply any special logic to these cards -- 
-    just get them drawn, whatever tags they might contain."""
+    just get them drawn, whatever tags they might contain.
+    """
     anchor = card.cfile.split('/').pop()
 
     output = ""
@@ -1687,7 +1695,7 @@ def create_simplecard(card, next_state):
 
     # For special tombstone cards, insert the state as non-visible text
     default_string = CONFIG.get("card_defaults", "tombstone")
-    if ( card.title == default_string ):
+    if (card.title == default_string):
         output += """\n<p id="state">%s</p>""" % next_state
 
     output += """</div>\n"""
@@ -1695,7 +1703,8 @@ def create_simplecard(card, next_state):
 
 
 def create_textcard(card, display_state):
-    """All news and features are drawn here. For condensing content, 
+    """
+    All news and features are drawn here. For condensing content, 
     wrap any nested image inside a "read more" bracket that will appear 
     after the 1st paragraph of text. Hide images behind this link too.
 
@@ -1708,10 +1717,10 @@ def create_textcard(card, display_state):
     topic_header = ""
     for topic in card.topics:
          topic_link = """<a class="topicLink" href="javascript:">%s</a>""" % topic
-         if ( topic_header == "" ):
-              topic_header = topic_link
+         if (topic_header == ""):
+             topic_header = topic_link
          else:
-              topic_header = topic_header + ", " + topic_link
+             topic_header = topic_header + ", " + topic_link
     anchor = card.cfile.split('/').pop()
 
     # The body of a text card consists of paragraphs of text, possibly
@@ -1722,7 +1731,7 @@ def create_textcard(card, display_state):
     output = ""
     output += """<div class="card %s" id="%s">\n""" % ( card.ctype, anchor )
     output += """   <div class="cardTitle">\n"""
-    if ( card.permalink == True ):
+    if (card.permalink == True):
         output += """      <h2>%s</h2>\n""" % card.title
         output += """      <p class="subject">%s</p>\n""" % card.cdate
     else:
@@ -1742,20 +1751,22 @@ def create_textcard(card, display_state):
     for line in processed_lines:
         # Parsing the whole page only works for full HTML pages
         e = lxml.html.fromstring(line)
-        if ( e.tag == 'img' ):
-            if (( line == first_line ) and ( 'img' not in passed )):
+        if (e.tag == 'img'):
+            if ((line == first_line) and ('img' not in passed)):
                 # Check image size. If it's the first line in the body and
                 # it's relatively small, display with the first paragraph.
                 # Add the dot in front to let the URIs be absolute, but the
                 # Python directories be relative to CWD
                 img = Image.open("." + e.attrib['src'])
                 # TODO: am I really an image? Have a bg script tell you
-                if (( img.size[0] > 300 ) and ( img.size[1] > 220 ) and 
-                    ( card.permalink == False ) and (card.search_result == False ) and
-                    ( ptags >= 3 )):
+                if ((img.size[0] > 300) and 
+                    (img.size[1] > 220) and 
+                    (card.permalink == False) and 
+                    (card.search_result == False ) and
+                    (ptags >= 3)):
                    e.attrib.update({"id": "imgExpand" })
-            elif (( ptags >= 3 ) and ( card.permalink == False ) and
-                   ( card.search_result == False )):
+            elif ((ptags >= 3) and (card.permalink == False) and
+                  (card.search_result == False)):
                 # Add a showExtend tag to hide it 
                 e.attrib.update({"id": "imgExpand" })
             else: 
@@ -1765,19 +1776,20 @@ def create_textcard(card, display_state):
             output += lxml.html.tostring(e)
             passed.update({'img': True})
     
-        elif ( e.tag == 'p' ):
+        elif (e.tag == 'p'):
             # If further than the first paragraph, write output
-            if ( 'p' in passed ): 
+            if ('p' in passed): 
                 output += lxml.html.tostring(e)
             # If more than three paragraphs, and it's a news entry,
             # and if the paragraph isn't a cute typography exercise...
             # start hiding extra paragraphs from view
-            elif ( len(e.text_content()) < 5 ):
+            elif (len(e.text_content()) < 5):
                 output += lxml.html.tostring(e)
                 continue   # Don't mark as passed yet
 
-            elif (( ptags >= 3 ) and ( card.permalink == False ) and
-                   ( card.search_result == False )):
+            elif ((ptags >= 3 ) and 
+                  (card.permalink == False) and
+                  (card.search_result == False)):
                 # First <p> is OK, but follow it with a (Read More) link, and a 
                 # div with showExtend that hides all the other elements
                 read_more = """ <a href="#%s" class="showShort" onclick="cardToggle('%s');">(Read&nbsp;More...)</a>""" % ( anchor, anchor )
@@ -1797,18 +1809,19 @@ def create_textcard(card, display_state):
 
     # End loop. now close the showExtend div if we 
     # added it earlier during tag processing
-    if (( ptags >= 3 ) and ( card.permalink == False ) and
-         ( card.search_result == False )):
+    if ((ptags >= 3 ) and 
+        (card.permalink == False) and
+        (card.search_result == False)):
         output += """   </div>\n"""
 
     # Convert the appearance value into a string for permalinks
     # And close the textcard
-    if ( display_state != None ):
+    if (display_state != None):
         permanchor = "/?x" + card.ctype[0] + anchor + ":" + display_state
     else:
         permanchor = "/?x" + card.ctype[0] + anchor
 
-    if ( card.permalink == False ):
+    if (card.permalink == False):
         output += """   <div class="cardFooter">\n"""
         output += """      <div class="bottom">\n"""
         output += """         <p class="cardNav"><a href="%s">Permalink</a></p>\n""" % permanchor
@@ -1821,7 +1834,8 @@ def create_textcard(card, display_state):
 
 
 def create_imagecard(card):
-    """Pure image frames should be generated and inserted roughly
+    """
+    Pure image frames should be generated and inserted roughly
     3 per page of news items. Duplicates of images are OK, as long
     as we need to keep adding eye candy to the page.
     """
@@ -1838,7 +1852,8 @@ def create_imagecard(card):
 
 
 def create_songcard(card):
-    """Song cards appear in two varieties -- one is made from a
+    """
+    Song cards appear in two varieties -- one is made from a
     single MP3 file, and appears as a focal point. The other type
     appears as M3U playlist files, and result in multiple songs 
     appearing in a single card list. The M3U version should be 
@@ -1872,22 +1887,21 @@ def create_page(page):
     output = ""
     total = len(page.cards)
     start_point = page.cur_len
-    # print "%d %d" % ( page.cur_len, total )
 
     for i in xrange(start_point, total):
-        if (( page.cards[i].ctype == "news" ) or
-             ( page.cards[i].ctype == "topics" ) or
-             ( page.cards[i].ctype == "features" )):
+        if ((page.cards[i].ctype == "news") or
+            (page.cards[i].ctype == "topics") or
+            (page.cards[i].ctype == "features")):
             output += create_textcard(page.cards[i], page.state.export_display_state())
 
-        if (( page.cards[i].ctype == "quotes" ) or
-             ( page.cards[i].ctype == "heading" )):
+        if ((page.cards[i].ctype == "quotes") or
+            (page.cards[i].ctype == "heading")):
             output += create_simplecard(page.cards[i], page.out_state)
 
-        if ( page.cards[i].ctype == "images" ):
+        if (page.cards[i].ctype == "images"):
             output += create_imagecard(page.cards[i])
 
-        if ( page.cards[i].ctype == "songs" ):
+        if (page.cards[i].ctype == "songs"):
             output += create_songcard(page.cards[i])
 
     return output
@@ -1918,7 +1932,7 @@ def contents_page(start_response, state):
     substitute = '<!-- Contents go here -->'
 
     # Fresh new HTML, no previous state provided
-    if ( state.fresh_mode() == True ):
+    if (state.fresh_mode() == True):
         page = cw_page(state)
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
@@ -1926,7 +1940,7 @@ def contents_page(start_response, state):
         start_response('200 OK', [('Content-Type','text/html')])
 
     # Permalink page of some kind
-    elif ( state.permalink_mode() == True ):
+    elif (state.permalink_mode() == True):
         page = cw_page(state)
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
@@ -1934,7 +1948,7 @@ def contents_page(start_response, state):
         start_response('200 OK', [('Content-Type','text/html')])
 
     # Did we get an empty search? If so, reshuffle
-    elif ( state.reshuffle_mode() == True ):
+    elif (state.reshuffle_mode() == True):
         syslog.syslog("***** Reshuffle Page Contents *****")
         state = cw_state(None)
         page = cw_page(state)
@@ -1942,7 +1956,7 @@ def contents_page(start_response, state):
         start_response('200 OK', [('Content-Type','text/html')])
 
     # Doing a search or a filter process
-    elif ( state.search_mode() == True ):
+    elif (state.search_mode() == True):
         page = cw_page(state)
         html = create_page(page)
         start_response('200 OK', [('Content-Type','text/html')])
@@ -1968,10 +1982,10 @@ def authentication():
         # TODO: max content length, check for EOF
         inbuf = fh.read(size)
         for vals in inbuf.split('&'):
-            [ key, value ] = vals.split('=')
+            [key, value] = vals.split('=')
             post[key] = value
 
-    if ( post['username'] == "justin" and post['password'] == "justin" ):
+    if (post['username'] == "justin" and post['password'] == "justin"):
         return True
     else:
         return False
@@ -1999,7 +2013,7 @@ def application(env, start_response):
 
     os.chdir(root_dir + "/" + resource_dir)
     in_state = os.environ.get('QUERY_STRING')
-    if ( in_state != None ) and ( in_state != '' ):
+    if (in_state != None) and ( in_state != ''):
         # Truncate state variable at 512 characters
         in_state = in_state[0:512]
     else:
@@ -2008,13 +2022,13 @@ def application(env, start_response):
     state = cw_state(in_state)   # Create state object
     auth_mode = CONFIG.get("authentication", "mode")
 
-    if ( os.environ.get('REQUEST_METHOD') == 'POST' ):
-        if ( authentication() == True ):
+    if (os.environ.get('REQUEST_METHOD') == 'POST'):
+        if (authentication() == True):
             return contents_page(start_response, state)
         else:   
             return authentication_page(start_response, state)
 
-    if ( auth_mode == "blog" or auth_mode == "combined" ):
+    if (auth_mode == "blog" or auth_mode == "combined"):
         return contents_page(start_response, state)
     else:
         return authentication_page(start_response, state)
