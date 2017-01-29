@@ -206,7 +206,6 @@ class cw_state:
             output = hits[0]
       # Special state variables are singleton values. Typically a
       # two-letter value starting with "x" as the first letter.
-      # TODO: do we need to preserve the comma-separated crap?
       elif ( CONFIG.has_option("special_states", search) ):
          hits = [token for token in self.state_vars if token.find(search) == 0]
          if ( len(hits) > 0 ):
@@ -302,19 +301,12 @@ class cw_state:
       # If the configuration supports a random theme, and we didn't have a
       # theme provided in the initial state, let's choose one randomly
       if (( appearance_state == None ) and 
-         (( self.theme == "random.per-session" ) or 
-          ( self.theme == "random.per-page" ))):
-
-         if ( self.theme == "random.per-page" ):
-            seed()   # Enable non-seeded choice
-            choice = randint(0, theme_count - 1)
-            self.theme = CONFIG.get("themes", str(choice)) 
-            if ( self.seed ):   # Re-enable seeded nonrandom choice
-               seed(self.seed)
-
-         else:   # random.per-session
-            choice = int(self.seed * 1000) % theme_count
-            self.theme = CONFIG.get("themes", str(choice))
+          ( self.theme == "random" )):
+         seed()   # Enable non-seeded choice
+         choice = randint(0, theme_count - 1)
+         self.theme = CONFIG.get("themes", str(choice)) 
+         if ( self.seed ):   # Re-enable seeded nonrandom choice
+            seed(self.seed)
 
 
    def __import_permalink_state(self):
@@ -612,11 +604,7 @@ class cw_state:
 
    def export_display_state(self):
       """Just export enough state for links in textcards that preserve theme"""
-      export_parts = [ self.__export_random_seed(),
-                       self.__export_theme_state() ]
-      export_parts = filter(None, export_parts)
-      export_display = ':'.join(export_parts)
-      return export_display
+      return self.__export_theme_state()
 
 
    def configured_states(self):
