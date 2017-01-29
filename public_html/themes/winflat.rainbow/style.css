@@ -219,6 +219,22 @@ img.InlineNewsCenter {
    text-align: center;
 } 
 
+img.InlineNewsBodyLeft {
+   float: left;
+   margin-right: 1.5em;
+   margin-top: 4px;
+   margin-bottom: 10px;
+   max-width: 40%;
+}
+
+img.InlineNewsBodyRight {
+   float: right;
+   margin-left: 1.5em;
+   margin-top: 4px;
+   margin-bottom: 10px;
+   max-width: 40%;
+}
+
 /* For news-image captions */
 h5 {
    margin-top: 0px;
