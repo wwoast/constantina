@@ -100,17 +100,17 @@ class cw_cardtype:
         between pages is a function of the number of possible elements.
         """
         for i in range(0, len(self.clist)):
-            if ( self.clist[i] == 'x' ):
+            if (self.clist[i] == 'x'):
                 continue
 
             part_end = i + self.page_distance
-            if ( i + part_end > len(self.clist)):
+            if (i + part_end > len(self.clist)):
                 part_end = len(self.clist)
 
             # Mark array items for removal
             for j in range(i+1, part_end):
-                if ( self.clist[i] == self.clist[j] ):
-                   self.clist[j] = 'x'
+                if (self.clist[i] == self.clist[j]):
+                    self.clist[j] = 'x'
 
 
     def __replace_marked(self):
@@ -119,22 +119,22 @@ class cw_cardtype:
         replacement values.
         """
         for i in range(0, len(self.clist)):
-            if ( self.clist[i] != 'x' ):
+            if (self.clist[i] != 'x'):
                 continue
 
             part_start = i - self.page_distance
-            if ( i - part_start < 0 ):
+            if (i - part_start < 0):
                 part_start = 0;
             part_end = i + self.page_distance
-            if ( i + part_end > len(self.clist)):
+            if (i + part_end > len(self.clist)):
                 part_end = len(self.clist)
 
             choices = range(0, self.file_count)
             shuffle(choices)
             for k in choices:
-                if ( k not in self.clist[part_start:part_end] ):
-                   self.clist[i] = k
-                   break
+                if (k not in self.clist[part_start:part_end]):
+                    self.clist[i] = k
+                    break
 
 
 class cw_state:
@@ -156,7 +156,7 @@ class cw_state:
         self.__set_state_defaults()
 
         # Was there an initial state string? Process it if there was.
-        if ( self.in_state != None ):
+        if (self.in_state != None):
             self.state_vars = self.in_state.split(':')   # TODO: max state params?
         else:
             self.state_vars = []
@@ -478,9 +478,9 @@ class cw_state:
         for i in xrange(len(cards) - 1, -1, -1):
             card = cards[i]
             if (card.ctype == 'news'):
-                if ( news_seen == False ):
-                   self.news.distance = card.num
-                   news_seen = True
+                if (news_seen == False):
+                    self.news.distance = card.num
+                    news_seen = True
                 continue
             if (card.ctype == 'heading'):
                 # Either a tombstone card or a "now loading" card
@@ -596,13 +596,13 @@ class cw_state:
         self.__calculate_last_distance(cards)
 
         # Finally, construct the state string for the next page
-        export_parts = [ self.__export_random_seed(),
-                         self.__export_content_card_state(),
-                         self.__export_search_state(query_terms),
-                         self.__export_filter_state(filter_terms),
-                         self.__export_filtered_card_count(filtered_count),
-                         self.__export_page_count_state(query_terms, filter_terms),
-                         self.__export_theme_state() ]
+        export_parts = [self.__export_random_seed(),
+                        self.__export_content_card_state(),
+                        self.__export_search_state(query_terms),
+                        self.__export_filter_state(filter_terms),
+                        self.__export_filtered_card_count(filtered_count),
+                        self.__export_page_count_state(query_terms, filter_terms),
+                        self.__export_theme_state()]
 
         export_parts = filter(None, export_parts)
         export_string = ':'.join(export_parts)
@@ -911,7 +911,7 @@ class cw_page:
                 card = cw_card(ctype, grab_file, state=self.state, grab_body=True, search_result=True)
                 # News articles without topic strings won't load. Other card types that
                 # don't have embedded topics will load just fine.
-                if (card.topics != [] ) or ( ctype == 'quotes' ) or ( ctype == 'topics'):
+                if (card.topics != []) or (ctype == 'quotes') or (ctype == 'topics'):
                     self.cards.append(card)
 
 
@@ -1330,7 +1330,7 @@ class cw_search:
         self.schema = ''
         self.index = ''
         self.query = ''
-        self.parser =''
+        self.parser = ''
         self.searcher = ''
         self.results = ''
 
@@ -1443,7 +1443,7 @@ class cw_search:
 
         # Did we sanitize a query, or a round of content? Infer by what
         # we're setting in the object itself.
-        if (safe_input != '' ):
+        if (safe_input != ''):
             if (returning == "query"):
                 self.query_string = safe_input
             elif (returning == "filter"):
@@ -1688,7 +1688,7 @@ def create_simplecard(card, next_state):
     anchor = card.cfile.split('/').pop()
 
     output = ""
-    output += """<div class="card %s" id="%s">\n""" % ( card.ctype, anchor )
+    output += """<div class="card %s" id="%s">\n""" % (card.ctype, anchor)
 
     body_lines = card.body.splitlines()
     processed_lines = unroll_newlines(body_lines)
@@ -1732,13 +1732,13 @@ def create_textcard(card, display_state):
     # properly hidden. Then, after the end of the first paragraph, add
     # a "Read More" link for expanding the other hidden items.
     output = ""
-    output += """<div class="card %s" id="%s">\n""" % ( card.ctype, anchor )
+    output += """<div class="card %s" id="%s">\n""" % (card.ctype, anchor)
     output += """   <div class="cardTitle">\n"""
     if (card.permalink == True):
         output += """      <h2>%s</h2>\n""" % card.title
         output += """      <p class="subject">%s</p>\n""" % card.cdate
     else:
-        output += """      <h2><a href="#%s" onclick="cardToggle('%s');">%s</a></h2>\n""" % ( anchor, anchor, card.title )
+        output += """      <h2><a href="#%s" onclick="cardToggle('%s');">%s</a></h2>\n""" % (anchor, anchor, card.title)
         output += """      <p class="subject">%s</p>\n""" % topic_header
     output += """   </div>\n"""
 
@@ -1765,13 +1765,13 @@ def create_textcard(card, display_state):
                 if ((img.size[0] > 300) and
                     (img.size[1] > 220) and
                     (card.permalink == False) and
-                    (card.search_result == False ) and
+                    (card.search_result == False) and
                     (ptags >= 3)):
-                   e.attrib.update({"id": "imgExpand" })
+                   e.attrib.update({"id": "imgExpand"})
             elif ((ptags >= 3) and (card.permalink == False) and
                   (card.search_result == False)):
                 # Add a showExtend tag to hide it
-                e.attrib.update({"id": "imgExpand" })
+                e.attrib.update({"id": "imgExpand"})
             else:
                 pass
 
@@ -1790,12 +1790,12 @@ def create_textcard(card, display_state):
                 output += lxml.html.tostring(e)
                 continue   # Don't mark as passed yet
 
-            elif ((ptags >= 3 ) and
+            elif ((ptags >= 3) and
                   (card.permalink == False) and
                   (card.search_result == False)):
                 # First <p> is OK, but follow it with a (Read More) link, and a
                 # div with showExtend that hides all the other elements
-                read_more = """ <a href="#%s" class="showShort" onclick="cardToggle('%s');">(Read&nbsp;More...)</a>""" % ( anchor, anchor )
+                read_more = """ <a href="#%s" class="showShort" onclick="cardToggle('%s');">(Read&nbsp;More...)</a>""" % (anchor, anchor)
                 prep = lxml.html.tostring(e)
                 output += prep.replace('</p>', read_more + '</p>')
                 output += """<div class="divExpand">\n"""
@@ -1812,7 +1812,7 @@ def create_textcard(card, display_state):
 
     # End loop. now close the showExtend div if we
     # added it earlier during tag processing
-    if ((ptags >= 3 ) and
+    if ((ptags >= 3) and
         (card.permalink == False) and
         (card.search_result == False)):
         output += """   </div>\n"""
@@ -1871,7 +1871,7 @@ def create_songcard(card):
 
         output += """   <div class="cell">"""
         output += """      <p class="songName">%s</p>""" % song.songtitle
-        output += """      <a href="%s">MP3 &darr; %s </a>""" % ( uripath, song.songlength )
+        output += """      <a href="%s">MP3 &darr; %s </a>""" % (uripath, song.songlength)
         output += """   </div>"""
 
     output += """</div>"""
