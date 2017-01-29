@@ -286,7 +286,7 @@ class cw_state:
         self.page = self.__find_state_variable('xp')
 
         # If page was read in as a special state variable, use that (for search results)
-        if (self.page is not None) and (self.search_mode() == True):
+        if (self.page is not None) and (self.search_mode() is True):
             self.page = self.__int_translate(self.page, 1, 0)
         # Otherwise, determine our page number from the news article index reported
         elif self.news.distance is not None:
@@ -498,7 +498,7 @@ class cw_state:
         for i in xrange(len(cards) - 1, -1, -1):
             card = cards[i]
             if card.ctype == 'news':
-                if news_seen == False:
+                if news_seen is False:
                     self.news.distance = card.num
                     news_seen = True
                 continue
@@ -515,7 +515,7 @@ class cw_state:
             done_distance.sort()
 
             dist = len(cards) - hidden_cards - i
-            # syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" % 
+            # syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" %
             #              (card.ctype, dist, i, len(cards), len(cards) - hidden_cards))
             getattr(self, card.ctype).distance = str(dist)
             # Early break once we've seen all the card types
@@ -565,7 +565,7 @@ class cw_state:
         number into the next search state for loading
         """
         page_string = None
-        if self.search_mode() == True:
+        if self.search_mode() is True:
             export_page = int(self.page) + 1
             page_string = "xp" + str(export_page)
         return page_string
@@ -601,7 +601,7 @@ class cw_state:
         track the number of filtered cards in the state.
         """
         filtered_count_string = None
-        if self.filter_processed_mode() == True:
+        if self.filter_processed_mode() is True:
             filtered_count_string = "xx" + str(filtered_count)
         return filtered_count_string
 
@@ -651,7 +651,7 @@ class cw_state:
         """Either an empty state, or just an empty state and a theme is set"""
         if (((self.in_state is None) or (self.configured_states() == ['appearance'])) and
              (self.page == 0) and
-             (self.reshuffle == False)):
+             (self.reshuffle is False)):
             return True
         else:
             return False
@@ -660,7 +660,7 @@ class cw_state:
     def reshuffle_mode(self):
         """An empty search was given, so reshuffle the page"""
         if ((self.search is not None) and
-            (self.reshuffle == True) and
+            (self.reshuffle is True) and
             (self.card_filter is None)):
             return True
         else:
@@ -684,7 +684,7 @@ class cw_state:
         that no card filtering is currently in place.
         """
         if ((self.card_filter is not None) and
-            (getattr(self, ctype).filtertype == False)):
+            (getattr(self, ctype).filtertype is False)):
             return True
         else:
             return False
@@ -776,7 +776,7 @@ class cw_page:
 
         news_items = CONFIG.getint("card_counts", "news")
 
-        if self.state.fresh_mode() == True:
+        if self.state.fresh_mode() is True:
             # Create a new page of randomly-assorted images and quotes,
             # along with reverse-time-order News items
             syslog.syslog("***** Completely new page-load workflow *****")
@@ -784,7 +784,7 @@ class cw_page:
             self.__distribute_cards()
             self.cards.insert(0, cw_card('heading', 'welcome', grab_body=True))
 
-            if self.state.out_of_content(len(self.cards)) == True:
+            if self.state.out_of_content(len(self.cards)) is True:
                 self.cards.append(cw_card('heading', 'bottom', grab_body=True))
             else:
                 # Add a hidden card to trigger loading more data when reached
@@ -792,7 +792,7 @@ class cw_page:
                 # Finally, add the "next page" tombstone to load more content
                 self.cards.append(cw_card('heading', 'tombstone', grab_body=True))
 
-        elif self.state.permalink_mode() == True:
+        elif self.state.permalink_mode() is True:
             # This is a permalink page request. For these, use a
             # special footer card (just a header card placed at
             # the bottom of the page).
@@ -800,7 +800,7 @@ class cw_page:
             self.__get_permalink_card()
             self.cards.append(cw_card('heading', 'footer', grab_body=True, permalink=True))
 
-        elif self.state.search_mode() == True:
+        elif self.state.search_mode() is True:
             # Return search results based on the subsequent comma-separated list,
             # parsed by __import_state into self.state.search.
             # TODO: Tokenize all search parameters and remove non-alphanum characters
@@ -863,17 +863,17 @@ class cw_page:
             if card_count == 0:
                 continue
             # No data and it's not the first page? Skip this type
-            if ((self.state.fresh_mode() == False) and
+            if ((self.state.fresh_mode() is False) and
                 (getattr(self.state, ctype).clist is None)):
                 continue
             # Are we doing cardtype filtering, and this isn't an included card type?
-            if self.state.exclude_cardtype(ctype) == True:
+            if self.state.exclude_cardtype(ctype) is True:
                 continue
 
             # Grab the cnum of the last inserted thing of this type
             # and then open the next one
             # If we didn't open anyting last time, start at the beginning
-            if self.state.fresh_mode() == True:
+            if self.state.fresh_mode() is True:
                 start = 0
             # If these are previous items, calculate how many were on previous pages
             else:
@@ -883,7 +883,7 @@ class cw_page:
                 card = cw_card(ctype, i, state=self.state, grab_body=True)
                 # Don't include cards that failed to load content
                 if card.topics != []:
-                   self.cards.append(card)
+                    self.cards.append(card)
 
 
     def __get_search_result_cards(self):
@@ -908,7 +908,7 @@ class cw_page:
             if ctype == 'topics':
                 continue
             # Are we doing cardtype filtering, and this isn't an included card type?
-            if self.state.exclude_cardtype(ctype) == True:
+            if self.state.exclude_cardtype(ctype) is True:
                 continue
 
             syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype) + " card_filter_state: " + str(self.state.card_filter))
@@ -921,7 +921,7 @@ class cw_page:
             for j in xrange(start, end_dist):
                 grab_file = self.search_results.hits[ctype][j]
                 # If the hits[ctype][j] is a file name, figure out which Nth file this is
-                if grab_file.isdigit() == False:
+                if grab_file.isdigit() is False:
                     for k in xrange(0, len(DIR_INDEX[ctype])):
                         # syslog.syslog("compare:" + grab_file + "==" + DIR_INDEX[ctype][k])
                         if DIR_INDEX[ctype][k] == grab_file:
@@ -939,7 +939,7 @@ class cw_page:
         """
         Given a utime or card filename, return a permalink page of that type.
         """
-        permalink_fields = [sv[1] for sv in CONFIG.items("special_states") 
+        permalink_fields = [sv[1] for sv in CONFIG.items("special_states")
                             if sv[1].find("permalink") != -1]
         for spcfield in permalink_fields:
             if getattr(self.state, spcfield) is not None:
@@ -986,7 +986,7 @@ class cw_page:
         # variable based on the current list of cards.
         for ctype, card_count in CONFIG.items("card_counts"):
             # Are we doing cardtype filtering, and this isn't an included card type?
-            if self.state.exclude_cardtype(ctype) == True:
+            if self.state.exclude_cardtype(ctype) is True:
                 continue
             dist = getattr(self.state, ctype).distance
             if (len(getattr(self.state, ctype).clist) == 0) or (dist is None):
@@ -1066,7 +1066,7 @@ class cw_page:
             if c_redist[ctype] == []:
                 continue   # Empty
             # Are we doing cardtype filtering, and this isn't an included card type?
-            if self.state.exclude_cardtype(ctype) == True:
+            if self.state.exclude_cardtype(ctype) is True:
                 continue
 
             # Max distance between cards of this type on a page
@@ -1161,7 +1161,7 @@ class cw_card:
         self.hidden = False
         # Don't hit the filesystem if we're just tracking which cards have
         # been previously opened (cw_page.__get_previous_cards)
-        if grab_body == True:
+        if grab_body is True:
             self.cfile = self.__openfile()
 
 
@@ -1183,9 +1183,9 @@ class cw_card:
 
         # Even if we have cards of a type, don't run this logic if cards array is []
         if ((self.ctype in random_types) and
-            (self.state != False) and
-            (self.search_result == False) and
-            (self.hidden == False) and
+            (self.state is not False) and
+            (self.search_result is False) and
+            (self.hidden is False) and
             (getattr(self.state, self.ctype).clist != [])):
             card_count = len(getattr(self.state, self.ctype).clist)
             which_file = getattr(self.state, self.ctype).clist[self.num % card_count]
@@ -1239,7 +1239,7 @@ class cw_card:
         magi = magic.Magic(mime=True)
 
         base_path = CONFIG.get("paths", self.ctype)
-        if self.hidden == True:
+        if self.hidden is True:
             fpath = base_path + "/hidden/" + thisfile
         else:
             fpath = base_path + "/" + thisfile
@@ -1297,7 +1297,7 @@ class cw_card:
         except:   # File got moved in between dirlist caching and us reading it
             return CONFIG.get("card_defaults", "file")
 
-        if self.hidden == True:
+        if self.hidden is True:
             return CONFIG.get("paths", self.ctype) + "/hidden/" + thisfile
         else:
             return CONFIG.get("paths", self.ctype) + "/" + thisfile
@@ -1616,7 +1616,7 @@ def opendir(ctype, hidden=False):
     card reading functions, so we manage it outside those.
     """
     directory = CONFIG.get("paths", ctype)
-    if hidden == True:
+    if hidden is True:
         directory += "/hidden"
         ctype += "/hidden"
 
@@ -1739,11 +1739,11 @@ def create_textcard(card, display_state):
     # TODO: VET title and topics for reasonable size restrictions
     topic_header = ""
     for topic in card.topics:
-         topic_link = """<a class="topicLink" href="javascript:">%s</a>""" % topic
-         if topic_header == "":
-             topic_header = topic_link
-         else:
-             topic_header = topic_header + ", " + topic_link
+        topic_link = """<a class="topicLink" href="javascript:">%s</a>""" % topic
+        if topic_header == "":
+            topic_header = topic_link
+        else:
+            topic_header = topic_header + ", " + topic_link
     anchor = card.cfile.split('/').pop()
 
     # The body of a text card consists of paragraphs of text, possibly
@@ -1754,7 +1754,7 @@ def create_textcard(card, display_state):
     output = ""
     output += """<div class="card %s" id="%s">\n""" % (card.ctype, anchor)
     output += """   <div class="cardTitle">\n"""
-    if card.permalink == True:
+    if card.permalink is True:
         output += """      <h2>%s</h2>\n""" % card.title
         output += """      <p class="subject">%s</p>\n""" % card.cdate
     else:
@@ -1784,12 +1784,12 @@ def create_textcard(card, display_state):
                 # TODO: am I really an image? Have a bg script tell you
                 if ((img.size[0] > 300) and
                     (img.size[1] > 220) and
-                    (card.permalink == False) and
-                    (card.search_result == False) and
+                    (card.permalink is False) and
+                    (card.search_result is False) and
                     (ptags >= 3)):
-                   e.attrib.update({"id": "imgExpand"})
-            elif ((ptags >= 3) and (card.permalink == False) and
-                  (card.search_result == False)):
+                    e.attrib.update({"id": "imgExpand"})
+            elif ((ptags >= 3) and (card.permalink is False) and
+                  (card.search_result is False)):
                 # Add a showExtend tag to hide it
                 e.attrib.update({"id": "imgExpand"})
             else:
@@ -1811,8 +1811,8 @@ def create_textcard(card, display_state):
                 continue   # Don't mark as passed yet
 
             elif ((ptags >= 3) and
-                  (card.permalink == False) and
-                  (card.search_result == False)):
+                  (card.permalink is False) and
+                  (card.search_result is False)):
                 # First <p> is OK, but follow it with a (Read More) link, and a
                 # div with showExtend that hides all the other elements
                 read_more = """ <a href="#%s" class="showShort" onclick="cardToggle('%s');">(Read&nbsp;More...)</a>""" % (anchor, anchor)
@@ -1833,8 +1833,8 @@ def create_textcard(card, display_state):
     # End loop. now close the showExtend div if we
     # added it earlier during tag processing
     if ((ptags >= 3) and
-        (card.permalink == False) and
-        (card.search_result == False)):
+        (card.permalink is False) and
+        (card.search_result is False)):
         output += """   </div>\n"""
 
     # Convert the appearance value into a string for permalinks
@@ -1844,7 +1844,7 @@ def create_textcard(card, display_state):
     else:
         permanchor = "/?x" + card.ctype[0] + anchor
 
-    if card.permalink == False:
+    if card.permalink is False:
         output += """   <div class="cardFooter">\n"""
         output += """      <div class="bottom">\n"""
         output += """         <p class="cardNav"><a href="%s">Permalink</a></p>\n""" % permanchor
@@ -1953,7 +1953,7 @@ def contents_page(start_response, state):
     substitute = '<!-- Contents go here -->'
 
     # Fresh new HTML, no previous state provided
-    if (state.fresh_mode() == True):
+    if state.fresh_mode() is True:
         page = cw_page(state)
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
@@ -1961,7 +1961,7 @@ def contents_page(start_response, state):
         start_response('200 OK', [('Content-Type', 'text/html')])
 
     # Permalink page of some kind
-    elif (state.permalink_mode() == True):
+    elif state.permalink_mode() is True:
         page = cw_page(state)
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
@@ -1969,7 +1969,7 @@ def contents_page(start_response, state):
         start_response('200 OK', [('Content-Type', 'text/html')])
 
     # Did we get an empty search? If so, reshuffle
-    elif (state.reshuffle_mode() == True):
+    elif state.reshuffle_mode() is True:
         syslog.syslog("***** Reshuffle Page Contents *****")
         state = cw_state(None)
         page = cw_page(state)
@@ -1977,7 +1977,7 @@ def contents_page(start_response, state):
         start_response('200 OK', [('Content-Type', 'text/html')])
 
     # Doing a search or a filter process
-    elif (state.search_mode() == True):
+    elif state.search_mode() is True:
         page = cw_page(state)
         html = create_page(page)
         start_response('200 OK', [('Content-Type', 'text/html')])
@@ -2006,7 +2006,7 @@ def authentication():
             [key, value] = vals.split('=')
             post[key] = value
 
-    if (post['username'] == "justin" and post['password'] == "justin"):
+    if (post['username'] == "justin") and (post['password'] == "justin"):
         return True
     else:
         return False
@@ -2034,7 +2034,7 @@ def application(env, start_response):
 
     os.chdir(root_dir + "/" + resource_dir)
     in_state = os.environ.get('QUERY_STRING')
-    if (in_state is not None) and ( in_state != ''):
+    if (in_state is not None) and (in_state != ''):
         # Truncate state variable at 512 characters
         in_state = in_state[0:512]
     else:
@@ -2044,7 +2044,7 @@ def application(env, start_response):
     auth_mode = CONFIG.get("authentication", "mode")
 
     if os.environ.get('REQUEST_METHOD') == 'POST':
-        if authentication() == True:
+        if authentication() is True:
             return contents_page(start_response, state)
         else:
             return authentication_page(start_response, state)
