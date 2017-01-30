@@ -10,14 +10,11 @@ import ConfigParser
 
 from medusa_search import MedusaSearch
 from medusa_cards import MedusaCardType, MedusaState, MedusaCard, MedusaSong
+from medusa_files import MedusaFiles, opendir
 
 syslog.openlog(ident='constantina')
 CONFIG = ConfigParser.SafeConfigParser()
 CONFIG.read('constantina.ini')
-
-
-# Only do opendir once per directory
-DIR_INDEX = {}
 
 
 class MedusaPage:
@@ -195,9 +192,9 @@ class MedusaPage:
                 grab_file = self.search_results.hits[ctype][j]
                 # If the hits[ctype][j] is a file name, figure out which Nth file this is
                 if grab_file.isdigit() is False:
-                    for k in xrange(0, len(DIR_INDEX[ctype])):
-                        # syslog.syslog("compare:" + grab_file + "==" + DIR_INDEX[ctype][k])
-                        if DIR_INDEX[ctype][k] == grab_file:
+                    for k in xrange(0, len(MedusaFiles[ctype])):
+                        # syslog.syslog("compare:" + grab_file + "==" + MedusaFiles[ctype][k])
+                        if MedusaFiles[ctype][k] == grab_file:
                             grab_file = k
                             break
 
@@ -407,60 +404,6 @@ class MedusaPage:
         for j in xrange(0, len(c_nodist['topics'])):
             self.cards.insert(lstop + j, c_nodist['topics'][j])
 
-
-
-def remove_future(dirlisting):
-    """For any files named after a Unix timestamp, don't include the
-    files in a directory listing if the timestamp-name is in the future.
-    Assumes the dirlisting is already sorted in reverse order!"""
-    for testpath in dirlisting:
-        date = datetime.fromtimestamp(int(testpath)).strftime("%s")
-        current = datetime.strftime(datetime.now(), "%s")
-        if date > current:
-            dirlisting.remove(testpath)
-        else:
-            break
-
-    return dirlisting
-
-
-def opendir(ctype, hidden=False):
-    """
-    Return either cached directory information or open a dir and
-    list all the files therein. Used for both searching and for the
-    card reading functions, so we manage it outside those.
-    """
-    directory = CONFIG.get("paths", ctype)
-    if hidden is True:
-        directory += "/hidden"
-        ctype += "/hidden"
-
-    # If the directory wasn't previously cached
-    if ctype not in DIR_INDEX.keys():
-        # Default value. If no files, keep the empty array
-        DIR_INDEX[ctype] = []
-
-        dirlisting = os.listdir(directory)
-        if (dirlisting == []):
-            return DIR_INDEX[ctype]
-
-        # Any newly-generated list of paths should be weeded out
-        # so that subdirectories don't get fopen'ed later
-        for testpath in dirlisting:
-            if os.path.isfile(os.path.join(directory, testpath)):
-                DIR_INDEX[ctype].append(testpath)
-
-        # Sort the output. Most directories should use
-        # utimes for their filenames, which sort nicely. Use
-        # reversed array for newest-first utime files
-        DIR_INDEX[ctype].sort()
-        DIR_INDEX[ctype].reverse()
-
-        # For news items, remove any items newer than the current time
-        if ctype == "news":
-            DIR_INDEX[ctype] = remove_future(DIR_INDEX[ctype])
-
-    return DIR_INDEX[ctype]
 
 
 def unroll_newlines(body_lines):

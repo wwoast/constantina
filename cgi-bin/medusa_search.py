@@ -6,13 +6,11 @@ import lxml.html
 import syslog
 import ConfigParser
 
+from medusa_files import MedusaFiles
+
 syslog.openlog(ident='medusa_search')
 CONFIG = ConfigParser.SafeConfigParser()
 CONFIG.read('constantina.ini')
-
-
-# Only do opendir once per directory
-DIR_INDEX = {}
 
 
 class MedusaSearch:
@@ -219,11 +217,11 @@ class MedusaSearch:
     def __add_ctype_to_index(self, ctype):
         """Take a file type, list all the files there, and add all the
         body contents to the index."""
-        # Make sure the DIR_INDEX is populated
+        # Make sure MedusaFiles is populated
         opendir(ctype)
         card_path = CONFIG.get("paths", ctype)
 
-        for filename in DIR_INDEX[ctype]:
+        for filename in MedusaFiles[ctype]:
             try:
                 fnmtime = int(os.path.getmtime(card_path + "/" + filename))
             except:

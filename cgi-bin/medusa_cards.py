@@ -8,13 +8,11 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
+from medusa_files import MedusaFiles, opendir
+
 syslog.openlog(ident='medusa_cards')
 CONFIG = ConfigParser.SafeConfigParser()
 CONFIG.read('constantina.ini')
-
-
-# Only do opendir once per directory
-DIR_INDEX = {}
 
 
 class MedusaCardType:
@@ -797,8 +795,8 @@ class MedusaCard:
             if which_file == 'x':
                 self.hidden = True
                 type_files = opendir(self.ctype, self.hidden)
-                # syslog.syslog(str(DIR_INDEX.keys()))
-                hidden_cards = xrange(0, len(DIR_INDEX[self.ctype + "/hidden"]))
+                # syslog.syslog(str(MedusaFiles.keys()))
+                hidden_cards = xrange(0, len(MedusaFiles[self.ctype + "/hidden"]))
                 self.num = hidden_cards[randint(0, len(hidden_cards)-1)]
                 # syslog.syslog("open hidden file: " + str(self.num) + "/" + str(hidden_cards))
                 which_file = self.num
