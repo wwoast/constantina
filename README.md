@@ -1,22 +1,26 @@
 # Constantina
 ### A dynamic-content blog platform
-##### Justin Cassidy, July 2014
+##### Justin Cassidy, February 2017
 
 ## Overview
 Constantina is a single-page static site generator designed to randomize 
-content. To get a basic idea, visit http://www.codaworry.com, and refresh the 
-page a few times.
+content for "grazing". To get a basic idea, visit http://www.codaworry.com,
+and refresh the page a few times.
+
+
+## Changelog
+
+* **0.4.0** - First public release
 
 
 ## Features
 * Single-page single-column infinite-scroll layout
  * Bundled with `zepto.js` and light supporting Javascript
  * Layout responsive at any screen size
- * Well supported and tested on mobile, landscape and portrait
+ * Actively tested on mobile, landscape and portrait
  * Infinite scroll falls back to a "click to load" for legacy browsers
-* Page consists of a simple series of cards 
- * Card content is either a prescribed file type or a short HTML snippet
- * Each card type is stored in a separate folder
+* Page consists of a series of cards 
+ * Card content is either short HTML snippets, or raw images/music files
  * Add content to a folder, and it will publish upon the next page load
  * Each card type has unique distribution and layout rules
 * Search feature for any cards with text content
@@ -26,39 +30,21 @@ page a few times.
 * Future-dated news only publish after their timestamp
 
 
-## Usage
-Constantina is an infinite-scrolling layout containing a series of "cards". 
-Roughly 20 cards are displayed upon initial load, and no additional cards are 
-loaded until the reader scrolls further in the viewport. We'll call each set of
-20 cards a ''page''.
+## How It Works
+Roughly 20 cards are displayed upon initial load, and Constantina considers
+this a ''page'' of content. No additional cards are loaded until the reader 
+scrolls further in the viewport, or submits a search in the search bar.
 
 Each card presents content stored in one of Constantina's content folders. 
-Finally, each content folder has rules for how the content appears in the 
-Constantina layout.
+Each content folder has a file naming convention and specific rules for how 
+the content appears in the Constantina layout.
 
 News items always have unix-timestamp names, and appear in reverse-time order,
 newest to oldest. Pictures and interjections are randomly-distributed through
 the pages, with guaranteed spacing. Songs and advertisements appear once per 
 ''page'', randomly distributed. Finally, there are a handful of special cards,
-such as headers, footers, and "tombstones" that assist or alert about any
+such as headers, footers, and ''tombstones'' that assist or alert about any
 pagination activities or page state.
-
-
-## Architecture
-`constantina.py` is a single Python script on the backend, which loads a series
-of static webpages, javascript, and content on the frontend.
-
-The backend script pulls files from subdirectories in a single ROOT_DIR folder.
-Some of these subdirectories store files that appear in set reverse-time
-order, like news entries. Other subdirectories store media that appear with
-random spacing and random ordering, such as pictures, songs, and quotes. A
-MAX_ITEMS variable defines the total size of the page -- once MAX_ITEMS is
-reached, the page must trigger an AJAX event to load further content. 
-
-The front end defines a single-column responsive layout for nearly any screen
-size. This column will display "cards" of content in an infinitely-scrolling
-list. A clickable event and a scroll-height event will both trigger AJAX calls
-to load further content into the page.
 
 
 ##Card Layout Rules
@@ -87,3 +73,65 @@ adjustable as well.
    ** 	= Admin will likely want to adjust these upward
    ***	= Just header and footer cards on the first and/or last pages
    ****	= Only returned when using the search bar
+
+
+##Installing Constantina
+
+### List of Python dependencies
+TOWRITE
+
+### uwsgi+nginx on a private server
+
+The best performing way to install Constantina is with a dedicated
+application server such as `gunicorn` or `uwsgi`, with a more general
+web server like `nginx` sitting in front and serving static assets.
+
+`/etc/nginx/sites-available/constantina.conf`:
+```
+server {
+        # Port, config, SSL, and other details here
+
+        # Just proxy the exact location on your webserver that you
+        # want Constantina to load within. All other locations are 
+        # static files that shouldn't be proxied.
+        location = / {
+                proxy_pass        http://localhost:9090/;
+                proxy_set_header  X-Real-IP $remote_addr;
+        }
+}
+```
+
+`uwsgi.constantina.ini`:
+```
+[uwsgi]
+http-socket  = :9090
+plugin       = python
+wsgi-file    = /path/to/constantina.py
+processes    = 3
+procname     = constantina
+max-requests = 5
+master
+close-on-exec
+```
+
+At the command line, you can test Constantina by running:
+```
+uwsgi --ini uwsgi.constantina.ini --daemonize=/path/to/constantina.log
+```
+
+
+### Apache + mod_cgi on Shared Hosting
+
+For those of you still on shared hosting, Constantina will run behind `mod_cgi`
+with the included `constantina.cgi` helper script. In the folder where you want
+Constantina to treat as your web root folder (i.e. your `public_html` folder),
+add a brief Apache config snippet file named `.htaccess`:
+
+```
+RewriteEngine on
+
+# All root not directed at files should be processed through CGI
+# Replace /cgi-bin/ with your hosting provider's specified scripts folder
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ /cgi-bin/constantina.cgi
+```
