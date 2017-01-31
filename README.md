@@ -4,8 +4,8 @@
 
 ## Overview
 Constantina is a single-page static site generator designed to randomize 
-content for "grazing". To get a basic idea, visit http://www.codaworry.com,
-and refresh the page a few times.
+content for "grazing". 
+
 
 
 ## Changelog
@@ -28,6 +28,7 @@ and refresh the page a few times.
  * Supports ''encyclopedia'' cards that only appear in search results
 * News cards contain Permalinks for external linking
 * Future-dated news only publish after their timestamp
+* Three colorful themes, and straightforward HTML/CSS to make new ones
 
 
 ## How It Works
@@ -47,8 +48,47 @@ such as headers, footers, and ''tombstones'' that assist or alert about any
 pagination activities or page state.
 
 
+##Card Format and Naming Standards
+
+| Card Type | Path                 | File Naming Standard     | File Formats   |
+|-----------|----------------------|--------------------------|----------------|
+| news      | cards/news/          | unix-time (`date +%s`)   | Limited HTML   |
+| images    | cards/pictures/      | any filename OK          | `.jpg`, `.png` |
+| songs	    | cards/songs/         | playlist plus subfolder  | `.mp3`, `.m3u` |
+| quotes    | cards/interjections/ | any filename OK          | Limited HTML   |
+| heading   | cards/heading/       | any filename OK          | Limited HTML   |
+| topics    | cards/encyclopedia/  | search-term string match | Limited HTML   |
+
+There are a handful of other untested card types defined. ''Limited HTML'' 
+format is a HTML format with two lines at the beginning, one for the post 
+title, and the other for searchable keywords:
+
+```
+Example Post
+Education, Demonstration
+
+<img class="InlineNewsLeft" src="/images/news/wingkey.png" alt="Example image" />
+<p>The Limited HTML format is generally restricted to display logic that easily displays on both large screens and single-column portrait mobile displays. Anchors, paragraphs, images, and other basic layout info is recommended.</p>
+```
+
+For news cards, name these files a unix timestamp and the date that timestamp
+corresponds to will be the stated publishing date of that card. `vim $(date +%s)` 
+will create a file with the current unix timestamp as the filename.
+
+Song cards will package all the songs in a playlist into a single block. The
+playlist should point at songs in a subfolder of `cards/songs`, and `.m3u`
+files are just a simple list of those song files (including the containing
+directory), one per line:
+
+```
+Evergreen Jazz/Toadstools.mp3
+Evergreen Jazz/Bug Catchers.mp3
+Evergreen Jazz/Nowhere Bells.mp3
+Evergreen Jazz/Blue Mormon.mp3
+```
+
 ##Card Layout Rules
-Card types are listed below, as well as their default path below the ROOT_DIR,
+Card types are listed below, as well as their default path below the `ROOT_DIR`,
 whether card placement on the page is random or not, and whether the order
 of cards in the page is randomly determined or not. Not all card types are
 indexed for searching, but we make note which types are. 
@@ -57,28 +97,35 @@ Finally, the cards per page values are listed, all of which can be adjusted
 by an admin. The card spacing rules are not shown below, but those values are
 adjustable as well.
 
-   Card Type	Path		Layout	Order		Indexed	Cards/Page
-   ---------	----		------	-----		-------	----------
-   news		news/		Fixed	Reverse-Time	Yes	10
-   images	pictures/	Random	Random		No*	4
-   songs	songs/		Random	Reverse-Time	No*	1
-   quotes	interjections/	Random	Random		Yes	3
-   ads		gracias/	Random	Random		No	0**
-   media	embedded/	Random	Random		No	0**
-   features	features/	Random	Random		Yes	0**
-   heading	heading/	Fixed	Predetermined	No	1***
-   topics	encyclopedia/	Fixed	Predetermined	Yes	1****
+| Card Type | Path                 | Layout | Order         | Indexed | Cards/Page |
+|-----------|----------------------|--------|---------------|---------|------------|
+| news      | cards/news/          | Fixed  | Reverse-Time  | Yes     | 10         |
+| images    | cards/pictures/      | Random | Random        | No*     | 4          |
+| songs	    | cards/songs/         | Random | Reverse-Time  | No*     | 1          |
+| quotes    | cards/interjections/ | Random | Random        | Yes     | 3          |
+| heading   | cards/heading/       | Fixed  | Predetermined | No      | 1**       |
+| topics    | cards/encyclopedia/  | Fixed  | Predetermined | Yes     | 1***      |
 
    * 	= May index metadata for these in the future
-   ** 	= Admin will likely want to adjust these upward
-   ***	= Just header and footer cards on the first and/or last pages
-   ****	= Only returned when using the search bar
+   **	= Just header and footer cards on the first and/or last pages
+   ***	= Only returned when using the search bar
 
 
 ##Installing Constantina
 
 ### List of Python dependencies
-TOWRITE
+
+You can grab these either from your distro or Python package manager, with the
+exception of `python-magic` where Debian's distro version has a totally different
+API than the version in `pip`.
+
+ * `pymad` for MP3 parsing. Unfortunately, this requires some C compiling.
+ * `pillow` for image operations. Successor to the older `PIL`
+ * `python-magic` for file type checks
+ * `lxml` for occasions where you need to parse HTML files
+ * `configparser` for implementing the configuration files
+ * `whoosh` for reverse-index word searching
+ * `wsgiref` if you need to use Apache and `mod_cgi`
 
 ### uwsgi+nginx on a private server
 
