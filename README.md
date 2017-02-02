@@ -8,7 +8,7 @@ content for *grazing*. It's written in Python, and was originally written
 to host my music and technology site, [Codaworry](http://www.codaworry.com). 
 
 ![mobile1](https://raw.githubusercontent.com/wwoast/constantina/master/docs/mobile1.png)
-![mobile2](https://raw.githubusercontent.com/wwoast/constantina/master/docs/mobile1.png)
+![mobile2](https://raw.githubusercontent.com/wwoast/constantina/master/docs/mobile2.png)
 ![desktop1](https://raw.githubusercontent.com/wwoast/constantina/master/docs/desktop1.png)
 ![desktop2](https://raw.githubusercontent.com/wwoast/constantina/master/docs/desktop2.png)
 
