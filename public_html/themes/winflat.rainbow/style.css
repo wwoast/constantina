@@ -108,6 +108,8 @@ div.logo {
 img.logo {
    margin-top: 4px;
    width: 316px;
+   height: 74px;
+   max-width: 100%;
 }
 
 div.logoHalo {
