@@ -43,7 +43,7 @@ this a ''page'' of content. No additional cards are loaded until the reader
 scrolls further in the viewport, or submits a search in the search bar.
 
 Each card presents content stored in one of Constantina's content folders. 
-Each content folder has a [file naming convention](https://github.com/wwoast/constantina/docs/ADMIN.md)
+Each content folder has a [file naming convention](https://github.com/wwoast/constantina/blob/master/docs/ADMIN.md)
 and specific rules for how the content appears in the Constantina layout.
 
 News items always have unix-timestamp names, and appear in reverse-time order,
@@ -57,12 +57,12 @@ pagination activities or page state.
 
 
 ## Usage and Lifecycle
-Constantina is licensed under the [GNU Affero General Public License](https://github.com/wwoast/constantina/docs/LICENSE.md). I've been using it for three years, and if you decide
+Constantina is licensed under the [GNU Affero General Public License](https://github.com/wwoast/constantina/blob/master/docs/LICENSE.md). I've been using it for three years, and if you decide
 to use it, I'd love your help in making it better.
 
 Constantina is a Python web application, and running it requires solid knowledge
 of Unix tools (`ssh` or `sftp`, Python, `uwsgi`). If you have basic footing in these 
-technologies, read the [installation and configuration notes](https://github.com/wwoast/constantina/docs/ADMIN.md) to get started!
+technologies, read the [installation and configuration notes](https://github.com/wwoast/constantina/blob/master/docs/ADMIN.md) to get started!
 
 While this is currently a blog engine, I intend Constantina to be a platform
 for small online communities. Eventually I intend to implement authentication,
