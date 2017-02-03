@@ -355,12 +355,12 @@ class MedusaState:
         if self.search is not None:
             searchterms = self.search.split(' ')
             searchterms = filter(None, searchterms)   # remove nulls
-            removeterms = self.__add_filter_cardtypes(searchterms)
+            [ newfilters, removeterms ] = self.__add_filter_cardtypes(searchterms)
             # Remove filter strings from the search state list if they exist
             [searchterms.remove(term) for term in removeterms]
             self.search = searchterms
             # Take off leading #-sigil for card type searches
-            self.card_filter = map(lambda x: x[1:], removeterms)
+            self.card_filter = map(lambda x: x[1:], newfilters)
             if self.card_filter == []:
                 self.card_filter = None
 
@@ -379,10 +379,9 @@ class MedusaState:
                 filterterms = self.card_filter.split(' ')
                 # Add-filter-cardtypes expects strings that start with #
                 hashtag_process = map(lambda x: "#" + x, filterterms)
-                filterterms = self.__add_filter_cardtypes(hashtag_process)
+                [ newfilters, removeterms ] = self.__add_filter_cardtypes(hashtag_process)
                 # Take off leading #-sigil for card type searches
-                # TODO: guarantee first character is sigil
-                self.card_filter = map(lambda x: x[1:], filterterms)
+                self.card_filter = map(lambda x: x[1:], newfilters)
                 if self.card_filter == []:
                     self.card_filter = None
 
@@ -404,14 +403,11 @@ class MedusaState:
             self.filtered = 0
 
 
-    def __add_filter_cardtypes(self, searchterms):
+    def __add_filter_cardtypes(self, searchterms, mode="keep_list"):
         """
         If you type a hashtag into the search box, Constantina will do a
         filter based on the cardtype you want. Aliases for various types
         of cards are configured in constantina.ini.
-
-        If you need to remove terms from the search list after processing
-        here, this function returns the list of terms to remove.
         """
         removeterms = []
         filtertypes = []
@@ -428,10 +424,10 @@ class MedusaState:
                             # Page filtering by type is enabled
                             # Add to the list of filterterms, and prepare to
                             # remove any filter tags from the search state.
-                            filtertypes.append(ctype)
+                            filtertypes.append("#" + ctype)
                             removeterms.append(term)
 
-        return removeterms
+        return [ filtertypes, removeterms ]
 
 
     def __import_state(self):
