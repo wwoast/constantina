@@ -3,7 +3,7 @@
 ##### Justin Cassidy, February 2017
 
 ##Summary
-[Constantina](https://raw.githubusercontent.com/wwoast/constantina/README.md) is a static site generator designed for *grazing*. It is licensed under the [GNU Affero General Public License](https://raw.githubusercontent.com/wwoast/constantina/docs/LICENSE.md).
+[Constantina](https://github.com/wwoast/constantina) is a static site generator designed for *grazing*. It is licensed under the [GNU Affero General Public License](https://github.com/wwoast/constantina/docs/LICENSE.md).
 
 ##Installing Constantina
 
