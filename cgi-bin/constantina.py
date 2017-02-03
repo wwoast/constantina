@@ -788,9 +788,7 @@ def application(env, start_response):
     with an introduction, footers, an image, and more...
     """
     root_dir = CONFIG.get("paths", "root")
-    resource_dir = CONFIG.get("paths", "resource")
-
-    os.chdir(root_dir + "/" + resource_dir)
+    os.chdir(root_dir)
     in_state = os.environ.get('QUERY_STRING')
     if (in_state is not None) and (in_state != ''):
         # Truncate state variable at 512 characters

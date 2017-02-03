@@ -143,14 +143,17 @@ adjustable as well.
 | images    | cards/pictures/      | Random | Random        | No*     | 4          |
 | songs	    | cards/songs/         | Random | Reverse-Time  | No*     | 1          |
 | quotes    | cards/interjections/ | Random | Random        | Yes     | 3          |
-| heading   | cards/heading/       | Fixed  | Predetermined | No      | 1**       |
-| topics    | cards/encyclopedia/  | Fixed  | Predetermined | Yes     | 1***      |
+| heading   | cards/heading/       | Fixed  | Predetermined | No      | 1**        |
+| topics    | cards/encyclopedia/  | Fixed  | Predetermined | Yes     | 1+         |
 
    * 	= May index metadata for these in the future
    **	= Just header and footer cards on the first and/or last pages
-   ***	= Only returned when using the search bar
+   +	= Only returned when using the search bar
 
 
 ##Constantina Configuraiton File
-`cgi-bin/constantina.ini` stores all operational configuration for the
+`cgi-bin/constantina.ini` stores all operational configuration for the 
 Constantina software.
+
+ * Getting your directory paths set is crucial
+  * `[paths].root` is  where your files are hosted, and `[paths].resource` is 
