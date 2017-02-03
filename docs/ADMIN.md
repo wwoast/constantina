@@ -192,7 +192,7 @@ portrait-mode on mobile is naturally supported. Secondly, to account for
 the sparseness of the single-column layouts on PCs, I try and leverage the
 wallpaper itself for texture and color.
 
-On mobile, wallpapers must be able to vertically tile to be visually  
+On mobile, wallpapers must be able to vertically tile to be visually 
 consistent with the fixed-background wallpapers on the desktop. For years,
 mobile browsers have failed to support fixed wallpapers, and there are
 typically problems with scrolling tiled wallpapers. If you scroll the page
