@@ -27,6 +27,7 @@ to host my music and technology site, [Codaworry](http://www.codaworry.com).
 * Search feature for cards with text emphasis
  * Uses `whoosh` text-search library on the backend
  * Unindexed text cards get indexed any time content is searched
+ * Supports keyword searches as well as "#cardtype" searches
  * Supports ''encyclopedia'' cards that only appear in search results
 * News cards contain Permalinks for external linking
 * Future-dated news only publish after their timestamp
