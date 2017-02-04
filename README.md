@@ -57,7 +57,7 @@ pagination activities or page state.
 
 
 ## Usage and Lifecycle
-Constantina is licensed under the [GNU Affero General Public License](https://github.com/wwoast/constantina/blob/master/docs/LICENSE.md). I've been using it for three years, and if you decide
+Constantina is licensed under the [GNU Affero General Public License](https://github.com/wwoast/constantina/blob/master/LICENSE.md). I've been using it for three years, and if you decide
 to use it, I'd love your help in making it better.
 
 Constantina is a Python web application, and running it requires solid knowledge
@@ -65,6 +65,6 @@ of Unix tools (`ssh` or `sftp`, Python, `uwsgi`). If you have basic footing in t
 technologies, read the [installation and configuration notes](https://github.com/wwoast/constantina/blob/master/docs/ADMIN.md) to get started!
 
 While this is currently a blog engine, I intend Constantina to be a platform
-for small online communities. Eventually I intend to implement authentication,
-a web forum, a basic webdav calendar, and an IMAP webmail client, all as part of 
+for small online communities. Eventually I'll implement authentication,
+a web forum, a basic CalDAV calendar, and an IMAP webmail client, all as part of 
 the existing system of cards and config.
