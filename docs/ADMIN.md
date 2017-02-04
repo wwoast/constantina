@@ -173,9 +173,9 @@ adjustable as well.
 | heading   | cards/heading/       | Fixed  | Predetermined | No      | 1**        |
 | topics    | cards/encyclopedia/  | Fixed  | Predetermined | Yes     | 1+         |
 
-   * 	= May index metadata for these in the future
-   **	= Just header and footer cards on the first and/or last pages
-   +	= Only returned when using the search bar
+  * `*`  : May index metadata for these in the future
+  * `**` : Just header and footer cards on the first and/or last pages
+  * `+`	 : Only returned when using the search bar
 
 
 ##Creating Themes
