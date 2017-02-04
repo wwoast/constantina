@@ -86,7 +86,7 @@ RewriteRule ^(.*)$ /cgi-bin/constantina.cgi
   * Normally if you want to search for news cards you type *#news*
   * However, the `[card_filters]` section defines alternatives such as *#updates*
  * `[card_properties]` defines logic for how state functions when cards are present
-  * *This section should not be changed
+  * *This section should not be changed*
  * `[authentication]` is not used yet, and should just be set to `blog`.
  * `[search]` defines paths and wordlists for Whoosh's search indexing
  * `[themes]` defines where Constantina's themes are located
