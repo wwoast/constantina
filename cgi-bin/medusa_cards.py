@@ -175,7 +175,7 @@ class MedusaState:
         exist on a single Constantina page.
         """
         self.max_items = 0             # Max items per page, based on
-                                         # counts from all card types
+                                       # counts from all card types
         for ctype, cpp in CONFIG.items('card_counts'):
             self.max_items = self.max_items + int(cpp)
 
