@@ -10,7 +10,7 @@ import ConfigParser
 
 from medusa_search import MedusaSearch
 from medusa_cards import MedusaCardType, MedusaState, MedusaCard, MedusaSong
-from constantina_shared import MedusaFiles, opendir
+from constantina_shared import BaseFiles, opendir
 
 syslog.openlog(ident='constantina')
 CONFIG = ConfigParser.SafeConfigParser()
@@ -167,7 +167,7 @@ class MedusaPage:
         # card of the results. TOPIC articles must be filenamed lowercase!!
         # HOWEVER if we're beyond the first page of search results, don't add
         # the encyclopedia page again! Use image count as a heuristic for page count.
-        if self.query_terms.lower() in opendir('topics'):
+        if self.query_terms.lower() in opendir(CONFIG, 'topics'):
             encyclopedia = MedusaCard('topics', self.query_terms.lower(), state=self.state, grab_body=True, search_result=True)
             self.cards.append(encyclopedia)
 
@@ -192,9 +192,9 @@ class MedusaPage:
                 grab_file = self.search_results.hits[ctype][j]
                 # If the hits[ctype][j] is a file name, figure out which Nth file this is
                 if grab_file.isdigit() is False:
-                    for k in xrange(0, len(MedusaFiles[ctype])):
-                        # syslog.syslog("compare:" + grab_file + "==" + MedusaFiles[ctype][k])
-                        if MedusaFiles[ctype][k] == grab_file:
+                    for k in xrange(0, len(BaseFiles[ctype])):
+                        # syslog.syslog("compare:" + grab_file + "==" + BaseFiles[ctype][k])
+                        if BaseFiles[ctype][k] == grab_file:
                             grab_file = k
                             break
 

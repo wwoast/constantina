@@ -6,11 +6,9 @@ import lxml.html
 import syslog
 import ConfigParser
 
-from constantina_shared import MedusaFiles, opendir
+from constantina_shared import BaseFiles, opendir
 
 syslog.openlog(ident='medusa_search')
-CONFIG = ConfigParser.SafeConfigParser()
-CONFIG.read('constantina.ini')
 
 
 class MedusaSearch:
@@ -36,6 +34,15 @@ class MedusaSearch:
     the related phrases can be turned off.
     """
     def __init__(self, page, resultcount, unsafe_query_terms, unsafe_filter_terms, previous_filtered):
+        self.config = ConfigParser.SafeConfigParser()
+        self.config.read('medusa.ini')
+
+        # Upper limit on the permitted number of searchable items.
+        # Since we use this as an array slice, add one to support N-1 elements
+        global_config = ConfigParser.SafeConfigParser()
+        global_config.read('constantina.ini')
+        self.max_query_count = self.global_config.getint("miscellaneous", "max_state_parameters") + 1
+
         # List of symbols to filter out in the unsafe input
         self.ignore_symbols = []
         # Regex of words that won't be indexed
@@ -50,9 +57,6 @@ class MedusaSearch:
         # message, or provide context on the search results shown.
         # Array of ctypes, each with an array of filename hits
         self.hits = {}
-        # Upper limit on the permitted number of searchable items.
-        # Since we use this as an array slice, add one to support N-1 elements
-        self.max_query_count = CONFIG.getint("miscellaneous", "max_state_parameters") + 1
 
         # Whoosh object defaults
         self.schema = ''
@@ -70,10 +74,10 @@ class MedusaSearch:
         self.filtered = previous_filtered
 
         # File paths for loading things
-        self.index_dir = CONFIG.get('search', 'index_dir')
-        self.words_file = CONFIG.get('search', 'ignore_words')
-        self.symobls_file = CONFIG.get('search', 'ignore_symbols')
-        self.search_types = CONFIG.get("card_properties", "search").replace(" ", "").split(",")
+        self.index_dir = self.config.get('search', 'index_dir')
+        self.words_file = self.config.get('search', 'ignore_words')
+        self.symobls_file = self.config.get('search', 'ignore_symbols')
+        self.search_types = self.config.get("card_properties", "search").replace(" ", "").split(",")
 
         # Define the indexing schema. Include the mtime to track updated
         # content in the backend, ctype so that we can manage the distribution
@@ -194,7 +198,7 @@ class MedusaSearch:
         # Enable writing to our chosen index. To limit the index
         # locking, this is the only function that writes to the index.
         writer = self.index.writer()
-        card_path = CONFIG.get("paths", ctype)
+        card_path = self.config.get("paths", ctype)
 
         with open(card_path + "/" + filename, 'r') as indexfh:
             body = ""
@@ -217,11 +221,11 @@ class MedusaSearch:
     def __add_ctype_to_index(self, ctype):
         """Take a file type, list all the files there, and add all the
         body contents to the index."""
-        # Make sure MedusaFiles is populated
-        opendir(ctype)
-        card_path = CONFIG.get("paths", ctype)
+        # Make sure BaseFiles is populated
+        opendir(self.config, ctype)
+        card_path = self.config.get("paths", ctype)
 
-        for filename in MedusaFiles[ctype]:
+        for filename in BaseFiles[ctype]:
             try:
                 fnmtime = int(os.path.getmtime(card_path + "/" + filename))
             except:

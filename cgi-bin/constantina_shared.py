@@ -7,13 +7,11 @@ from random import shuffle
 from urllib import unquote_plus
 
 syslog.openlog(ident='constantina_shared')
-CONFIG = ConfigParser.SafeConfigParser()
-CONFIG.read('constantina.ini')
 
 
 # Only do opendir once per directory, and store results here
-# The other Medusa modules need access to this "globally".
-MedusaFiles = {}
+# The other Constantina modules need access to this "globally".
+BaseFiles = {}
 
 
 class BaseCardType:
@@ -33,7 +31,8 @@ class BaseCardType:
     Through checking the configured card_counts, we create one of these
     objects named for each card type (ctype).
     """
-    def __init__(self, ctype, count, distance, filtertype, spacing):
+    def __init__(self, config, ctype, count, distance, filtertype, spacing):
+        self.config = config
         self.ctype = ctype
         self.count = count
         self.distance = distance
@@ -42,9 +41,9 @@ class BaseCardType:
 
         self.clist = []      # List of card indexes that appeared of this type
         # Number of files of this type
-        self.file_count = len(opendir(self.ctype))
+        self.file_count = len(opendir(self.config, self.ctype))
         # Files per page of this type
-        self.per_page = CONFIG.getint("card_counts", self.ctype)
+        self.per_page = config.getint("card_counts", self.ctype)
         # How many ctype cards should we see before the same card
         # appears again in the randomized view? This is a function
         # of the number of available cards
@@ -74,7 +73,8 @@ class BaseCardType:
         into a shuffled list of files. The shuffled array is extended, but
         adjusted so that repeat rules across pages will be respected
         """
-        total_pages = int(floor(len(opendir("news")) / CONFIG.getint("card_counts", "news")))
+        # TODO: news doesn't generalize anymore. Needs to come from page_state.
+        total_pages = int(floor(len(opendir(self.config, "news")) / self.config.getint("card_counts", "news")))
         total_ctype = total_pages * self.per_page
 
         # Guarantee enough cards to choose from
@@ -142,7 +142,10 @@ class BaseState:
     It also provides a clean interface to global modes and settings that
     influence what content and appearances a Constantina page can take.
     """
-    def __init__(self, in_state=None):
+    def __init__(self, config_file, in_state=None):
+        self.config = ConfigParser.SafeConfigParser()
+        self.config.read(config_file)
+
         self.in_state = in_state      # Track the original state string
         self.__set_state_defaults()
 
@@ -151,11 +154,6 @@ class BaseState:
             self.state_vars = self.in_state.split(':')
         else:
             self.state_vars = []
-        self.__import_state()
-
-        # Now that we've imported, shuffle any card types we want to shuffle
-        for ctype in CONFIG.get("card_properties", "randomize").replace(" ", "").split(","):
-            getattr(self, ctype).shuffle()
 
 
     def __int_translate(self, checkval, width, default):
@@ -175,21 +173,21 @@ class BaseState:
         """
         self.max_items = 0             # Max items per page, based on
                                        # counts from all card types
-        for ctype, cpp in CONFIG.items('card_counts'):
+        for ctype, cpp in self.config.items('card_counts'):
             self.max_items = self.max_items + int(cpp)
 
         # For the card types in the card_counts config, create variables, i.e.
         #   state.news.distance, state.topics.spacing
-        # TODO: Choose which config file!!!
-        for ctype, card_count in CONFIG.items('card_counts'):
-            setattr(self, ctype, MedusaCardType(
+        for ctype, card_count in self.config.items('card_counts'):
+            setattr(self, ctype, BaseCardType(
+                config=self.config,
                 ctype=ctype,
                 count=int(card_count),
                 distance=None,
                 filtertype=False,
-                spacing=CONFIG.getint('card_spacing', ctype)))
+                spacing=self.config.getint('card_spacing', ctype)))
 
-        for spctype, spcfield in CONFIG.items("special_states"):
+        for spctype, spcfield in self.config.items("special_states"):
             setattr(self, spcfield, None)       # All state vals are expected to exist
 
 
@@ -212,13 +210,13 @@ class BaseState:
                 output = hits[0]
         # Special state variables are singleton values. Typically a
         # two-letter value starting with "x" as the first letter.
-        elif CONFIG.has_option("special_states", search):
+        elif self.config.has_option("special_states", search):
             hits = [token for token in self.state_vars if token.find(search) == 0]
             if len(hits) > 0:
                 output = unquote_plus(hits[0][2:])
         # Individual content card state variables. Each one is a distance
         # from the current page.
-        elif search in [s[0] for s in CONFIG.options("card_counts")]:
+        elif search in [s[0] for s in self.config.options("card_counts")]:
             hits = [token for token in self.state_vars if token.find(search) == 0]
             if len(hits) > 0:
                 output = int(hits[0][1:])
@@ -244,40 +242,40 @@ def remove_future(dirlisting):
     return dirlisting
 
 
-def opendir(ctype, hidden=False):
+def opendir(config, ctype, hidden=False):
     """
     Return either cached directory information or open a dir and
     list all the files therein. Used for both searching and for the
-    card reading functions, so we manage it outside those.
+    card reading functions, so it's part of the shared module.
     """
-    directory = CONFIG.get("paths", ctype)
+    directory = config.get("paths", ctype)
     if hidden is True:
         directory += "/hidden"
         ctype += "/hidden"
 
     # If the directory wasn't previously cached
-    if ctype not in MedusaFiles.keys():
+    if ctype not in BaseFiles.keys():
         # Default value. If no files, keep the empty array
-        MedusaFiles[ctype] = []
+        BaseFiles[ctype] = []
 
         dirlisting = os.listdir(directory)
-        if (dirlisting == []):
-            return MedusaFiles[ctype]
+        if dirlisting == []:
+            return BaseFiles[ctype]
 
         # Any newly-generated list of paths should be weeded out
         # so that subdirectories don't get fopen'ed later
         for testpath in dirlisting:
             if os.path.isfile(os.path.join(directory, testpath)):
-                MedusaFiles[ctype].append(testpath)
+                BaseFiles[ctype].append(testpath)
 
         # Sort the output. Most directories should use
         # utimes for their filenames, which sort nicely. Use
         # reversed array for newest-first utime files
-        MedusaFiles[ctype].sort()
-        MedusaFiles[ctype].reverse()
+        BaseFiles[ctype].sort()
+        BaseFiles[ctype].reverse()
 
         # For news items, remove any items newer than the current time
         if ctype == "news":
-            MedusaFiles[ctype] = remove_future(MedusaFiles[ctype])
+            BaseFiles[ctype] = remove_future(BaseFiles[ctype])
 
-    return MedusaFiles[ctype]
+    return BaseFiles[ctype]
