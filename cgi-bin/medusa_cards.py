@@ -27,15 +27,10 @@ class MedusaState(BaseState):
     It also provides a clean interface to global modes and settings that
     influence what content and appearances a Constantina page can take.
     """
-    def __init__(self, config_file, in_state=None):
+    def __init__(self, in_state=None):
         # Open the config file, and set card type defaults per state variable
-        BaseState.__init__(self, config_file, in_state)
-
-        # Was there an initial state string? Process it if there was.
-        if self.in_state is not None:
-            self.state_vars = self.in_state.split(':')
-        else:
-            self.state_vars = []
+        BaseState.__init__(self, 'medusa.ini', in_state)
+        # Process all state variables listed in medusa.ini
         self.__import_state()
 
         # Now that we've imported, shuffle any card types we want to shuffle
