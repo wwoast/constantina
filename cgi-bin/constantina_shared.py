@@ -13,6 +13,9 @@ syslog.openlog(ident='constantina_shared')
 # The other Constantina modules need access to this "globally".
 BaseFiles = {}
 
+global_config = ConfigParser.SafeConfigParser()
+global_config.read('constantina.ini')
+
 
 class BaseCardType:
     """
@@ -143,8 +146,9 @@ class BaseState:
     influence what content and appearances a Constantina page can take.
     """
     def __init__(self, config_file, in_state=None):
+        # self.config_file = global_config.get('paths', 'config') + "/" + config_file
         self.config = ConfigParser.SafeConfigParser()
-        self.config.read(config_file)
+        self.config.read("/var/www-cgi/staging/medusa.ini")
 
         self.in_state = in_state      # Track the original state string
         self.__set_state_defaults()

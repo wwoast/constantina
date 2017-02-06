@@ -9,7 +9,7 @@ import syslog
 import ConfigParser
 
 from medusa_search import MedusaSearch
-from medusa_cards import MedusaCardType, MedusaState, MedusaCard, MedusaSong
+from medusa_cards import MedusaState, MedusaCard, MedusaSong
 from constantina_shared import BaseFiles, opendir
 
 syslog.openlog(ident='constantina')
