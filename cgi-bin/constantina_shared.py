@@ -146,9 +146,11 @@ class BaseState:
     influence what content and appearances a Constantina page can take.
     """
     def __init__(self, config_file, in_state=None):
-        # self.config_file = global_config.get('paths', 'config') + "/" + config_file
+        self.config_file = global_config.get('paths', 'config') + "/" + config_file
         self.config = ConfigParser.SafeConfigParser()
-        self.config.read("/var/www-cgi/staging/medusa.ini")
+        self.config.read(self.config_file)
+        syslog.syslog(self.config.get('paths', 'news'))
+        syslog.syslog(self.config.get('card_counts', 'news'))
 
         self.in_state = in_state      # Track the original state string
         self.__set_state_defaults()
