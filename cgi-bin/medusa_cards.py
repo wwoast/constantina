@@ -11,8 +11,6 @@ import ConfigParser
 from constantina_shared import BaseFiles, BaseCardType, BaseState, opendir
 
 syslog.openlog(ident='medusa_cards')
-CONFIG = ConfigParser.SafeConfigParser()
-CONFIG.read('constantina.ini')
 
 
 class MedusaState(BaseState):
@@ -560,17 +558,20 @@ class MedusaCard:
     """
 
     def __init__(self, ctype, num, state=False, grab_body=True, permalink=False, search_result=False):
-        self.title = CONFIG.get("card_defaults", "title")
+        self.config = ConfigParser.SimpleConfigParser()
+        self.config.read('medusa.ini')
+
+        self.title = self.config.get("card_defaults", "title")
         self.topics = []
-        self.body = CONFIG.get("card_defaults", "body")
+        self.body = self.config.get("card_defaults", "body")
         self.ctype = ctype
         # Request either the Nth entry of this type, or a specific utime/date
         self.num = num
         # If we need to access data from the state object, for card shuffling
         self.state = state
         self.songs = []
-        self.cfile = CONFIG.get("card_defaults", "file")
-        self.cdate = CONFIG.get("card_defaults", "date")
+        self.cfile = self.config.get("card_defaults", "file")
+        self.cdate = self.config.get("card_defaults", "date")
         self.permalink = permalink
         self.search_result = search_result
         self.hidden = False
@@ -594,7 +595,7 @@ class MedusaCard:
         # Find the utime value in the array if the number given isn't an array index.
         # If we're inserting cards into an active page, the state variable will be
         # given, and should be represented by a shuffled value.
-        random_types = CONFIG.get("card_properties", "randomize").replace(" ", "").split(",")
+        random_types = self.config.get("card_properties", "randomize").replace(" ", "").split(",")
 
         # Even if we have cards of a type, don't run this logic if cards array is []
         if ((self.ctype in random_types) and
@@ -635,7 +636,7 @@ class MedusaCard:
     def __songfiles(self):
         """Create an array of song objects for this card"""
         for songpath in self.body.splitlines():
-            songpath = CONFIG.get("paths", "songs") + "/" + songpath
+            songpath = self.config.get("paths", "songs") + "/" + songpath
             self.songs.append(MedusaSong(songpath))
 
 
@@ -653,7 +654,7 @@ class MedusaCard:
         """
         magi = magic.Magic(mime=True)
 
-        base_path = CONFIG.get("paths", self.ctype)
+        base_path = self.config.get("paths", self.ctype)
         if self.hidden is True:
             fpath = base_path + "/hidden/" + thisfile
         else:
@@ -664,11 +665,11 @@ class MedusaCard:
                 ftype = magi.from_file(fpath)
                 # News entries or features are processed the same way
                 if (("text" in ftype) and
-                    ((CONFIG.get("paths", "news") in cfile.name) or
-                     (CONFIG.get("paths", "heading") in cfile.name) or
-                     (CONFIG.get("paths", "quotes") in cfile.name) or
-                     (CONFIG.get("paths", "topics") in cfile.name) or
-                     (CONFIG.get("paths", "features") in cfile.name))):
+                    ((self.config.get("paths", "news") in cfile.name) or
+                     (self.config.get("paths", "heading") in cfile.name) or
+                     (self.config.get("paths", "quotes") in cfile.name) or
+                     (self.config.get("paths", "topics") in cfile.name) or
+                     (self.config.get("paths", "features") in cfile.name))):
                     self.title = cfile.readline().replace("\n", "")
                     rawtopics = cfile.readline().replace("\n", "")
                     for item in rawtopics.split(', '):
@@ -677,7 +678,7 @@ class MedusaCard:
 
                 # Multiple-song playlists
                 if (("text" in ftype) and
-                    (CONFIG.get("paths", "songs") in cfile.name)):
+                    (self.config.get("paths", "songs") in cfile.name)):
                     self.title = fpath
                     self.topics.append("Song Playlist")
                     self.body = cfile.read()
@@ -685,7 +686,7 @@ class MedusaCard:
 
                 # Single-image cards
                 if ((("jpeg" in ftype) or ("png" in ftype)) and
-                     (CONFIG.get("paths", "images") in cfile.name)):
+                     (self.config.get("paths", "images") in cfile.name)):
                     # TODO: alt/img metadata
                     self.title = fpath
                     self.topics.append("Images")
@@ -693,7 +694,7 @@ class MedusaCard:
 
                 # Single-song orphan cards
                 if ((("mpeg" in ftype) and ("layer iii" in ftype)) and
-                     (CONFIG.get("paths", "songs") in cfile.name)):
+                     (self.config.get("paths", "songs") in cfile.name)):
                     self.title = fpath            # TODO: filename from title
                     self.topics.append("Songs")   # TODO: include the album
                     self.body = fpath
@@ -710,12 +711,12 @@ class MedusaCard:
             file.close(cfile)
 
         except:   # File got moved in between dirlist caching and us reading it
-            return CONFIG.get("card_defaults", "file")
+            return self.config.get("card_defaults", "file")
 
         if self.hidden is True:
-            return CONFIG.get("paths", self.ctype) + "/hidden/" + thisfile
+            return self.config.get("paths", self.ctype) + "/hidden/" + thisfile
         else:
-            return CONFIG.get("paths", self.ctype) + "/" + thisfile
+            return self.config.get("paths", self.ctype) + "/" + thisfile
 
 
 
