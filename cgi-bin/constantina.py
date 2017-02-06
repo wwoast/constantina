@@ -10,7 +10,7 @@ import ConfigParser
 
 from medusa_search import MedusaSearch
 from medusa_cards import MedusaCardType, MedusaState, MedusaCard, MedusaSong
-from medusa_files import MedusaFiles, opendir
+from constantina_shared import MedusaFiles, opendir
 
 syslog.openlog(ident='constantina')
 CONFIG = ConfigParser.SafeConfigParser()

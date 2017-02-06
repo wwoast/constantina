@@ -8,7 +8,7 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
-from medusa_files import MedusaFiles, opendir
+from constantina_shared import MedusaFiles, opendir
 
 syslog.openlog(ident='medusa_cards')
 CONFIG = ConfigParser.SafeConfigParser()

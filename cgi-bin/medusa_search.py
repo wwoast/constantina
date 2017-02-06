@@ -6,7 +6,7 @@ import lxml.html
 import syslog
 import ConfigParser
 
-from medusa_files import MedusaFiles, opendir
+from constantina_shared import MedusaFiles, opendir
 
 syslog.openlog(ident='medusa_search')
 CONFIG = ConfigParser.SafeConfigParser()
