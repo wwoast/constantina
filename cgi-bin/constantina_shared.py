@@ -232,6 +232,35 @@ class BaseState:
         return output
 
 
+    def __process_search_strings(self, sigil, searchterms):
+        """
+        If you type a hashtag string like #news into the search box, Constantina
+        will do a filter based on the cardtype you want. It uses this function
+        to isolate out any special sigil-prefixed strings from a search,
+        including #cardtypes, @usernames, and $subjects.
+
+        Returns an array of arrays, first being the terms to migrate to the
+        destination state var, and the second the list of strings to remove
+        from the search string list.
+        """
+        filtertypes = []
+        removeterms = []
+
+        for term in searchterms:
+            # syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
+            if term[0] == '#':
+                for ctype, filterlist in self.config.items("card_filters"):
+                    filternames = filterlist.replace(" ", "").split(',')
+                    for filtername in filternames:
+                        if (term == sigil + filtername):
+                            # Add to the list of filterterms, and prepare to
+                            # remove any filter tags from the search state.
+                            filtertypes.append("#" + ctype)
+                            removeterms.append(term)
+
+        return [ filtertypes, removeterms ]
+
+
     def __import_theme_state(self):
         """
         In the state object, we track an appearance variable, which corresponds

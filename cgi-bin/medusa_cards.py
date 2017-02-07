@@ -134,12 +134,14 @@ class MedusaState(BaseState):
         if self.search is not None:
             searchterms = self.search.split(' ')
             searchterms = filter(None, searchterms)   # remove nulls
-            [ newfilters, removeterms ] = self.__add_filter_cardtypes(searchterms)
+            [ newfilters, removeterms ] = self.__process_search_strings('#', searchterms)
             # Remove filter strings from the search state list if they exist
             [searchterms.remove(term) for term in removeterms]
             self.search = searchterms
             # Take off leading #-sigil for card type searches
             self.card_filter = map(lambda x: x[1:], newfilters)
+            for ctype in self.card_filter:
+                getattr(self, ctype).filtertype = True
             if self.card_filter == []:
                 self.card_filter = None
 
@@ -158,9 +160,12 @@ class MedusaState(BaseState):
                 filterterms = self.card_filter.split(' ')
                 # Add-filter-cardtypes expects strings that start with #
                 hashtag_process = map(lambda x: "#" + x, filterterms)
-                [ newfilters, removeterms ] = self.__add_filter_cardtypes(hashtag_process)
+                [ newfilters, removeterms ] = self.__process_search_strings('#', hashtag_process)
                 # Take off leading #-sigil for card type searches
                 self.card_filter = map(lambda x: x[1:], newfilters)
+                # Record filters being set
+                for ctype in self.card_filter:
+                    getattr(self, ctype).filtertype = True
                 if self.card_filter == []:
                     self.card_filter = None
 
@@ -180,33 +185,6 @@ class MedusaState(BaseState):
             self.filtered = self.__int_translate(self.filtered, 1, 0)
         else:
             self.filtered = 0
-
-
-    def __add_filter_cardtypes(self, searchterms, mode="keep_list"):
-        """
-        If you type a hashtag into the search box, Constantina will do a
-        filter based on the cardtype you want. Aliases for various types
-        of cards are configured in constantina.ini.
-        """
-        removeterms = []
-        filtertypes = []
-
-        for term in searchterms:
-            # syslog.syslog("searchterm: " + term + " ; allterms: " + str(searchterms))
-            if term[0] == '#':
-                for ctype, filterlist in self.config.items("card_filters"):
-                    filternames = filterlist.replace(" ", "").split(',')
-                    for filtername in filternames:
-                        if (term == '#' + filtername):
-                            # Toggle this cardtype as one we'll filter on
-                            getattr(self, ctype).filtertype = True
-                            # Page filtering by type is enabled
-                            # Add to the list of filterterms, and prepare to
-                            # remove any filter tags from the search state.
-                            filtertypes.append("#" + ctype)
-                            removeterms.append(term)
-
-        return [ filtertypes, removeterms ]
 
 
     def __import_state(self):
