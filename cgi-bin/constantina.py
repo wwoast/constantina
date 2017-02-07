@@ -17,7 +17,20 @@ CONFIG = ConfigParser.SafeConfigParser()
 CONFIG.read('constantina.ini')
 
 
-class MedusaPage:
+class ConstantinaState:
+    """
+    Constantina State Object, an aggregate of the following:
+       MedusaState: blog cards. images, quotes, news, songs
+       ZooState: forum cards. threads, images, songs
+       DraculaState: mail cards. ??
+
+    Aggregate all other states here, and do counting for things like total
+    cards, the number of pages, etc.
+    """
+    pass
+
+
+class ConstantinaPage:
     """
     Constantina Page Object.
 
@@ -28,7 +41,6 @@ class MedusaPage:
     describes what has already been shown so that new randomly-
     inserted content is not a duplicate that was previously shown.
     """
-
     def __init__(self, in_state=None):
         """
         If there was a previous state, construct array of cards for
@@ -657,7 +669,7 @@ def create_songcard(card):
 
 
 def create_page(page):
-    """Given a MedusaPage object, draw all the cards with content in
+    """Given a ConstantinaPage object, draw all the cards with content in
     them, Each card type has unique things it must do to process
     the data before it's drawn to screen.
 
@@ -712,7 +724,7 @@ def contents_page(start_response, state):
 
     # Fresh new HTML, no previous state provided
     if state.fresh_mode() is True:
-        page = MedusaPage(state)
+        page = ConstantinaPage(state)
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
         html = html.replace(substitute, create_page(page))
@@ -720,7 +732,7 @@ def contents_page(start_response, state):
 
     # Permalink page of some kind
     elif state.permalink_mode() is True:
-        page = MedusaPage(state)
+        page = ConstantinaPage(state)
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
         html = html.replace(substitute, create_page(page))
@@ -730,19 +742,19 @@ def contents_page(start_response, state):
     elif state.reshuffle_mode() is True:
         syslog.syslog("***** Reshuffle Page Contents *****")
         state = MedusaState(None)
-        page = MedusaPage(state)
+        page = ConstantinaPage(state)
         html = create_page(page)
         start_response('200 OK', [('Content-Type', 'text/html')])
 
     # Doing a search or a filter process
     elif state.search_mode() is True:
-        page = MedusaPage(state)
+        page = ConstantinaPage(state)
         html = create_page(page)
         start_response('200 OK', [('Content-Type', 'text/html')])
 
     # Otherwise, there is state, but no special headers.
     else:
-        page = MedusaPage(state)
+        page = ConstantinaPage(state)
         html = create_page(page)
         start_response('200 OK', [('Content-Type', 'text/html')])
 
