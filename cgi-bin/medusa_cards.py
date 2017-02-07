@@ -49,7 +49,7 @@ class MedusaState(BaseState):
         between page loads, we know the shuffled card functions give the same
         shuffle ordering.
         """
-        self.seed = self.__find_state_variable("seed")
+        self.seed = BaseState._find_state_variable(self, "seed")
         if self.seed is None:
             self.seed = round(random(), 14)
         else:
@@ -74,7 +74,7 @@ class MedusaState(BaseState):
             # NOTE: This ctype attribute naming requires each content card type to
             # begin with a unique alphanumeric character.
             ctype = [value for value in self.config.options("card_counts") if value[0] == state_var][0]
-            distance = self.__find_state_variable(state_var)
+            distance = BaseState._find_state_variable(self, state_var)
             getattr(self, ctype).distance = distance
 
 
@@ -85,11 +85,11 @@ class MedusaState(BaseState):
 
         Output must be an integer.
         """
-        self.page = self.__find_state_variable('xp')
+        self.page = BaseState._find_state_variable(self, 'xp')
 
         # If page was read in as a special state variable, use that (for search results)
         if (self.page is not None) and (self.search_mode() is True):
-            self.page = self.__int_translate(self.page, 1, 0)
+            self.page = BaseState._int_translate(self, self.page, 1, 0)
         # Otherwise, determine our page number from the news article index reported
         elif self.news.distance is not None:
             self.page = (int(self.news.distance) + 1) / self.config.getint('card_counts', 'news')
@@ -108,7 +108,7 @@ class MedusaState(BaseState):
         permalink_states = [sv[0] for sv in self.config.items("special_states")
                             if sv[1].find("permalink") != -1]
         for state in permalink_states:
-            value = self.__find_state_variable(state)
+            value = BaseState._find_state_variable(self, state)
             if value != None:
                 attrib = self.config.get("special_states", state)
                 setattr(self, attrib, value)
@@ -123,7 +123,7 @@ class MedusaState(BaseState):
 
         Output is either strings of search/filter terms, or None
         """
-        self.search = self.__find_state_variable('xs')
+        self.search = BaseState._find_state_variable(self, 'xs')
         if self.search == '':
             self.reshuffle = True
         else:
@@ -134,7 +134,7 @@ class MedusaState(BaseState):
         if self.search is not None:
             searchterms = self.search.split(' ')
             searchterms = filter(None, searchterms)   # remove nulls
-            [ newfilters, removeterms ] = self.__process_search_strings('#', searchterms)
+            [ newfilters, removeterms ] = BaseState._process_search_strings('#', searchterms)
             # Remove filter strings from the search state list if they exist
             [searchterms.remove(term) for term in removeterms]
             self.search = searchterms
@@ -154,13 +154,13 @@ class MedusaState(BaseState):
         of filter strings that were excised out on a previous page load.
         """
         if self.card_filter is None:
-            self.card_filter = self.__find_state_variable('xo')
+            self.card_filter = BaseState._find_state_variable(self, 'xo')
 
             if self.card_filter is not None:
                 filterterms = self.card_filter.split(' ')
                 # Add-filter-cardtypes expects strings that start with #
                 hashtag_process = map(lambda x: "#" + x, filterterms)
-                [ newfilters, removeterms ] = self.__process_search_strings('#', hashtag_process)
+                [ newfilters, removeterms ] = BaseState._process_search_strings('#', hashtag_process)
                 # Take off leading #-sigil for card type searches
                 self.card_filter = map(lambda x: x[1:], newfilters)
                 # Record filters being set
@@ -178,11 +178,11 @@ class MedusaState(BaseState):
 
         Output must be an integer.
         """
-        self.filtered = self.__find_state_variable('xx')
+        self.filtered = BaseState._find_state_variable(self, 'xx')
         if ((self.filtered is not None) and
             (self.search is not None) and
             (self.card_filter is not None)):
-            self.filtered = self.__int_translate(self.filtered, 1, 0)
+            self.filtered = BaseState._int_translate(self, self.filtered, 1, 0)
         else:
             self.filtered = 0
 
@@ -196,7 +196,7 @@ class MedusaState(BaseState):
         """
         self.__import_random_seed()          # Import the random seed first
         self.__import_content_card_state()   # Then import the normal content cards
-        self.__import_theme_state()          # Theme settings
+        BaseState._import_theme_state(self) # Theme settings
         self.__import_search_state()         # Search strings and processing out filter strings
         self.__import_filter_state()         # Any filter strings loaded from prior pages
         self.__import_filtered_card_count()  # Number of cards filtered out of prior pages
@@ -213,6 +213,7 @@ class MedusaState(BaseState):
         news cards and heading cards separately, and determine how far each ctype
         card is from the beginning of the next page that will be loaded.
         """
+        # TODO: migrate to BaseState
         all_ctypes = self.config.options("card_counts")
 
         # Populate the state object, which we'll later build the
@@ -357,7 +358,7 @@ class MedusaState(BaseState):
                         self.__export_filter_state(filter_terms),
                         self.__export_filtered_card_count(filtered_count),
                         self.__export_page_count_state(),
-                        self.__export_theme_state()]
+                        BaseState._export_theme_state(self)]
 
         export_parts = filter(None, export_parts)
         export_string = ':'.join(export_parts)

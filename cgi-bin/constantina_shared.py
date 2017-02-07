@@ -3,7 +3,7 @@ import os
 import syslog
 import ConfigParser
 from math import floor
-from random import shuffle
+from random import randint, seed, shuffle
 from urllib import unquote_plus
 
 syslog.openlog(ident='constantina_shared')
@@ -13,8 +13,8 @@ syslog.openlog(ident='constantina_shared')
 # The other Constantina modules need access to this "globally".
 BaseFiles = {}
 
-global_config = ConfigParser.SafeConfigParser()
-global_config.read('constantina.ini')
+GLOBAL_CONFIG = ConfigParser.SafeConfigParser()
+GLOBAL_CONFIG.read('constantina.ini')
 
 
 class BaseCardType:
@@ -146,7 +146,7 @@ class BaseState:
     influence what content and appearances a Constantina page can take.
     """
     def __init__(self, config_file, in_state=None):
-        self.config_file = global_config.get('paths', 'config') + "/" + config_file
+        self.config_file = GLOBAL_CONFIG.get('paths', 'config') + "/" + config_file
         self.config = ConfigParser.SafeConfigParser()
         self.config.read(self.config_file)
         syslog.syslog(self.config.get('paths', 'news'))
@@ -160,15 +160,6 @@ class BaseState:
             self.state_vars = self.in_state.split(':')
         else:
             self.state_vars = []
-
-
-    def __int_translate(self, checkval, width, default):
-        """Take a string of digits and convert width chars into an integer"""
-        if checkval.isdigit():
-            checkval = int(checkval[0:width])
-        else:   # Invalid input gets a chosen default
-            checkval = default
-        return checkval
 
 
     def __set_state_defaults(self):
@@ -197,7 +188,16 @@ class BaseState:
             setattr(self, spcfield, None)       # All state vals are expected to exist
 
 
-    def __find_state_variable(self, search):
+    def _int_translate(self, checkval, width, default):
+        """Take a string of digits and convert width chars into an integer"""
+        if checkval.isdigit():
+            checkval = int(checkval[0:width])
+        else:   # Invalid input gets a chosen default
+            checkval = default
+        return checkval
+
+
+    def _find_state_variable(self, search):
         """
         Leveraged by all the other state functions. Find the given state
         variable, either by state variable name, or "number" to find the
@@ -232,7 +232,7 @@ class BaseState:
         return output
 
 
-    def __process_search_strings(self, sigil, searchterms):
+    def _process_search_strings(self, sigil, searchterms):
         """
         If you type a hashtag string like #news into the search box, Constantina
         will do a filter based on the cardtype you want. It uses this function
@@ -261,7 +261,7 @@ class BaseState:
         return [ filtertypes, removeterms ]
 
 
-    def __import_theme_state(self):
+    def _import_theme_state(self):
         """
         In the state object, we track an appearance variable, which corresponds
         to the exact state variable imported (and exported) for the appearance.
@@ -269,35 +269,32 @@ class BaseState:
         The appearance value lets us look up which theme we display for the user.
         This theme value is a path fragment to a theme's images and stylesheets.
         """
-        appearance_state = self.__find_state_variable('xa')
+        appearance_state = self._find_state_variable('xa')
 
         if appearance_state is not None:
             # Read in single char of theme state value
             self.appearance = self.__int_translate(appearance_state, 1, 0)
 
-        global_config = ConfigParser.SimpleConfigParser()
-        global_config.read('constantina.ini')
-
-        theme_count = len(global_config.items("themes")) - 1
+        theme_count = len(GLOBAL_CONFIG.items("themes")) - 1
         self.theme = None
         if self.appearance is None:
-            self.theme = global_config.get("themes", "default")
+            self.theme = GLOBAL_CONFIG.get("themes", "default")
         elif self.appearance >= theme_count:
-            self.theme = global_config.get("themes", str(self.appearance % theme_count))
+            self.theme = GLOBAL_CONFIG.get("themes", str(self.appearance % theme_count))
         else:
-            self.theme = global_config.get("themes", str(self.appearance))
+            self.theme = GLOBAL_CONFIG.get("themes", str(self.appearance))
 
         # If the configuration supports a random theme, and we didn't have a
         # theme provided in the initial state, let's choose one randomly
         if (appearance_state is None) and (self.theme == "random"):
             seed()   # Enable non-seeded choice
             choice = randint(0, theme_count - 1)
-            self.theme = global_config.get("themes", str(choice))
+            self.theme = GLOBAL_CONFIG.get("themes", str(choice))
             if self.seed:   # Re-enable seeded nonrandom choice
                 seed(self.seed)
 
 
-    def __export_theme_state(self):
+    def _export_theme_state(self):
         """If tracking an appearance or theme, include it in state links"""
         appearance_string = None
         if self.appearance is not None:
