@@ -28,9 +28,46 @@ class ConstantinaState(BaseState):
         self.global_config = ConfigParser.SafeConfigParser()
         self.global_config.read('constantina.ini')
 
-
         # Based on modes, enable Medusa/other states
         pass
+
+
+    def __import_page_count_state(self):
+        """
+        For all subsequent "infinite-scroll AJAX" content after the initial page
+        load, we track the current page number of content.
+
+        Output must be an integer.
+        """
+        self.page = BaseState._find_state_variable(self, 'xp')
+
+        # If page was read in as a special state variable, use that (for search results)
+        if (self.page is not None) and (self.search_mode() is True):
+            self.page = BaseState._int_translate(self, self.page, 1, 0)
+        # Otherwise, determine our page number from the news article index reported
+        # TODO: Page count not just a function of MedusaState, so consider moving this
+        #   into the Constantina state. Also, the news heuristic won't work anymore
+        elif self.news.distance is not None:
+            self.page = (int(self.news.distance) + 1) / self.config.getint('card_counts', 'news')
+        else:
+            self.page = 0
+
+
+    def __import_random_seed(self):
+        """
+        Set the return seed based on a 14-digit string from the state variable.
+        As an input to seed(), this has to be a float between zero and one.
+
+        This seed is used to consistently seed the shuffle function, so that
+        between page loads, we know the shuffled card functions give the same
+        shuffle ordering.
+        """
+        self.seed = BaseState._find_state_variable(self, "seed")
+        if self.seed is None:
+            self.seed = round(random(), 14)
+        else:
+            self.seed = float(str("0." + self.seed))
+        seed(self.seed)   # Now the RNG is seeded with our consistent value
 
 
     def _import_theme_state(self):
@@ -67,7 +104,39 @@ class ConstantinaState(BaseState):
                 seed(self.seed)
 
 
-    
+    def __import_state(self):
+        """TOWRITE: import states from all active sub-applications (medusa, zoo)"""
+        pass
+
+
+    def __export_page_count_state(self):
+        """
+        If we had search results and used a page number, write an incremented page
+        number into the next search state for loading
+        """
+        page_string = None
+        if self.search_mode() is True:
+            export_page = int(self.page) + 1
+            page_string = "xp" + str(export_page)
+        return page_string
+
+
+    def __export_random_seed(self):
+        """Export the random seed for adding to the state variable"""
+        return str(self.seed).replace("0.", "")
+
+
+    def _export_theme_state(self):
+        """If tracking an appearance or theme, include it in state links"""
+        appearance_string = None
+        if self.appearance is not None:
+            appearance_string = "xa" + str(self.appearance)
+        return appearance_string
+ 
+
+    def export_state(self):
+        """Export all medusa/other states, as well as appearance/page here"""
+        pass
 
 
     def fresh_mode(self):

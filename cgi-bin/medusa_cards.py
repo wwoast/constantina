@@ -61,27 +61,6 @@ class MedusaState(BaseState):
             getattr(self, ctype).distance = distance
 
 
-    def __import_page_count_state(self):
-        """
-        For all subsequent "infinite-scroll AJAX" content after the initial page
-        load, we track the current page number of content.
-
-        Output must be an integer.
-        """
-        self.page = BaseState._find_state_variable(self, 'xp')
-
-        # If page was read in as a special state variable, use that (for search results)
-        if (self.page is not None) and (self.search_mode() is True):
-            self.page = BaseState._int_translate(self, self.page, 1, 0)
-        # Otherwise, determine our page number from the news article index reported
-        # TODO: Page count not just a function of MedusaState, so consider moving this
-        #   into the Constantina state. Also, the news heuristic won't work anymore
-        elif self.news.distance is not None:
-            self.page = (int(self.news.distance) + 1) / self.config.getint('card_counts', 'news')
-        else:
-            self.page = 0
-
-
     def __import_permalink_state(self):
         """
         Any card type that can be displayed on its own is a permalink-type
@@ -181,12 +160,10 @@ class MedusaState(BaseState):
         """
         self.__import_random_seed()          # Import the random seed first. TODO: move to constantina state
         self.__import_medusa_card_state()    # Then import the normal content cards
-        BaseState._import_theme_state(self)  # Theme settings. TODO: move to constantina state
         self.__import_search_state()         # Search strings and processing out filter strings
         self.__import_filter_state()         # Any filter strings loaded from prior pages
         self.__import_filtered_card_count()  # Number of cards filtered out of prior pages
         self.__import_permalink_state()      # Permalink settings
-        self.__import_page_count_state()     # Figure out what page we're on
 
 
     def __calculate_last_distance(self, cards):
@@ -283,18 +260,6 @@ class MedusaState(BaseState):
         return content_string
 
 
-    def __export_page_count_state(self):
-        """
-        If we had search results and used a page number, write an incremented page
-        number into the next search state for loading
-        """
-        page_string = None
-        if self.search_mode() is True:
-            export_page = int(self.page) + 1
-            page_string = "xp" + str(export_page)
-        return page_string
-
-
     def __export_search_state(self, query_terms):
         """Export state related to searched cards"""
         query_string = None
@@ -336,9 +301,7 @@ class MedusaState(BaseState):
                         self.__export_medusa_card_state(),
                         self.__export_search_state(query_terms),
                         self.__export_filter_state(filter_terms),
-                        self.__export_filtered_card_count(filtered_count),
-                        self.__export_page_count_state(),
-                        BaseState._export_theme_state(self)]
+                        self.__export_filtered_card_count(filtered_count)]
 
         export_parts = filter(None, export_parts)
         export_string = ':'.join(export_parts)
