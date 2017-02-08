@@ -8,13 +8,9 @@ from urllib import unquote_plus
 
 syslog.openlog(ident='constantina_shared')
 
-
 # Only do opendir once per directory, and store results here
 # The other Constantina modules need access to this "globally".
 BaseFiles = {}
-
-GLOBAL_CONFIG = ConfigParser.SafeConfigParser()
-GLOBAL_CONFIG.read('constantina.ini')
 
 
 class BaseCardType:
@@ -259,47 +255,6 @@ class BaseState:
                             removeterms.append(term)
 
         return [ filtertypes, removeterms ]
-
-
-    def _import_theme_state(self):
-        """
-        In the state object, we track an appearance variable, which corresponds
-        to the exact state variable imported (and exported) for the appearance.
-
-        The appearance value lets us look up which theme we display for the user.
-        This theme value is a path fragment to a theme's images and stylesheets.
-        """
-        appearance_state = self._find_state_variable('xa')
-
-        if appearance_state is not None:
-            # Read in single char of theme state value
-            self.appearance = self.__int_translate(appearance_state, 1, 0)
-
-        theme_count = len(GLOBAL_CONFIG.items("themes")) - 1
-        self.theme = None
-        if self.appearance is None:
-            self.theme = GLOBAL_CONFIG.get("themes", "default")
-        elif self.appearance >= theme_count:
-            self.theme = GLOBAL_CONFIG.get("themes", str(self.appearance % theme_count))
-        else:
-            self.theme = GLOBAL_CONFIG.get("themes", str(self.appearance))
-
-        # If the configuration supports a random theme, and we didn't have a
-        # theme provided in the initial state, let's choose one randomly
-        if (appearance_state is None) and (self.theme == "random"):
-            seed()   # Enable non-seeded choice
-            choice = randint(0, theme_count - 1)
-            self.theme = GLOBAL_CONFIG.get("themes", str(choice))
-            if self.seed:   # Re-enable seeded nonrandom choice
-                seed(self.seed)
-
-
-    def _export_theme_state(self):
-        """If tracking an appearance or theme, include it in state links"""
-        appearance_string = None
-        if self.appearance is not None:
-            appearance_string = "xa" + str(self.appearance)
-        return appearance_string
 
 
 

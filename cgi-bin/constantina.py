@@ -8,30 +8,15 @@ import lxml.html
 import syslog
 import ConfigParser
 
-from medusa_search import MedusaSearch
-from medusa_cards import MedusaState, MedusaCard, MedusaSong
 from constantina_shared import BaseFiles, opendir
+from constantina_state import ConstantinaState
+from medusa_cards import MedusaCard, MedusaSong
+from medusa_search import MedusaSearch
 
 syslog.openlog(ident='constantina')
+# TODO: get rid of this somehow!
 CONFIG = ConfigParser.SafeConfigParser()
 CONFIG.read('constantina.ini')
-
-
-class ConstantinaState:
-    """
-    Constantina State Object, an aggregate of the following:
-       MedusaState: blog cards. images, quotes, news, songs
-       ZooState: forum cards. threads, images, songs
-       DraculaState: mail cards. ??
-
-    Aggregate all other states here, and do counting for things like total
-    cards, the number of pages, etc.
-    """
-    def __init__(self, in_state=None):
-        pass
-
-
-
 
 
 class ConstantinaPage:
@@ -689,6 +674,7 @@ def create_page(page):
         if ((page.cards[i].ctype == "news") or
             (page.cards[i].ctype == "topics") or
             (page.cards[i].ctype == "features")):
+            # TODO: export_display_state is gone, replaced by theme state
             output += create_textcard(page.cards[i], page.state.export_display_state())
 
         if ((page.cards[i].ctype == "quotes") or

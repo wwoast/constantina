@@ -40,23 +40,6 @@ class MedusaState(BaseState):
         # syslog.syslog("Random seed: " + str(self.seed))
 
 
-    def __import_random_seed(self):
-        """
-        Set the return seed based on a 14-digit string from the state variable.
-        As an input to seed(), this has to be a float between zero and one.
-
-        This seed is used to consistently seed the shuffle function, so that
-        between page loads, we know the shuffled card functions give the same
-        shuffle ordering.
-        """
-        self.seed = BaseState._find_state_variable(self, "seed")
-        if self.seed is None:
-            self.seed = round(random(), 14)
-        else:
-            self.seed = float(str("0." + self.seed))
-        seed(self.seed)   # Now the RNG is seeded with our consistent value
-
-
     def __import_medusa_card_state(self):
         """
         News cards and other content cards' state is tracked here. Seed tracking
@@ -269,11 +252,6 @@ class MedusaState(BaseState):
                 break
 
 
-    def __export_random_seed(self):
-        """Export the random seed for adding to the state variable"""
-        return str(self.seed).replace("0.", "")
-
-
     def __export_medusa_card_state(self):
         """
         Construct a string representing the cards that were loaded on this
@@ -367,11 +345,6 @@ class MedusaState(BaseState):
         return export_string
 
 
-    def export_display_state(self):
-        """Just export enough state for links in textcards that preserve theme"""
-        return self.__export_theme_state()
-
-
     def configured_states(self):
         """
         Check to see which special states are enabled. Return an array of
@@ -383,103 +356,6 @@ class MedusaState(BaseState):
         return [state for state in state_names
                       if ((getattr(self, state) != None) and
                           (getattr(self, state) != []))]
-
-
-    def fresh_mode(self):
-        """Either an empty state, or just an empty state and a theme is set"""
-        if (((self.in_state is None) or (self.configured_states() == ['appearance'])) and
-             (self.page == 0) and
-             (self.reshuffle is False)):
-            return True
-        else:
-            return False
-
-
-    def reshuffle_mode(self):
-        """An empty search was given, so reshuffle the page"""
-        if ((self.search is not None) and
-            (self.reshuffle is True) and
-            (self.card_filter is None)):
-            return True
-        else:
-            return False
-
-
-    def permalink_mode(self):
-        """Is one of the permalink modes on?"""
-        if ((self.news_permalink is not None) or
-            (self.features_permalink is not None) or
-            (self.topics_permalink is not None)):
-            return True
-        else:
-            return False
-
-
-    def exclude_cardtype(self, ctype):
-        """
-        Is a card filter in place, and if so, is the given card type being filtered?
-        If this returns true, it means the user either wants cards of this type, or
-        that no card filtering is currently in place.
-        """
-        if ((self.card_filter is not None) and
-            (getattr(self, ctype).filtertype is False)):
-            return True
-        else:
-            return False
-
-
-    def filter_processed_mode(self):
-        """
-        Is it a search state, and did we already convert #hashtag strings
-        into filter queries?
-        """
-        states = self.configured_states()
-        if (('search' in states) or
-            ('card_filter' in states)):
-            return True
-        else:
-            return False
-
-
-    def filter_only_mode(self):
-        """All search queries converted into card filters"""
-        if self.configured_states() == ['card_filter']:
-            return True
-        else:
-            return False
-
-
-    def search_only_mode(self):
-        """There is a search query, but no terms converted into card filters"""
-        if self.configured_states() == ['search']:
-            return True
-        else:
-            return False
-
-
-    def search_mode(self):
-        """Any valid state from a search mode will trigger this mode"""
-        if ((self.search is not None) or
-            (self.card_filter is not None) or
-            (self.filtered != 0)):
-            return True
-        else:
-            return False
-
-
-    def out_of_content(self, card_count):
-        """
-        Count the number of cards that are part of our page counting. If we've
-        already displayed this number of cards, we are out of content.
-        """
-        card_limit = 0
-        for ctype in self.config.get("card_properties", "pagecount").replace(" ", "").split(","):
-            card_limit = card_limit + getattr(self, ctype).file_count
-        # syslog.syslog("card_limit: " + str(card_limit) + "   card_count: " + str(card_count))
-        if card_count >= card_limit:
-            return True
-        else:
-            return False
 
 
 
