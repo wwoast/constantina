@@ -6,7 +6,7 @@ import lxml.html
 import syslog
 import ConfigParser
 
-from constantina_shared import BaseFiles, opendir
+from constantina_shared import BaseFiles, opendir, unroll_newlines
 
 syslog.openlog(ident='zoo_search')
 

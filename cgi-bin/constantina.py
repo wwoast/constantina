@@ -8,7 +8,7 @@ import lxml.html
 import syslog
 import ConfigParser
 
-from constantina_shared import BaseFiles, opendir
+from constantina_shared import BaseFiles, opendir, unroll_newlines
 from constantina_state import ConstantinaState
 from medusa_cards import MedusaCard, MedusaSong
 from medusa_search import MedusaSearch
@@ -405,44 +405,6 @@ class ConstantinaPage:
         for j in xrange(0, len(c_nodist['topics'])):
             self.cards.insert(lstop + j, c_nodist['topics'][j])
 
-
-
-def unroll_newlines(body_lines):
-    """
-    Given lines of text, remove all newlines that occur within an
-    HTML element. Anything that we parse with lxml.html will inevitably
-    start trying to use this utility function.
-    """
-    processed_lines = []
-    pro_line = ""
-    i = 0
-
-    # For processing purposes, if no p tag at the beginning of a line, combine
-    # it with the next line. This guarantees one HTML tag per line for the
-    # later per-element processing
-    while i < len(body_lines):
-        # Add a space back to the end of each line so
-        # they don't clump together when reconstructed
-        this_line = body_lines[i].strip() + " "
-        # Don't parse empty or whitespace lines
-        if (this_line.isspace()) or (this_line == ''):
-            i = i + 1
-            continue
-
-        if this_line.find('<p>') == 0:
-            if not ((pro_line.isspace()) or (pro_line == '')):
-                processed_lines.append(pro_line)
-            pro_line = this_line
-        elif (this_line.find('<img') != -1):
-            if not ((pro_line.isspace()) or (pro_line == '')):
-                processed_lines.append(pro_line)
-            pro_line = this_line
-        else:
-            pro_line += this_line
-        i = i + 1
-
-    processed_lines.append(pro_line)
-    return processed_lines
 
 
 def count_ptags(processed_lines):
