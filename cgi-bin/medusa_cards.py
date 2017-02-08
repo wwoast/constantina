@@ -57,7 +57,7 @@ class MedusaState(BaseState):
         seed(self.seed)   # Now the RNG is seeded with our consistent value
 
 
-    def __import_content_card_state(self):
+    def __import_medusa_card_state(self):
         """
         News cards and other content cards' state is tracked here. Seed tracking
         between page loads means we don't need to log which content cards were
@@ -91,6 +91,8 @@ class MedusaState(BaseState):
         if (self.page is not None) and (self.search_mode() is True):
             self.page = BaseState._int_translate(self, self.page, 1, 0)
         # Otherwise, determine our page number from the news article index reported
+        # TODO: Page count not just a function of MedusaState, so consider moving this
+        #   into the Constantina state. Also, the news heuristic won't work anymore
         elif self.news.distance is not None:
             self.page = (int(self.news.distance) + 1) / self.config.getint('card_counts', 'news')
         else:
@@ -194,9 +196,9 @@ class MedusaState(BaseState):
         loading. The order that state components are loaded is significant,
         as is the output type of each state import function.
         """
-        self.__import_random_seed()          # Import the random seed first
-        self.__import_content_card_state()   # Then import the normal content cards
-        BaseState._import_theme_state(self) # Theme settings
+        self.__import_random_seed()          # Import the random seed first. TODO: move to constantina state
+        self.__import_medusa_card_state()    # Then import the normal content cards
+        BaseState._import_theme_state(self)  # Theme settings. TODO: move to constantina state
         self.__import_search_state()         # Search strings and processing out filter strings
         self.__import_filter_state()         # Any filter strings loaded from prior pages
         self.__import_filtered_card_count()  # Number of cards filtered out of prior pages
@@ -213,7 +215,7 @@ class MedusaState(BaseState):
         news cards and heading cards separately, and determine how far each ctype
         card is from the beginning of the next page that will be loaded.
         """
-        # TODO: migrate to BaseState
+        # TODO: migrate to BaseState and make more generic
         all_ctypes = self.config.options("card_counts")
 
         # Populate the state object, which we'll later build the
@@ -272,7 +274,7 @@ class MedusaState(BaseState):
         return str(self.seed).replace("0.", "")
 
 
-    def __export_content_card_state(self):
+    def __export_medusa_card_state(self):
         """
         Construct a string representing the cards that were loaded on this
         page, for the sake of informing the next page load.
@@ -353,7 +355,7 @@ class MedusaState(BaseState):
 
         # Finally, construct the state string for the next page
         export_parts = [self.__export_random_seed(),
-                        self.__export_content_card_state(),
+                        self.__export_medusa_card_state(),
                         self.__export_search_state(query_terms),
                         self.__export_filter_state(filter_terms),
                         self.__export_filtered_card_count(filtered_count),

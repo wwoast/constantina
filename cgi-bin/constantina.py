@@ -27,7 +27,11 @@ class ConstantinaState:
     Aggregate all other states here, and do counting for things like total
     cards, the number of pages, etc.
     """
-    pass
+    def __init__(self, in_state=None):
+        pass
+
+
+
 
 
 class ConstantinaPage:
