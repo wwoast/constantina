@@ -129,10 +129,13 @@ class BaseCardType:
 
 class BaseState:
     """
-    Constantina Page State Object.
+    Constantina Page State Object, base methods.
+    Constantina consists of three sub-applications (forum, blog, mail) and
+    each one has its own config file and tracks its own state, extended from
+    this utility class.
 
-    This is serialized and deserialized from a string embedded
-    on the page itself that describes the following details:
+    Constantina state values are serialized and deserialized from a string 
+    embedded into the page itself that describes the following details:
         - The distance from the last-displayed item of this type to the end
           of the displayed page
         - The seed number that defines the displayed random order
@@ -160,9 +163,9 @@ class BaseState:
 
     def __set_state_defaults(self):
         """
-        Set basic default values for special_state properties and normal
-        content-card properties, as well as upper limits on how many cards can
-        exist on a single Constantina page.
+        Set default values for special_state properties and normal content-card
+        properties, as well as upper limits on how many cards can exist on a 
+        single Constantina page for this type of application.
         """
         self.max_items = 0             # Max items per page, based on
                                        # counts from all card types
@@ -255,6 +258,71 @@ class BaseState:
                             removeterms.append(term)
 
         return [ filtertypes, removeterms ]
+
+
+    def _calculate_last_distance(self, cards):
+        """
+        The main part about state tracking in Constantina is tracking how far
+        the closest card to the beginning of a page load is.
+
+        Prior to exporting a page state, loop over your list of cards, tracking
+        news cards and heading cards separately, and determine how far each ctype
+        card is from the beginning of the next page that will be loaded.
+        """
+        # TODO: migrate to BaseState and make more generic
+        all_ctypes = self.config.options("card_counts")
+
+        # Populate the state object, which we'll later build the
+        # state_string from. Don't deal with news items yet
+        for card in cards:
+            # Do not proces news items in the state variable
+            # TODO: define "body" cards that don't get processed here per ini file
+            # (in the zoo, threads work the same as medusa news cards)
+            if (card.ctype == 'news') or (card.ctype == 'heading'):
+                continue
+            # For adding into a string later, make card.num a string too
+            getattr(self, card.ctype).clist.append(str(card.num))
+            if card.ctype not in all_ctypes:
+                all_ctypes.append(card.ctype)
+
+        # Add distance values to the end of each state_hash
+        # array, as is the standard for these state tokens.
+        done_distance = []
+        all_ctypes.sort()
+
+        # Terminate the loop if we either get to the bottom of the
+        # array, or whether we've calculated distances for all
+        # possible state types
+        hidden_cards = 0    # Account for each hidden card in the distance
+                            # between here and the end of the page
+        news_seen = False   # Have we processed a news card yet?
+        # Traversing backwards from the end, find the last of each cardtype shown
+        for i in xrange(len(cards) - 1, -1, -1):
+            card = cards[i]
+            if card.ctype == 'news':
+                if news_seen is False:
+                    self.news.distance = card.num
+                    news_seen = True
+                continue
+            if card.ctype == 'heading':
+                # Either a tombstone card or a "now loading" card
+                # Subtract one from the distance of "shown cards"
+                hidden_cards = hidden_cards + 1
+                continue
+            if card.ctype in done_distance:
+                continue
+
+            # We've now tracked this card type
+            done_distance.append(card.ctype)
+            done_distance.sort()
+
+            dist = len(cards) - hidden_cards - i
+            # syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" %
+            #              (card.ctype, dist, i, len(cards), len(cards) - hidden_cards))
+            getattr(self, card.ctype).distance = str(dist)
+            # Early break once we've seen all the card types
+            if done_distance == all_ctypes:
+                break
 
 
 

@@ -32,6 +32,10 @@ class ConstantinaState(BaseState):
         pass
 
 
+    # TODO: figure out filtered counts or search behavior based on all cards'
+    # response to the searches submitted into the text box
+
+
     def __import_page_count_state(self):
         """
         For all subsequent "infinite-scroll AJAX" content after the initial page

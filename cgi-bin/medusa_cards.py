@@ -166,69 +166,6 @@ class MedusaState(BaseState):
         self.__import_permalink_state()      # Permalink settings
 
 
-    def __calculate_last_distance(self, cards):
-        """
-        The main part about state tracking in Constantina is tracking how far
-        the closest card to the beginning of a page load is.
-
-        Prior to exporting a page state, loop over your list of cards, tracking
-        news cards and heading cards separately, and determine how far each ctype
-        card is from the beginning of the next page that will be loaded.
-        """
-        # TODO: migrate to BaseState and make more generic
-        all_ctypes = self.config.options("card_counts")
-
-        # Populate the state object, which we'll later build the
-        # state_string from. Don't deal with news items yet
-        for card in cards:
-            # Do not proces news items in the state variable
-            if (card.ctype == 'news') or (card.ctype == 'heading'):
-                continue
-            # For adding into a string later, make card.num a string too
-            getattr(self, card.ctype).clist.append(str(card.num))
-            if card.ctype not in all_ctypes:
-                all_ctypes.append(card.ctype)
-
-        # Add distance values to the end of each state_hash
-        # array, as is the standard for these state tokens.
-        done_distance = []
-        all_ctypes.sort()
-
-        # Terminate the loop if we either get to the bottom of the
-        # array, or whether we've calculated distances for all
-        # possible state types
-        hidden_cards = 0    # Account for each hidden card in the distance
-                            # between here and the end of the page
-        news_seen = False   # Have we processed a news card yet?
-        # Traversing backwards from the end, find the last of each cardtype shown
-        for i in xrange(len(cards) - 1, -1, -1):
-            card = cards[i]
-            if card.ctype == 'news':
-                if news_seen is False:
-                    self.news.distance = card.num
-                    news_seen = True
-                continue
-            if card.ctype == 'heading':
-                # Either a tombstone card or a "now loading" card
-                # Subtract one from the distance of "shown cards"
-                hidden_cards = hidden_cards + 1
-                continue
-            if card.ctype in done_distance:
-                continue
-
-            # We've now tracked this card type
-            done_distance.append(card.ctype)
-            done_distance.sort()
-
-            dist = len(cards) - hidden_cards - i
-            # syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" %
-            #              (card.ctype, dist, i, len(cards), len(cards) - hidden_cards))
-            getattr(self, card.ctype).distance = str(dist)
-            # Early break once we've seen all the card types
-            if done_distance == all_ctypes:
-                break
-
-
     def __export_medusa_card_state(self):
         """
         Construct a string representing the cards that were loaded on this
@@ -294,7 +231,7 @@ class MedusaState(BaseState):
         """
         # Start by calculating the distance from the next page for each
         # card type. This updates the state.ctype.distance values
-        self.__calculate_last_distance(cards)
+        BaseState.__calculate_last_distance(self, cards)
 
         # Finally, construct the state string for the next page
         export_parts = [self.__export_random_seed(),
