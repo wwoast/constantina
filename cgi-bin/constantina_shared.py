@@ -148,8 +148,8 @@ class BaseState:
         self.config_file = GLOBAL_CONFIG.get('paths', 'config') + "/" + config_file
         self.config = ConfigParser.SafeConfigParser()
         self.config.read(self.config_file)
-        syslog.syslog(self.config.get('paths', 'news'))
-        syslog.syslog(self.config.get('card_counts', 'news'))
+        # syslog.syslog(self.config.get('paths', 'news'))
+        # syslog.syslog(self.config.get('card_counts', 'news'))
 
         self.in_state = in_state      # Track the original state string
         self.__set_state_defaults()

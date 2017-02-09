@@ -11,6 +11,8 @@ import ConfigParser
 from constantina_shared import BaseFiles, BaseState
 from medusa_cards import MedusaState
 
+syslog.openlog(ident='constantina_state')
+
 
 class ConstantinaState(BaseState):
     """
@@ -25,15 +27,50 @@ class ConstantinaState(BaseState):
     depend on properties of the various states
     """
     def __init__(self, in_state=None):
+        BaseState.__init__('constantina.ini', in_state)
         self.global_config = ConfigParser.SafeConfigParser()
         self.global_config.read('constantina.ini')
 
-        # Based on modes, enable Medusa/other states
-        pass
+        self.__set_state_defaults()
 
 
-    # TODO: figure out filtered counts or search behavior based on all cards'
-    # response to the searches submitted into the text box
+    def __set_state_defaults(self):
+        """
+        Set default values for special_state properties and normal content-card
+        properties, as well as upper limits on how many cards can exist on a 
+        single Constantina page for this type of application.
+        """
+        self.max_items = 0   # Aggregate max items per page
+        self.filtered = 0    # Aggregate filtered card count
+
+        # For the values in the special_states config, create variables, i.e.
+        #   state.appearance, state.page
+        for spctype, spcfield in self.config.items("special_states"):
+            setattr(self, spcfield, None)       # All state vals are expected to exist
+
+        # Subapplication states are held in this object too
+        self.medusa = None
+        self.zoo = None
+        # self.dracula = None
+
+        # Based on modes, enable Medusa/Zoo/other states
+        if global_config.get("authentication", "mode") == "blog": 
+            self.medusa = MedusaState(in_state)
+            self.max_items += self.medusa.max_items
+            self.filtered += self.medusa.filtered
+
+        if global_config.get("authentication", "mode") == "zoo":
+            self.zoo = ZooState(in_state)
+            self.max_items += self.zoo.max_items
+            self.filtered += self.zoo.filtered
+
+        if global_config.get("authentication", "mode") == "combined":
+            self.medusa = MedusaState(in_state)
+            self.max_items += self.medusa.max_items
+            self.filtered += self.medusa.filtered
+            self.zoo = ZooState(in_state)
+            self.max_items += self.zoo.max_items
+            self.filtered += self.zoo.filtered
 
 
     def __import_page_count_state(self):
