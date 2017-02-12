@@ -693,7 +693,7 @@ def contents_page(start_response, state):
     # Did we get an empty search? If so, reshuffle
     elif state.reshuffle_mode() is True:
         syslog.syslog("***** Reshuffle Page Contents *****")
-        state = MedusaState(None)
+        state = ConstantinaState(None)
         page = ConstantinaPage(state)
         html = create_page(page)
         start_response('200 OK', [('Content-Type', 'text/html')])
@@ -760,7 +760,7 @@ def application(env, start_response):
     else:
         in_state = None
 
-    state = MedusaState(in_state)   # Create state object
+    state = ConstantinaState(in_state)   # Create state object
     auth_mode = CONFIG.get("authentication", "mode")
 
     if os.environ.get('REQUEST_METHOD') == 'POST':
