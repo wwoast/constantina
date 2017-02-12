@@ -37,8 +37,6 @@ class MedusaState(BaseState):
         for ctype in self.config.get("card_properties", "randomize").replace(" ", "").split(","):
             getattr(self, ctype).shuffle()
 
-        # syslog.syslog("Random seed: " + str(self.seed))
-
 
     def __import_card_state(self):
         """
@@ -233,8 +231,7 @@ class MedusaState(BaseState):
         BaseState.__calculate_last_distance(self, cards)
 
         # Finally, construct the state string for the next page
-        export_parts = [self.__export_random_seed(),
-                        self.__export_card_state(),
+        export_parts = [self.__export_card_state(),
                         self.__export_search_state(query_terms),
                         self.__export_filter_state(filter_terms),
                         self.__export_filtered_card_count(filtered_count)]
@@ -250,8 +247,7 @@ class MedusaState(BaseState):
         either card types or special state types that are not set to None.
         """
         state_names = [val[1] for val in self.config.items('special_states')]
-        state_names.remove('page')       # These two are set no matter what
-        state_names.remove('filtered')
+        state_names.remove('filtered')   # Filtered is set no matter what
         return [state for state in state_names
                       if ((getattr(self, state) != None) and
                           (getattr(self, state) != []))]
