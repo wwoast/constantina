@@ -27,7 +27,7 @@ class ConstantinaState(BaseState):
     depend on properties of the various states
     """
     def __init__(self, in_state=None):
-        BaseState.__init__('constantina.ini', in_state)
+        BaseState.__init__(self, 'constantina.ini', in_state)
         self.global_config = ConfigParser.SafeConfigParser()
         self.global_config.read('constantina.ini')
 
@@ -330,7 +330,7 @@ class ConstantinaState(BaseState):
         already displayed this number of cards, we are out of content.
         """
         card_limit = 0
-        for application in global_config.get("application", "list")
+        for application in global_config.get("application", "list"):
             app_state = getattr(self, application)
             for ctype in app_state.config.get("card_properties", "pagecount").replace(" ", "").split(","):
                 card_limit = card_limit + getattr(self, ctype).file_count
