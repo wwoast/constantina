@@ -31,14 +31,20 @@ class ConstantinaState(BaseState):
         self.global_config = ConfigParser.SafeConfigParser()
         self.global_config.read('constantina.ini')
 
+        # Getting defaults from the other states requires us to first import
+        # any random seed value. Then, we can finish setting the imported state
+        self.__import_random_seed()			
         self.__set_state_defaults()
+        self.__import_state()
 
 
     def __set_state_defaults(self):
         """
         Set default values for special_state properties and normal content-card
         properties, as well as upper limits on how many cards can exist on a 
-        single Constantina page for this type of application.
+        single Constantina page for this type of application. Doing so means we
+        must import all of the sub-application states here, rather than in the
+        import function like you'd do intuitively :(
         """
         self.max_items = 0   # Aggregate max items per page
         self.filtered = 0    # Aggregate filtered card count
@@ -146,8 +152,29 @@ class ConstantinaState(BaseState):
 
 
     def __import_state(self):
-        """TOWRITE: import states from all active sub-applications (medusa, zoo)"""
-        pass
+        """
+        When setting defaults, we imported the sub application states. But now
+        we need to import the relevant states for the entire application, like
+        the page state and the chosen theme.
+        """
+        self.__import_page_count_state()
+        self.__import_theme_state()
+
+
+    def get(self, application, value):
+        """
+        Allow retrieving a medusa/zoo state value or function, or returning a 
+        default None value.
+        """
+        app_state = getattr(self, application, None)
+        if app_state == None:
+            return None
+
+        item = getattr(app_state, value)
+        if callable(item):
+            return item() 
+        else:
+            return item
 
 
     def __export_page_count_state(self):
@@ -177,7 +204,14 @@ class ConstantinaState(BaseState):
 
     def export_state(self):
         """Export all medusa/other states, as well as appearance/page here"""
-        pass
+        export_parts = [ self.export_random_seed(),
+                         self.export_page_count_state(),
+                         self.get("medusa", "export_state"),
+                         self.get("zoo", "export_state") ]
+
+        export_parts = filter(None, export_parts)
+        export_string = ':'.join(export_parts)
+        return export_string
 
 
     def fresh_mode(self):

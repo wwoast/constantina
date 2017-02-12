@@ -169,6 +169,7 @@ class BaseState:
         """
         self.max_items = 0             # Max items per page, based on
                                        # counts from all card types
+
         for ctype, cpp in self.config.items('card_counts'):
             self.max_items = self.max_items + int(cpp)
 

@@ -40,7 +40,7 @@ class MedusaState(BaseState):
         # syslog.syslog("Random seed: " + str(self.seed))
 
 
-    def __import_medusa_card_state(self):
+    def __import_card_state(self):
         """
         News cards and other content cards' state is tracked here. Seed tracking
         between page loads means we don't need to log which content cards were
@@ -158,15 +158,14 @@ class MedusaState(BaseState):
         loading. The order that state components are loaded is significant,
         as is the output type of each state import function.
         """
-        self.__import_random_seed()          # Import the random seed first. TODO: move to constantina state
-        self.__import_medusa_card_state()    # Then import the normal content cards
+        self.__import_card_state()           # Import the normal content cards
         self.__import_search_state()         # Search strings and processing out filter strings
         self.__import_filter_state()         # Any filter strings loaded from prior pages
         self.__import_filtered_card_count()  # Number of cards filtered out of prior pages
         self.__import_permalink_state()      # Permalink settings
 
 
-    def __export_medusa_card_state(self):
+    def __export_card_state(self):
         """
         Construct a string representing the cards that were loaded on this
         page, for the sake of informing the next page load.
@@ -235,7 +234,7 @@ class MedusaState(BaseState):
 
         # Finally, construct the state string for the next page
         export_parts = [self.__export_random_seed(),
-                        self.__export_medusa_card_state(),
+                        self.__export_card_state(),
                         self.__export_search_state(query_terms),
                         self.__export_filter_state(filter_terms),
                         self.__export_filtered_card_count(filtered_count)]
