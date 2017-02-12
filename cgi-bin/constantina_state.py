@@ -8,7 +8,7 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
-from constantina_shared import BaseFiles, BaseState
+from constantina_shared import GlobalConfig, BaseFiles, BaseState
 from medusa_cards import MedusaState
 
 syslog.openlog(ident='constantina_state')
@@ -28,8 +28,6 @@ class ConstantinaState(BaseState):
     """
     def __init__(self, in_state=None):
         BaseState.__init__(self, 'constantina.ini', in_state)
-        self.global_config = ConfigParser.SafeConfigParser()
-        self.global_config.read('constantina.ini')
 
         # Getting defaults from the other states requires us to first import
         # any random seed value. Then, we can finish setting the imported state
@@ -60,17 +58,17 @@ class ConstantinaState(BaseState):
         # self.dracula = None
 
         # Based on modes, enable Medusa/Zoo/other states
-        if global_config.get("authentication", "mode") == "blog": 
+        if GlobalConfig.get("authentication", "mode") == "blog": 
             self.medusa = MedusaState(in_state)
             self.max_items += self.medusa.max_items
             self.filtered += self.medusa.filtered
 
-        if global_config.get("authentication", "mode") == "zoo":
+        if GlobalConfig.get("authentication", "mode") == "zoo":
             self.zoo = ZooState(in_state)
             self.max_items += self.zoo.max_items
             self.filtered += self.zoo.filtered
 
-        if global_config.get("authentication", "mode") == "combined":
+        if GlobalConfig.get("authentication", "mode") == "combined":
             self.medusa = MedusaState(in_state)
             self.max_items += self.medusa.max_items
             self.filtered += self.medusa.filtered
@@ -101,7 +99,7 @@ class ConstantinaState(BaseState):
         The mode can be a sum of available values, or logic like 'and' or 'or'
         """
         items = []
-        for application in global_config.get("applications", "list"):
+        for application in GlobalConfig.get("applications", "list"):
             items.append = self.get(application, value)
         if mode == "append":
             items = filter(None, items)
@@ -171,21 +169,21 @@ class ConstantinaState(BaseState):
             # Read in single char of theme state value
             self.appearance = BaseState._int_translate(appearance_state, 1, 0)
 
-        theme_count = len(global_config.items("themes")) - 1
+        theme_count = len(GlobalConfig.items("themes")) - 1
         self.theme = None
         if self.appearance is None:
-            self.theme = global_config.get("themes", "default")
+            self.theme = GlobalConfig.get("themes", "default")
         elif self.appearance >= theme_count:
-            self.theme = global_config.get("themes", str(self.appearance % theme_count))
+            self.theme = GlobalConfig.get("themes", str(self.appearance % theme_count))
         else:
-            self.theme = global_config.get("themes", str(self.appearance))
+            self.theme = GlobalConfig.get("themes", str(self.appearance))
 
         # If the configuration supports a random theme, and we didn't have a
         # theme provided in the initial state, let's choose one randomly
         if (appearance_state is None) and (self.theme == "random"):
             seed()   # Enable non-seeded choice
             choice = randint(0, theme_count - 1)
-            self.theme = global_config.get("themes", str(choice))
+            self.theme = GlobalConfig.get("themes", str(choice))
             if self.seed:   # Re-enable seeded nonrandom choice
                 seed(self.seed)
 
@@ -330,7 +328,7 @@ class ConstantinaState(BaseState):
         already displayed this number of cards, we are out of content.
         """
         card_limit = 0
-        for application in global_config.get("application", "list"):
+        for application in GlobalConfig.get("application", "list"):
             app_state = getattr(self, application)
             for ctype in app_state.config.get("card_properties", "pagecount").replace(" ", "").split(","):
                 card_limit = card_limit + getattr(self, ctype).file_count

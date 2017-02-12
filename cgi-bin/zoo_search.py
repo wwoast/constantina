@@ -6,7 +6,7 @@ import lxml.html
 import syslog
 import ConfigParser
 
-from constantina_shared import BaseFiles, opendir, unroll_newlines
+from constantina_shared import GlobalConfig, BaseFiles, opendir, unroll_newlines
 
 syslog.openlog(ident='zoo_search')
 
@@ -23,9 +23,7 @@ class ZooSearch:
 
         # Upper limit on the permitted number of searchable items.
         # Since we use this as an array slice, add one to support N-1 elements
-        global_config = ConfigParser.SafeConfigParser()
-        global_config.read('constantina.ini')
-        self.max_query_count = self.global_config.getint("miscellaneous", "max_state_parameters") + 1
+        self.max_query_count = GlobalConfig.getint("miscellaneous", "max_state_parameters") + 1
 
         # List of symbols to filter out in the unsafe input
         self.ignore_symbols = []

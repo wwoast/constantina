@@ -8,7 +8,7 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
-from constantina_shared import BaseFiles, BaseCardType, BaseState, opendir
+from constantina_shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, opendir
 
 syslog.openlog(ident='medusa_cards')
 

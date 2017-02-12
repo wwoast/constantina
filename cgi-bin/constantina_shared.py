@@ -8,6 +8,9 @@ from urllib import unquote_plus
 
 syslog.openlog(ident='constantina_shared')
 
+GlobalConfig = ConfigParser.SafeConfigParser()
+GlobalConfig.read('constantina.ini')
+
 # Only do opendir once per directory, and store results here
 # The other Constantina modules need access to this "globally".
 BaseFiles = {}
@@ -17,7 +20,7 @@ class BaseCardType:
     """
     Constantina Card Type State Tracking.
 
-    In the MedusaState class, we track the following properties per-card-type:
+    In the SubApplicationState class, we track the following properties per-card-type:
         - How many of each item was displayed
         - Which news or image items were displayed
             - This is condensed into a start and end range of file indices
@@ -145,7 +148,7 @@ class BaseState:
     influence what content and appearances a Constantina page can take.
     """
     def __init__(self, config_file, in_state=None):
-        self.config_file = GLOBAL_CONFIG.get('paths', 'config') + "/" + config_file
+        self.config_file = GlobalConfig.get('paths', 'config') + "/" + config_file
         self.config = ConfigParser.SafeConfigParser()
         self.config.read(self.config_file)
         # syslog.syslog(self.config.get('paths', 'news'))
