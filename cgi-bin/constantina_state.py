@@ -79,6 +79,45 @@ class ConstantinaState(BaseState):
             self.filtered += self.zoo.filtered
 
 
+    def get(self, application, value):
+        """
+        Allow retrieving a medusa/zoo state value or function, or returning a 
+        default None value.
+        """
+        app_state = getattr(self, application, None)
+        if app_state == None:
+            return None
+
+        item = getattr(app_state, value)
+        if callable(item):
+            return item() 
+        else:
+            return item
+
+
+    def all(self, value, mode="append"):
+        """
+        For all available applications, get the value or function asked for.
+        The mode can be a sum of available values, or logic like 'and' or 'or'
+        """
+        items = []
+        for application in global_config.get("applications", "list"):
+            items.append = self.get(application, value)
+        if mode == "append":
+            items = filter(None, items)
+            if items == []:
+                return None
+            return [item for sublist in items for item in sublist]   # Flatten
+        elif mode == "sum":
+            return sum(items)
+        elif mode == "or":
+            return any(items)   # Logical OR across the list
+        elif mode == "and":
+            return all(items)   # Logical AND across the list
+        else:
+            return None
+
+
     def __import_page_count_state(self):
         """
         For all subsequent "infinite-scroll AJAX" content after the initial page
@@ -161,22 +200,6 @@ class ConstantinaState(BaseState):
         self.__import_theme_state()
 
 
-    def get(self, application, value):
-        """
-        Allow retrieving a medusa/zoo state value or function, or returning a 
-        default None value.
-        """
-        app_state = getattr(self, application, None)
-        if app_state == None:
-            return None
-
-        item = getattr(app_state, value)
-        if callable(item):
-            return item() 
-        else:
-            return item
-
-
     def __export_page_count_state(self):
         """
         If we had search results and used a page number, write an incremented page
@@ -216,10 +239,9 @@ class ConstantinaState(BaseState):
 
     def fresh_mode(self):
         """Either an empty state, or just an empty state and a theme is set"""
-        # TODO: check other states! Reshuffle logic in ConstantinaState
-        if (((self.in_state is None) or (self.configured_states() == ['appearance'])) and
+        if (((self.in_state is None) or (self.all("configured_states") == ['appearance'])) and
              (self.page == 0) and
-             (self.medusa.reshuffle is False)):
+             (self.all("reshuffle", "or") is False)):
             return True
         else:
             return False
@@ -227,10 +249,9 @@ class ConstantinaState(BaseState):
 
     def reshuffle_mode(self):
         """An empty search was given, so reshuffle the page"""
-        # TODO: check other states! Reshuffle logic in ConstantinaState
-        if ((self.medusa.search is not None) and
-            (self.medusa.reshuffle is True) and
-            (self.medusa.card_filter is None)):
+        if ((self.all("search") is not None) and
+            (self.all("reshuffle", "or") is True) and
+            (self.all("card_filter") is None)):
             return True
         else:
             return False
@@ -247,15 +268,18 @@ class ConstantinaState(BaseState):
             return False
 
 
-    def exclude_cardtype(self, ctype):
+    def exclude_cardtype(self, application, ctype):
         """
         Is a card filter in place, and if so, is the given card type being filtered?
         If this returns true, it means the user either wants cards of this type, or
         that no card filtering is currently in place.
         """
-        # TODO: check other state!
-        if ((self.medusa.card_filter is not None) and
-            (getattr(self, ctype).filtertype is False)):
+        app_ctype = self.get(application, ctype)
+        if app_ctype == None:   # No app or ctype, so no cards of this type
+            return False
+
+        if ((self.all("card_filter") is not None) and
+            (app_ctype.filtertype is False)):
             return True
         else:
             return False
@@ -266,8 +290,7 @@ class ConstantinaState(BaseState):
         Is it a search state, and did we already convert #hashtag strings
         into filter queries?
         """
-        # TODO: check other state!
-        states = self.medusa.configured_states()
+        states = self.all("configured_states")
         if (('search' in states) or
             ('card_filter' in states)):
             return True
@@ -277,8 +300,7 @@ class ConstantinaState(BaseState):
 
     def filter_only_mode(self):
         """All search queries converted into card filters"""
-        # TODO: check other state!
-        if self.medusa.configured_states() == ['card_filter']:
+        if self.all("configured_states") == ['card_filter']:
             return True
         else:
             return False
@@ -286,8 +308,7 @@ class ConstantinaState(BaseState):
 
     def search_only_mode(self):
         """There is a search query, but no terms converted into card filters"""
-        # TODO: check other state!
-        if self.medusa.configured_states() == ['search']:
+        if self.all("configured_states") == ['search']:
             return True
         else:
             return False
@@ -295,10 +316,9 @@ class ConstantinaState(BaseState):
 
     def search_mode(self):
         """Any valid state from a search mode will trigger this mode"""
-        # TODO: check other state
-        if ((self.medusa.search is not None) or
-            (self.medusa.card_filter is not None) or
-            (self.medusa.filtered != 0)):
+        if ((self.all("search") is not None) or
+            (self.all("card_filter") is not None) or
+            (self.filtered != 0)):
             return True
         else:
             return False
@@ -310,8 +330,10 @@ class ConstantinaState(BaseState):
         already displayed this number of cards, we are out of content.
         """
         card_limit = 0
-        for ctype in self.config.get("card_properties", "pagecount").replace(" ", "").split(","):
-            card_limit = card_limit + getattr(self, ctype).file_count
+        for application in global_config.get("application", "list")
+            app_state = getattr(self, application)
+            for ctype in app_state.config.get("card_properties", "pagecount").replace(" ", "").split(","):
+                card_limit = card_limit + getattr(self, ctype).file_count
         # syslog.syslog("card_limit: " + str(card_limit) + "   card_count: " + str(card_count))
         if card_count >= card_limit:
             return True
