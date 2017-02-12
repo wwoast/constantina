@@ -261,7 +261,7 @@ class BaseState:
         return [ filtertypes, removeterms ]
 
 
-    def _calculate_last_distance(self, cards):
+    def _calculate_last_distance(self, cards, common="news"):
         """
         The main part about state tracking in Constantina is tracking how far
         the closest card to the beginning of a page load is.
@@ -279,7 +279,7 @@ class BaseState:
             # Do not proces news items in the state variable
             # TODO: define "body" cards that don't get processed here per ini file
             # (in the zoo, threads work the same as medusa news cards)
-            if (card.ctype == 'news') or (card.ctype == 'heading'):
+            if (card.ctype == common) or (card.ctype == 'heading'):
                 continue
             # For adding into a string later, make card.num a string too
             getattr(self, card.ctype).clist.append(str(card.num))
@@ -296,14 +296,14 @@ class BaseState:
         # possible state types
         hidden_cards = 0    # Account for each hidden card in the distance
                             # between here and the end of the page
-        news_seen = False   # Have we processed a news card yet?
+        common_seen = False # Have we processed a news card yet?
         # Traversing backwards from the end, find the last of each cardtype shown
         for i in xrange(len(cards) - 1, -1, -1):
             card = cards[i]
-            if card.ctype == 'news':
-                if news_seen is False:
-                    self.news.distance = card.num
-                    news_seen = True
+            if card.ctype == common:
+                if common_seen is False:
+                    getattr(self, common).distance = card.num
+                    common_seen = True
                 continue
             if card.ctype == 'heading':
                 # Either a tombstone card or a "now loading" card

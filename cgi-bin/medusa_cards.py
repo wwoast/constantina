@@ -228,7 +228,7 @@ class MedusaState(BaseState):
         """
         # Start by calculating the distance from the next page for each
         # card type. This updates the state.ctype.distance values
-        BaseState.__calculate_last_distance(self, cards)
+        BaseState.__calculate_last_distance(self, cards, common="news")
 
         # Finally, construct the state string for the next page
         export_parts = [self.__export_card_state(),
