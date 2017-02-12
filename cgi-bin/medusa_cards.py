@@ -29,7 +29,7 @@ class MedusaState(BaseState):
     """
     def __init__(self, in_state=None):
         # Open the config file, and set card type defaults per state variable
-        BaseState.__init__(self, 'medusa.ini', in_state)
+        BaseState.__init__(self, in_state, 'medusa.ini')
         # Process all state variables listed in medusa.ini
         self.__import_state()
 

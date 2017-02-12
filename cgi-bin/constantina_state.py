@@ -27,7 +27,7 @@ class ConstantinaState(BaseState):
     depend on properties of the various states
     """
     def __init__(self, in_state=None):
-        BaseState.__init__(self, 'constantina.ini', in_state)
+        BaseClass.__init__(self, in_state, None)
 
         # Getting defaults from the other states requires us to first import
         # any random seed value. Then, we can finish setting the imported state

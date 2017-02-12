@@ -147,14 +147,9 @@ class BaseState:
     It also provides a clean interface to global modes and settings that
     influence what content and appearances a Constantina page can take.
     """
-    def __init__(self, config_file, in_state=None):
-        self.config_file = GlobalConfig.get('paths', 'config') + "/" + config_file
-        self.config = ConfigParser.SafeConfigParser()
-        self.config.read(self.config_file)
-        # syslog.syslog(self.config.get('paths', 'news'))
-        # syslog.syslog(self.config.get('card_counts', 'news'))
-
+    def __init__(self, in_state=None, config_file=None):
         self.in_state = in_state      # Track the original state string
+        self.__read_config(config_file)
         self.__set_state_defaults()
 
         # Was there an initial state string? Process it if there was.
@@ -163,6 +158,15 @@ class BaseState:
         else:
             self.state_vars = []
 
+
+    def __read_config(self, config_file):
+        """Read the configuration file that will populate the sub-application"""
+        self.config_path = GlobalConfig.get('paths', 'config') + "/" + config_file
+        self.config = ConfigParser.SafeConfigParser()
+        self.config.read(self.config_path)
+        # syslog.syslog(self.config.get('paths', 'news'))
+        # syslog.syslog(self.config.get('card_counts', 'news'))
+        
 
     def __set_state_defaults(self):
         """

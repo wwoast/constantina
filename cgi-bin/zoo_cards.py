@@ -29,7 +29,7 @@ class ZooState(BaseState):
     output, so that both blog and forum state is represented.
     """
     def __init__(self):
-        BaseState.__init__(self, 'zoo.ini', in_state)
+        BaseState.__init__(self, in_state, 'zoo.ini')
 
 
 
