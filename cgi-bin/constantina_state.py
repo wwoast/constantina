@@ -100,7 +100,7 @@ class ConstantinaState(BaseState):
         """
         items = []
         for application in GlobalConfig.get("applications", "list"):
-            items.append = self.get(application, value)
+            items.append(self.get(application, value))
         if mode == "append":
             items = filter(None, items)
             if items == []:
@@ -149,7 +149,7 @@ class ConstantinaState(BaseState):
         seed(self.seed)   # Now the RNG is seeded with our consistent value
 
 
-    def _import_theme_state(self):
+    def __import_theme_state(self):
         """
         In the top-level state object, we track an appearance variable, which 
         corresponds to the exact state variable imported (and exported) for the
@@ -158,11 +158,11 @@ class ConstantinaState(BaseState):
         The appearance value lets us look up which theme we display for the user.
         This theme value is a path fragment to a theme's images and stylesheets.
         """
-        appearance_state = BaseState._find_state_variable('xa')
+        appearance_state = BaseState._find_state_variable(self, 'xa')
 
         if appearance_state is not None:
             # Read in single char of theme state value
-            self.appearance = BaseState._int_translate(appearance_state, 1, 0)
+            self.appearance = BaseState._int_translate(self, appearance_state, 1, 0)
 
         theme_count = len(GlobalConfig.items("themes")) - 1
         self.theme = None
