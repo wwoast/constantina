@@ -151,7 +151,7 @@ class BaseState:
         self.in_state = in_state   # Track the original state string
         self.ctypes = []           # Card types in this application
         self.search = []           # Cards that are indexed/searchable
-        self.specials = []          # Special states associated with an app
+        self.specials = []         # Special states associated with an app
  
         if config_file is not None:
             self.__read_config(config_file)

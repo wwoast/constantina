@@ -312,7 +312,7 @@ class MedusaCard:
         For news files, the filename itself is a Unix timestamp number, and
         can be specified directly.
         """
-        type_files = opendir(self.ctype, self.hidden)
+        type_files = opendir(self.config, self.ctype, self.hidden)
 
         # Find the utime value in the array if the number given isn't an array index.
         # If we're inserting cards into an active page, the state variable will be
@@ -332,7 +332,7 @@ class MedusaCard:
             # random_types check
             if which_file == 'x':
                 self.hidden = True
-                type_files = opendir(self.ctype, self.hidden)
+                type_files = opendir(self.config, self.ctype, self.hidden)
                 # syslog.syslog(str(BaseFiles.keys()))
                 hidden_cards = xrange(0, len(BaseFiles[self.ctype + "/hidden"]))
                 self.num = hidden_cards[randint(0, len(hidden_cards)-1)]
