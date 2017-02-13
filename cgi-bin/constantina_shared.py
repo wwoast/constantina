@@ -151,7 +151,8 @@ class BaseState:
         self.in_state = in_state   # Track the original state string
         self.ctypes = []           # Card types in this application
         self.search = []           # Cards that are indexed/searchable
-        
+        self.specials = []          # Special states associated with an app
+ 
         if config_file is not None:
             self.__read_config(config_file)
             self.__set_state_defaults()
@@ -196,6 +197,7 @@ class BaseState:
                 spacing=self.config.getint('card_spacing', ctype)))
 
         for spctype, spcfield in self.config.items("special_states"):
+            self.specials.append(spcfield)      # List of spc state names
             setattr(self, spcfield, None)       # All state vals are expected to exist
 
         # Track which card types should be searchable, randomized, countable

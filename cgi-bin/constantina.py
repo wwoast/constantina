@@ -216,14 +216,17 @@ class ConstantinaPage:
         """
         Given a utime or card filename, return a permalink page of that type.
         """
-        permalink_fields = [sv[1] for sv in CONFIG.items("special_states")
-                            if sv[1].find("permalink") != -1]
-        for spcfield in permalink_fields:
-            if getattr(self.state, spcfield) is not None:
-                cnum = str(getattr(self.state, spcfield))
-                # Insert a card after the first heading
-                ctype = spcfield.split("_")[0]
-                self.cards.append(MedusaCard(ctype, cnum, grab_body=True, permalink=True))
+        for application in CONFIG.get("applications", "enabled").replace(" ", "").split(","):
+            app_state = getattr(self.state, application)
+        
+            permalink_fields = [sv[1] for sv in appstate.specials
+                                if sv[1].find("permalink") != -1]
+            for spcfield in permalink_fields:
+                if getattr(app_state, spcfield) is not None:
+                    cnum = str(getattr(app_state, spcfield))   # TODO document. wtf?
+                    # Insert a card after the first heading
+                    ctype = spcfield.split("_")[0]
+                    self.cards.append(MedusaCard(ctype, cnum, grab_body=True, permalink=True))
 
 
     def __get_prior_cards(self):
@@ -243,6 +246,7 @@ class ConstantinaPage:
         contents by distributing news articles such that the
         card-type distances are properly represented.
         """
+        # TODO: doing this across subapplications is scary!!
         if self.state.news.distance is not None:
             news_items = int(self.state.news.distance)
         else:
