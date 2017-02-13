@@ -241,7 +241,7 @@ class MedusaState(BaseState):
         return export_string
 
 
-    def exclude_cardtype(self, application, ctype):
+    def exclude_cardtype(self, ctype):
         """
         Is a card filter in place, and if so, is the given card type being filtered?
         If this returns true, it means the user either wants cards of this type, or
@@ -281,8 +281,7 @@ class MedusaCard:
     """
 
     def __init__(self, ctype, num, state=False, grab_body=True, permalink=False, search_result=False):
-        self.config = ConfigParser.SimpleConfigParser()
-        self.config.read('medusa.ini')
+        self.config = state.config
 
         self.title = self.config.get("card_defaults", "title")
         self.topics = []
@@ -318,7 +317,7 @@ class MedusaCard:
         # Find the utime value in the array if the number given isn't an array index.
         # If we're inserting cards into an active page, the state variable will be
         # given, and should be represented by a shuffled value.
-        random_types = self.config.get("card_properties", "randomize").replace(" ", "").split(",")
+        random_types = self.state.randomize
 
         # Even if we have cards of a type, don't run this logic if cards array is []
         if ((self.ctype in random_types) and
