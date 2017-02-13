@@ -149,8 +149,10 @@ class BaseState:
     """
     def __init__(self, in_state=None, config_file=None):
         self.in_state = in_state      # Track the original state string
-        self.__read_config(config_file)
-        self.__set_state_defaults()
+        
+        if config_file is not None:
+            self.__read_config(config_file)
+            self.__set_state_defaults()
 
         # Was there an initial state string? Process it if there was.
         if self.in_state is not None:

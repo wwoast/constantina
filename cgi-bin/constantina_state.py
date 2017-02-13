@@ -27,7 +27,7 @@ class ConstantinaState(BaseState):
     depend on properties of the various states
     """
     def __init__(self, in_state=None):
-        BaseClass.__init__(self, in_state, None)
+        BaseState.__init__(self, in_state, None)
 
         # Getting defaults from the other states requires us to first import
         # any random seed value. Then, we can finish setting the imported state
@@ -49,7 +49,7 @@ class ConstantinaState(BaseState):
 
         # For the values in the special_states config, create variables, i.e.
         #   state.appearance, state.page
-        for spctype, spcfield in self.config.items("special_states"):
+        for spctype, spcfield in GlobalConfig.items("special_states"):
             setattr(self, spcfield, None)       # All state vals are expected to exist
 
         # Subapplication states are held in this object too
@@ -59,20 +59,20 @@ class ConstantinaState(BaseState):
 
         # Based on modes, enable Medusa/Zoo/other states
         if GlobalConfig.get("authentication", "mode") == "blog": 
-            self.medusa = MedusaState(in_state)
+            self.medusa = MedusaState(self.in_state)
             self.max_items += self.medusa.max_items
             self.filtered += self.medusa.filtered
 
         if GlobalConfig.get("authentication", "mode") == "zoo":
-            self.zoo = ZooState(in_state)
+            self.zoo = ZooState(self.in_state)
             self.max_items += self.zoo.max_items
             self.filtered += self.zoo.filtered
 
         if GlobalConfig.get("authentication", "mode") == "combined":
-            self.medusa = MedusaState(in_state)
+            self.medusa = MedusaState(self.in_state)
             self.max_items += self.medusa.max_items
             self.filtered += self.medusa.filtered
-            self.zoo = ZooState(in_state)
+            self.zoo = ZooState(self.in_state)
             self.max_items += self.zoo.max_items
             self.filtered += self.zoo.filtered
 
@@ -126,13 +126,8 @@ class ConstantinaState(BaseState):
         self.page = BaseState._find_state_variable(self, 'xp')
 
         # If page was read in as a special state variable, use that (for search results)
-        if (self.page is not None) and (self.search_mode() is True):
+        if self.page is not None:
             self.page = BaseState._int_translate(self, self.page, 1, 0)
-        # Otherwise, determine our page number from the news article index reported
-        # TODO: Page count not just a function of MedusaState, so consider moving this
-        #   into the Constantina state. Also, the news heuristic won't work anymore
-        elif self.news.distance is not None:
-            self.page = (int(self.news.distance) + 1) / self.config.getint('card_counts', 'news')
         else:
             self.page = 0
 
