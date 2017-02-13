@@ -261,23 +261,6 @@ class ConstantinaState(BaseState):
             return False
 
 
-    def exclude_cardtype(self, application, ctype):
-        """
-        Is a card filter in place, and if so, is the given card type being filtered?
-        If this returns true, it means the user either wants cards of this type, or
-        that no card filtering is currently in place.
-        """
-        app_ctype = self.get(application, ctype)
-        if app_ctype == None:   # No app or ctype, so no cards of this type
-            return False
-
-        if ((self.all("card_filter") is not None) and
-            (app_ctype.filtertype is False)):
-            return True
-        else:
-            return False
-
-
     def filter_processed_mode(self):
         """
         Is it a search state, and did we already convert #hashtag strings

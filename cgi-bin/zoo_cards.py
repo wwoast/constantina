@@ -77,6 +77,23 @@ class ZooState(BaseState):
         # TOWRITE: Zoo specific stuff
 
 
+    def exclude_cardtype(self, application, ctype):
+        """
+        Is a card filter in place, and if so, is the given card type being filtered?
+        If this returns true, it means the user either wants cards of this type, or
+        that no card filtering is currently in place.
+        """
+        ctype = getattr(self, ctype)
+        if ctype == None:   # No app or ctype, so no cards of this type
+            return False
+
+        if ((getattr(self, "card_filter") is not None) and
+            (self.ctype.filtertype is False)):
+            return True
+        else:
+            return False
+
+
     # TOWRITE: modes related to forum cards and checks
 
 

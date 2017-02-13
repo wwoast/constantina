@@ -180,7 +180,7 @@ class ConstantinaPage:
             app_state = getattr(self.state, application)
 
             # Other types of search results come afterwards
-            for ctype in self.search:
+            for ctype in app_state.search:
                 # Manage the encyclopedia cards separately
                 if ctype == 'topics':
                     continue
