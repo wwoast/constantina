@@ -299,118 +299,120 @@ class ConstantinaPage:
         # non-redist set (news articles)
         c_nodist = {}
 
-        for ctype, spacing in CONFIG.items("card_spacing"):
-            # Spacing rules from the last page. Subtract the distance from
-            # the end of the previous page. For all other cards, follow the
-            # strict card spacing rules from the config file, plus jitter
-            spacing = int(spacing)
-            distance = getattr(self.state, ctype).distance
-            if distance is None:
-                distance = 0
-
-            if distance >= spacing:   # Prev page ctype card not close
-                c_dist[ctype] = 0
-            elif (lstop == 0) and (distance == 0):   # No pages yet
-                c_dist[ctype] = 0
-            else:   # Implement spacing from the beginning of the new page
-                c_dist[ctype] = spacing - distance
-            # syslog.syslog("*** initial spacing: ctype:%s  spacing:%d  c_dist:%d  distance:%d  lstop:%d" % ( ctype, spacing, c_dist[ctype], distance, lstop))
-            c_redist[ctype] = []
-            c_nodist[ctype] = []
-
-        # Make arrays of each card type, so we can random-jump their inserts later.
-        for i in xrange(lstop, total):
-            ctype = self.cards[i].ctype
-            # News cards don't get redistributed, and cards that we
-            # already adjusted don't get moved either
-            if (ctype == 'news') or (ctype == 'topics'):
-                c_nodist[ctype].append(self.cards[i])
-            else:
-                # Take all non-news cards out
-                c_redist[ctype].append(self.cards[i])
-
-        # Erase this snippet of the cards array, so we can reconstruct
-        # it manually. Keep popping from the point where we snipped things
-        for i in xrange(lstop, total):
-            self.cards.pop(lstop)
-
-        # Now, add the news cards back
-        for j in xrange(0, len(c_nodist['news'])):
-            self.cards.insert(lstop + j, c_nodist['news'][j])
-
-        # Now, for each type of non-news card, figure out the starting point
-        # where cards can be inserted, follow the spacing rules, and redist
-        # them throughout the cards.
-        # TODO: lowest card-count ctype inserts happen first, so there is better
-        # spacing for higher-card-count types
-        for ctype in sorted(c_redist, key=lambda ctype: len(c_redist[ctype])):
-            if c_redist[ctype] == []:
-                continue   # Empty
-            # Are we doing cardtype filtering, and this isn't an included card type?
-            if self.state.exclude_cardtype(ctype) is True:
-                continue
-
-            # Max distance between cards of this type on a page
-            norm_dist = getattr(self.state, ctype).spacing
-            # Number of input cards we're working with
-            # (should never be more than getattr(self.state, ctype).count
-            card_count = len(c_redist[ctype])
-            # For spacing purposes, page starts at the earliest page we can
-            # put a card on this page, w/o being too close to a same-type
-            # card on the previous page. This shortens the effective page dist
-            effective_pdist = p_dist - c_dist[ctype]
-            max_dist = effective_pdist
-            if card_count >= 1:
-                max_dist = floor(effective_pdist / card_count)
-
-            # If less cards on the page then expected, degrade
-            if max_dist < norm_dist:
-                max_dist = norm_dist
-                norm_dist = max_dist - 1
-
-            # Let jumps be non-deterministic
-            seed()
-
-            # Start with an initial shorter distance for shuffling.
-            # The furthest initial insert spot isn't the "first space", but
-            # the maximum insert distance before spacing rules are not possible
-            # to properly follow.
-            start_jrange = c_dist[ctype]
-            cur_p_dist = len(self.cards) - lstop
-            next_cnt = 1
-            cards_ahead = card_count - next_cnt
-            end_jrange = cur_p_dist - (cards_ahead * norm_dist)
-            # syslog.syslog("*** dist initial: ctype:%s  cnt:%d  spacing:%d cur_pd:%d  sj:%d  ej:%d" % ( ctype, len(c_redist[ctype]), norm_dist, cur_p_dist, start_jrange, end_jrange))
-
-            # Add back the cards. NOTE all jumpranges must be offsets from lstop,
-            # not specific indexes that refer to the insert points in the array
-            for k in xrange(0, card_count):
-                # Not many items in the array?
-                if start_jrange >= end_jrange:
-                    jump = start_jrange
+        for application in CONFIG.get("applications", "enabled").replace(" ","").split(","):
+            app_state = getattr(self.state, application)
+            for ctype, spacing in app_state.config.items("card_spacing"):
+                # Spacing rules from the last page. Subtract the distance from
+                # the end of the previous page. For all other cards, follow the
+                # strict card spacing rules from the config file, plus jitter
+                spacing = int(spacing)
+                distance = getattr(app_state, ctype).distance
+                if distance is None:
+                    distance = 0
+    
+                if distance >= spacing:   # Prev page ctype card not close
+                    c_dist[ctype] = 0
+                elif (lstop == 0) and (distance == 0):   # No pages yet
+                    c_dist[ctype] = 0
+                else:   # Implement spacing from the beginning of the new page
+                    c_dist[ctype] = spacing - distance
+                # syslog.syslog("*** initial spacing: ctype:%s  spacing:%d  c_dist:%d  distance:%d  lstop:%d" % ( ctype, spacing, c_dist[ctype], distance, lstop))
+                c_redist[ctype] = []
+                c_nodist[ctype] = []
+    
+            # Make arrays of each card type, so we can random-jump their inserts later.
+            for i in xrange(lstop, total):
+                ctype = self.cards[i].ctype
+                # News cards don't get redistributed, and cards that we
+                # already adjusted don't get moved either
+                if (ctype == 'news') or (ctype == 'topics'):
+                    c_nodist[ctype].append(self.cards[i])
                 else:
-                    jump = randint(start_jrange, end_jrange)
-
-                ins_index = lstop + jump
-
-                card = c_redist[ctype][k]
-                self.cards.insert(ins_index, card)
-                # syslog.syslog("k:%d  ins_index:%d  jump:%d  cur_pd:%d  sj:%d  ej:%d" % ( k, ins_index, jump, cur_p_dist, start_jrange, end_jrange))
-
-                # For next iteration, spacing is at least space distance away from
-                # the current insert, and no further than the distance by which
-                # future spacing rules are not possible to follow.
-                start_jrange = jump + norm_dist
+                    # Take all non-news cards out
+                    c_redist[ctype].append(self.cards[i])
+    
+            # Erase this snippet of the cards array, so we can reconstruct
+            # it manually. Keep popping from the point where we snipped things
+            for i in xrange(lstop, total):
+                self.cards.pop(lstop)
+    
+            # Now, add the news cards back
+            for j in xrange(0, len(c_nodist['news'])):
+                self.cards.insert(lstop + j, c_nodist['news'][j])
+    
+            # Now, for each type of non-news card, figure out the starting point
+            # where cards can be inserted, follow the spacing rules, and redist
+            # them throughout the cards.
+            # TODO: lowest card-count ctype inserts happen first, so there is better
+            # spacing for higher-card-count types
+            for ctype in sorted(c_redist, key=lambda ctype: len(c_redist[ctype])):
+                if c_redist[ctype] == []:
+                    continue   # Empty
+                # Are we doing cardtype filtering, and this isn't an included card type?
+                if app_state.exclude_cardtype(ctype) is True:
+                    continue
+    
+                # Max distance between cards of this type on a page
+                norm_dist = getattr(app_state, ctype).spacing
+                # Number of input cards we're working with
+                # (should never be more than getattr(self.state, ctype).count
+                card_count = len(c_redist[ctype])
+                # For spacing purposes, page starts at the earliest page we can
+                # put a card on this page, w/o being too close to a same-type
+                # card on the previous page. This shortens the effective page dist
+                effective_pdist = p_dist - c_dist[ctype]
+                max_dist = effective_pdist
+                if card_count >= 1:
+                    max_dist = floor(effective_pdist / card_count)
+    
+                # If less cards on the page then expected, degrade
+                if max_dist < norm_dist:
+                    max_dist = norm_dist
+                    norm_dist = max_dist - 1
+    
+                # Let jumps be non-deterministic
+                seed()
+    
+                # Start with an initial shorter distance for shuffling.
+                # The furthest initial insert spot isn't the "first space", but
+                # the maximum insert distance before spacing rules are not possible
+                # to properly follow.
+                start_jrange = c_dist[ctype]
                 cur_p_dist = len(self.cards) - lstop
-                next_cnt = next_cnt + 1
+                next_cnt = 1
                 cards_ahead = card_count - next_cnt
                 end_jrange = cur_p_dist - (cards_ahead * norm_dist)
-
-
-        # Return seed to previous deterministic value, if it existed
-        if self.state.seed:
-            seed(self.state.seed)
-
+                # syslog.syslog("*** dist initial: ctype:%s  cnt:%d  spacing:%d cur_pd:%d  sj:%d  ej:%d" % ( ctype, len(c_redist[ctype]), norm_dist, cur_p_dist, start_jrange, end_jrange))
+    
+                # Add back the cards. NOTE all jumpranges must be offsets from lstop,
+                # not specific indexes that refer to the insert points in the array
+                for k in xrange(0, card_count):
+                    # Not many items in the array?
+                    if start_jrange >= end_jrange:
+                        jump = start_jrange
+                    else:
+                        jump = randint(start_jrange, end_jrange)
+    
+                    ins_index = lstop + jump
+    
+                    card = c_redist[ctype][k]
+                    self.cards.insert(ins_index, card)
+                    # syslog.syslog("k:%d  ins_index:%d  jump:%d  cur_pd:%d  sj:%d  ej:%d" % ( k, ins_index, jump, cur_p_dist, start_jrange, end_jrange))
+    
+                    # For next iteration, spacing is at least space distance away from
+                    # the current insert, and no further than the distance by which
+                    # future spacing rules are not possible to follow.
+                    start_jrange = jump + norm_dist
+                    cur_p_dist = len(self.cards) - lstop
+                    next_cnt = next_cnt + 1
+                    cards_ahead = card_count - next_cnt
+                    end_jrange = cur_p_dist - (cards_ahead * norm_dist)
+    
+    
+            # Return seed to previous deterministic value, if it existed
+            if self.state.seed:
+                seed(self.state.seed)
+    
         # Lastly, add the topics cards back
         for j in xrange(0, len(c_nodist['topics'])):
             self.cards.insert(lstop + j, c_nodist['topics'][j])
