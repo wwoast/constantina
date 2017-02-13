@@ -140,7 +140,7 @@ class ConstantinaPage:
                     (getattr(app_state, ctype).clist is None)):
                     continue
                 # Are we doing cardtype filtering, and this isn't an included card type?
-                if self.state.exclude_cardtype(ctype) is True:
+                if app_state.exclude_cardtype(ctype) is True:
                     continue
 
                 # Grab the cnum of the last inserted thing of this type
@@ -185,10 +185,10 @@ class ConstantinaPage:
                 if ctype == 'topics':
                     continue
                 # Are we doing cardtype filtering, and this isn't an included card type?
-                if self.state.exclude_cardtype(ctype) is True:
+                if app_state.exclude_cardtype(ctype) is True:
                     continue
 
-                syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype) + " card_filter_state: " + str(self.state.card_filter))
+                syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(app_state, ctype).filtertype) + " card_filter_state: " + str(app_state.card_filter))
                 start = 0
                 end_dist = len(self.search_results.hits[ctype])
                 # No results for this search type
@@ -205,7 +205,7 @@ class ConstantinaPage:
                                 grab_file = k
                                 break
 
-                    card = MedusaCard(ctype, grab_file, state=self.state, grab_body=True, search_result=True)
+                    card = MedusaCard(ctype, grab_file, state=app_state, grab_body=True, search_result=True)
                     # News articles without topic strings won't load. Other card types that
                     # don't have embedded topics will load just fine.
                     if (card.topics != []) or (ctype == 'quotes') or (ctype == 'topics'):
