@@ -148,7 +148,9 @@ class BaseState:
     influence what content and appearances a Constantina page can take.
     """
     def __init__(self, in_state=None, config_file=None):
-        self.in_state = in_state      # Track the original state string
+        self.in_state = in_state   # Track the original state string
+        self.ctypes = []           # Card types in this application
+        self.search = []           # Cards that are indexed/searchable
         
         if config_file is not None:
             self.__read_config(config_file)
@@ -178,13 +180,13 @@ class BaseState:
         """
         self.max_items = 0             # Max items per page, based on
                                        # counts from all card types
-
         for ctype, cpp in self.config.items('card_counts'):
             self.max_items = self.max_items + int(cpp)
 
         # For the card types in the card_counts config, create variables, i.e.
         #   state.news.distance, state.topics.spacing
         for ctype, card_count in self.config.items('card_counts'):
+            self.ctypes.append(ctype)
             setattr(self, ctype, BaseCardType(
                 config=self.config,
                 ctype=ctype,
@@ -195,6 +197,19 @@ class BaseState:
 
         for spctype, spcfield in self.config.items("special_states"):
             setattr(self, spcfield, None)       # All state vals are expected to exist
+
+        # Track which card types should be searchable, randomized, countable
+        for section in ["search", "randomize", "pagecount"]:
+            setattr(self, section, [])
+        search_types = self.config.get("card_properties", "search").replace(" ", "").split(",")
+        for ctype in search_types: 
+            self.search.append(ctype)
+        randomize_types = self.config.get("card_properties", "randomize").replace(" ", "").split(",")
+        for ctype in randomize_types: 
+            self.randomize.append(ctype)
+        pagecount_types = self.config.get("card_properties", "pagecount").replace(" ", "").split(",")
+        for ctype in pagecount_types: 
+            self.pagecount.append(ctype)
 
 
     def _int_translate(self, checkval, width, default):

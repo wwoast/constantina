@@ -99,7 +99,7 @@ class ConstantinaState(BaseState):
         The mode can be a sum of available values, or logic like 'and' or 'or'
         """
         items = []
-        for application in GlobalConfig.get("applications", "list"):
+        for application in GlobalConfig.get("applications", "enabled"):
             items.append(self.get(application, value))
         if mode == "append":
             items = filter(None, items)
@@ -323,7 +323,7 @@ class ConstantinaState(BaseState):
         already displayed this number of cards, we are out of content.
         """
         card_limit = 0
-        for application in GlobalConfig.get("application", "list"):
+        for application in GlobalConfig.get("applications", "enabled"):
             app_state = getattr(self, application)
             for ctype in app_state.config.get("card_properties", "pagecount").replace(" ", "").split(","):
                 card_limit = card_limit + getattr(self, ctype).file_count

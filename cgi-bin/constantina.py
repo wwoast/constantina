@@ -127,34 +127,37 @@ class ConstantinaPage:
         # Anything with rules for cards per page, start adding them.
         # Do not grab full data for all but the most recent cards!
         # For older cards, just track their metadata
-        for ctype, count in CONFIG.items("card_counts"):
-            card_count = int(count)
-            # No topic cards unless they're search results, and no card types
-            # that have no historical values in the last page
-            if card_count == 0:
-                continue
-            # No data and it's not the first page? Skip this type
-            if ((self.state.fresh_mode() is False) and
-                (getattr(self.state, ctype).clist is None)):
-                continue
-            # Are we doing cardtype filtering, and this isn't an included card type?
-            if self.state.exclude_cardtype(ctype) is True:
-                continue
+        for application in CONFIG.get("applications", "enabled").replace(" ", "").split(","):
+            app_state = getattr(self.state, application)
+            for ctype in app_state.ctypes: 
+                card_count = getattr(app_state, ctype).count
+                # No topic cards unless they're search results, and no card types
+                # that have no historical values in the last page
+                if card_count == 0:
+                    continue
+                # No data and it's not the first page? Skip this type
+                if ((self.state.fresh_mode() is False) and
+                    (getattr(app_state, ctype).clist is None)):
+                    continue
+                # Are we doing cardtype filtering, and this isn't an included card type?
+                if self.state.exclude_cardtype(ctype) is True:
+                    continue
 
-            # Grab the cnum of the last inserted thing of this type
-            # and then open the next one
-            # If we didn't open anyting last time, start at the beginning
-            if self.state.fresh_mode() is True:
-                start = 0
-            # If these are previous items, calculate how many were on previous pages
-            else:
-                start = int(self.state.page * card_count)
+                # Grab the cnum of the last inserted thing of this type
+                # and then open the next one
+                # If we didn't open anyting last time, start at the beginning
+                if self.state.fresh_mode() is True:
+                    start = 0
+                # If these are previous items, calculate how many were on previous pages
+                else:
+                    start = int(self.state.page * card_count)
 
-            for i in xrange(start, start + card_count):
-                card = MedusaCard(ctype, i, state=self.state, grab_body=True)
-                # Don't include cards that failed to load content
-                if card.topics != []:
-                    self.cards.append(card)
+                for i in xrange(start, start + card_count):
+                    # TODO: specify generic card class for obtaining
+                    card = MedusaCard(ctype, i, state=app_state, grab_body=True)
+                    # Don't include cards that failed to load content
+                    if card.topics != []:
+                        self.cards.append(card)
 
 
     def __get_search_result_cards(self):
@@ -168,42 +171,45 @@ class ConstantinaPage:
         # card of the results. TOPIC articles must be filenamed lowercase!!
         # HOWEVER if we're beyond the first page of search results, don't add
         # the encyclopedia page again! Use image count as a heuristic for page count.
+        # TODO: make sure that medusa is a permissable state!!
         if self.query_terms.lower() in opendir(CONFIG, 'topics'):
-            encyclopedia = MedusaCard('topics', self.query_terms.lower(), state=self.state, grab_body=True, search_result=True)
+            encyclopedia = MedusaCard('topics', self.query_terms.lower(), state=self.state.medusa, grab_body=True, search_result=True)
             self.cards.append(encyclopedia)
 
-        # Other types of search results come afterwards
-        search_types = CONFIG.get("card_properties", "search").replace(" ", "").split(",")
-        for ctype in search_types:
-            # Manage the encyclopedia cards separately
-            if ctype == 'topics':
-                continue
-            # Are we doing cardtype filtering, and this isn't an included card type?
-            if self.state.exclude_cardtype(ctype) is True:
-                continue
+        for application in CONFIG.get("applications", "enabled").replace(" ", "").split(","):
+            app_state = getattr(self.state, application)
 
-            syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype) + " card_filter_state: " + str(self.state.card_filter))
-            start = 0
-            end_dist = len(self.search_results.hits[ctype])
-            # No results for this search type
-            if end_dist == 0:
-                continue
+            # Other types of search results come afterwards
+            for ctype in self.search:
+                # Manage the encyclopedia cards separately
+                if ctype == 'topics':
+                    continue
+                # Are we doing cardtype filtering, and this isn't an included card type?
+                if self.state.exclude_cardtype(ctype) is True:
+                    continue
 
-            for j in xrange(start, end_dist):
-                grab_file = self.search_results.hits[ctype][j]
-                # If the hits[ctype][j] is a file name, figure out which Nth file this is
-                if grab_file.isdigit() is False:
-                    for k in xrange(0, len(BaseFiles[ctype])):
-                        # syslog.syslog("compare:" + grab_file + "==" + BaseFiles[ctype][k])
-                        if BaseFiles[ctype][k] == grab_file:
-                            grab_file = k
-                            break
+                syslog.syslog("ctype: " + ctype + " filter: " + str(getattr(self.state, ctype).filtertype) + " card_filter_state: " + str(self.state.card_filter))
+                start = 0
+                end_dist = len(self.search_results.hits[ctype])
+                # No results for this search type
+                if end_dist == 0:
+                    continue
 
-                card = MedusaCard(ctype, grab_file, state=self.state, grab_body=True, search_result=True)
-                # News articles without topic strings won't load. Other card types that
-                # don't have embedded topics will load just fine.
-                if (card.topics != []) or (ctype == 'quotes') or (ctype == 'topics'):
-                    self.cards.append(card)
+                for j in xrange(start, end_dist):
+                    grab_file = self.search_results.hits[ctype][j]
+                    # If the hits[ctype][j] is a file name, figure out which Nth file this is
+                    if grab_file.isdigit() is False:
+                        for k in xrange(0, len(BaseFiles[ctype])):
+                            # syslog.syslog("compare:" + grab_file + "==" + BaseFiles[ctype][k])
+                            if BaseFiles[ctype][k] == grab_file:
+                                grab_file = k
+                                break
+
+                    card = MedusaCard(ctype, grab_file, state=self.state, grab_body=True, search_result=True)
+                    # News articles without topic strings won't load. Other card types that
+                    # don't have embedded topics will load just fine.
+                    if (card.topics != []) or (ctype == 'quotes') or (ctype == 'topics'):
+                        self.cards.append(card)
 
 
     def __get_permalink_card(self):
