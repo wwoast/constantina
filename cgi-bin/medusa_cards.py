@@ -280,7 +280,7 @@ class MedusaCard:
     the card, as well as what its page index and type are.
     """
 
-    def __init__(self, ctype, num, state=False, grab_body=True, permalink=False, search_result=False):
+    def __init__(self, ctype, num, state, grab_body=True, permalink=False, search_result=False):
         self.config = state.config
 
         self.title = self.config.get("card_defaults", "title")

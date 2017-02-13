@@ -53,15 +53,15 @@ class ConstantinaPage:
             syslog.syslog("***** Completely new page-load workflow *****")
             self.__get_cards()
             self.__distribute_cards()
-            self.cards.insert(0, MedusaCard('heading', 'welcome', grab_body=True))
+            self.cards.insert(0, MedusaCard('heading', 'welcome', state=self.state.medusa, grab_body=True))
 
             if self.state.out_of_content(len(self.cards)) is True:
                 self.cards.append(MedusaCard('heading', 'bottom', grab_body=True))
             else:
                 # Add a hidden card to trigger loading more data when reached
-                self.cards.insert(len(self.cards) - 7, MedusaCard('heading', 'scrollstone', grab_body=True))
+                self.cards.insert(len(self.cards) - 7, MedusaCard('heading', 'scrollstone', state=self.state.medusa, grab_body=True))
                 # Finally, add the "next page" tombstone to load more content
-                self.cards.append(MedusaCard('heading', 'tombstone', grab_body=True))
+                self.cards.append(MedusaCard('heading', 'tombstone', state=self.state.medusa, grab_body=True))
 
         elif self.state.permalink_mode() is True:
             # This is a permalink page request. For these, use a
@@ -89,11 +89,11 @@ class ConstantinaPage:
             # TODO: this logic has issues
             if ((self.state.max_items - self.filtered) * (self.state.page + 1) <= len(self.cards)):
                 # Add a hidden card to trigger loading more data when reached
-                self.cards.insert(len(self.cards) - 7, MedusaCard('heading', 'scrollstone', grab_body=True))
+                self.cards.insert(len(self.cards) - 7, MedusaCard('heading', 'scrollstone', state=self.state.medusa, grab_body=True))
                 # Finally, add the "next page" tombstone to load more content
-                self.cards.append(MedusaCard('heading', 'tombstone', grab_body=True))
+                self.cards.append(MedusaCard('heading', 'tombstone', state=self.state.medusa, grab_body=True))
             else:
-                self.cards.append(MedusaCard('heading', 'bottom', grab_body=True))
+                self.cards.append(MedusaCard('heading', 'bottom', state=self.state.medusa, grab_body=True))
 
         else:
             # Get new cards for an existing page, tracking what the
@@ -106,11 +106,11 @@ class ConstantinaPage:
 
             if (self.state.news.distance + self.state.news.per_page <= self.state.news.file_count):
                 # Add a hidden card to trigger loading more data when reached
-                self.cards.insert(len(self.cards) - 7, MedusaCard('heading', 'scrollstone', grab_body=True))
+                self.cards.insert(len(self.cards) - 7, MedusaCard('heading', 'scrollstone', state=self.state.medusa, grab_body=True))
                 # Finally, add the "next page" tombstone to load more content
-                self.cards.append(MedusaCard('heading', 'tombstone', grab_body=True))
+                self.cards.append(MedusaCard('heading', 'tombstone', state=self.state.medusa, grab_body=True))
             else:
-                self.cards.append(MedusaCard('heading', 'bottom', grab_body=True))
+                self.cards.append(MedusaCard('heading', 'bottom', state=self.state.medusa, grab_body=True))
 
         # Once we've constructed the new card list, update the page
         # state for insertion, for the "next_page" link.
@@ -226,7 +226,7 @@ class ConstantinaPage:
                     cnum = str(getattr(app_state, spcfield))   # TODO document. wtf?
                     # Insert a card after the first heading
                     ctype = spcfield.split("_")[0]
-                    self.cards.append(MedusaCard(ctype, cnum, grab_body=True, permalink=True))
+                    self.cards.append(MedusaCard(ctype, cnum, state=app_state, grab_body=True, permalink=True))
 
 
     def __get_prior_cards(self):
@@ -254,7 +254,7 @@ class ConstantinaPage:
 
         # Then add the appropriate page count's worth of news
         for n in xrange(0, news_items):
-            self.cards.append(MedusaCard('news', n, grab_body=False))
+            self.cards.append(MedusaCard('news', n, state=self.state.medusa, grab_body=False))
 
         # Now, for each card type, go back state.ctype.distance
         # and insert the run of that card type.
@@ -275,7 +275,7 @@ class ConstantinaPage:
             # syslog.syslog("ctype, len, and dist: " + str(ctype) + " " + str(len(self.cards)) + " " + str(dist))
             put = len(self.cards) - 1 - int(dist)
             for cnum in getattr(self.state, ctype).clist:
-                self.cards.insert(put, MedusaCard(ctype, cnum, grab_body=False))
+                self.cards.insert(put, MedusaCard(ctype, cnum, state=self.state.medusa, grab_body=False))
 
         # Current length should properly track the starting point
         # of where we begin adding new cards to the page, not just
