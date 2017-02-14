@@ -88,7 +88,7 @@ class ConstantinaState(BaseState):
 
         item = getattr(app_state, value)
         if callable(item):
-            return item(args) 
+            return item(*args)   # Unroll the array of args
         else:
             return item
 
@@ -210,7 +210,7 @@ class ConstantinaState(BaseState):
         return str(self.seed).replace("0.", "")
 
 
-    def _export_theme_state(self):
+    def __export_theme_state(self):
         """If tracking an appearance or theme, include it in state links"""
         appearance_string = None
         if self.appearance is not None:
@@ -221,8 +221,9 @@ class ConstantinaState(BaseState):
     def export_state(self, cards, query_terms, filter_terms, filtered_count):
         """Export all medusa/other states, as well as appearance/page here"""
         args = [cards, query_terms, filter_terms, filtered_count]
-        export_parts = [ self.export_random_seed(),
-                         self.export_page_count_state(),
+        export_parts = [ self.__export_random_seed(),
+                         self.__export_page_count_state(),
+                         self.__export_theme_state(),
                          self.get("medusa", "export_state", args),
                          self.get("zoo", "export_state", args) ]
 
