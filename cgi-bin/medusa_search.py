@@ -34,7 +34,7 @@ class MedusaSearch:
     the related phrases can be turned off.
     """
     def __init__(self, state):
-        self.config = state.config
+        self.config = state.medusa.config
 
         # Upper limit on the permitted number of searchable items.
         # Since we use this as an array slice, add one to support N-1 elements
@@ -66,8 +66,8 @@ class MedusaSearch:
         # Max search results per page is equal to the number of cards that would
         # be shown on a normal news page. And while whoosh expects pages starting
         # at one, the page state counting will be from zero
-        self.page = self.state.page + 1
-        self.resultcount = self.state.max_items
+        self.page = state.page + 1
+        self.resultcount = state.max_items
         self.filtered = state.filtered
 
         # File paths for loading things
@@ -76,8 +76,8 @@ class MedusaSearch:
         self.symobls_file = self.config.get('search', 'ignore_symbols')
         self.search_types = self.config.get("card_properties", "search").replace(" ", "").split(",")
 
-        unsafe_query_terms = self.state.medusa.search
-        unsafe_filter_terms = self.state.medusa.card_filter
+        unsafe_query_terms = state.medusa.search
+        unsafe_filter_terms = state.medusa.card_filter
 
         # Define the indexing schema. Include the mtime to track updated
         # content in the backend, ctype so that we can manage the distribution
