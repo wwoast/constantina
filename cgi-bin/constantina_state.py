@@ -77,7 +77,7 @@ class ConstantinaState(BaseState):
             self.filtered += self.zoo.filtered
 
 
-    def get(self, application, value):
+    def get(self, application, value, args=None):
         """
         Allow retrieving a medusa/zoo state value or function, or returning a 
         default None value.
@@ -88,19 +88,19 @@ class ConstantinaState(BaseState):
 
         item = getattr(app_state, value)
         if callable(item):
-            return item() 
+            return item(args) 
         else:
             return item
 
 
-    def all(self, value, mode="append"):
+    def all(self, value, mode="append", args=None):
         """
         For all available applications, get the value or function asked for.
         The mode can be a sum of available values, or logic like 'and' or 'or'
         """
         items = []
-        for application in GlobalConfig.get("applications", "enabled"):
-            items.append(self.get(application, value))
+        for application in GlobalConfig.get("applications", "enabled").replace(" ","").split(","):
+            items.append(self.get(application, value, args))
         if mode == "append":
             items = filter(None, items)
             if items == []:
@@ -218,12 +218,13 @@ class ConstantinaState(BaseState):
         return appearance_string
  
 
-    def export_state(self):
+    def export_state(self, cards, query_terms, filter_terms, filtered_count):
         """Export all medusa/other states, as well as appearance/page here"""
+        args = [cards, query_terms, filter_terms, filtered_count]
         export_parts = [ self.export_random_seed(),
                          self.export_page_count_state(),
-                         self.get("medusa", "export_state"),
-                         self.get("zoo", "export_state") ]
+                         self.get("medusa", "export_state", args),
+                         self.get("zoo", "export_state", args) ]
 
         export_parts = filter(None, export_parts)
         export_string = ':'.join(export_parts)
@@ -306,10 +307,10 @@ class ConstantinaState(BaseState):
         already displayed this number of cards, we are out of content.
         """
         card_limit = 0
-        for application in GlobalConfig.get("applications", "enabled"):
+        for application in GlobalConfig.get("applications", "enabled").replace(" ", "").split(","):
             app_state = getattr(self, application)
             for ctype in app_state.config.get("card_properties", "pagecount").replace(" ", "").split(","):
-                card_limit = card_limit + getattr(self, ctype).file_count
+                card_limit = card_limit + getattr(app_state, ctype).file_count
         # syslog.syslog("card_limit: " + str(card_limit) + "   card_count: " + str(card_count))
         if card_count >= card_limit:
             return True

@@ -56,7 +56,7 @@ class ConstantinaPage:
             self.cards.insert(0, MedusaCard('heading', 'welcome', state=self.state.medusa, grab_body=True))
 
             if self.state.out_of_content(len(self.cards)) is True:
-                self.cards.append(MedusaCard('heading', 'bottom', grab_body=True))
+                self.cards.append(MedusaCard('heading', 'bottom', state=self.state.medusa, grab_body=True))
             else:
                 # Add a hidden card to trigger loading more data when reached
                 self.cards.insert(len(self.cards) - 7, MedusaCard('heading', 'scrollstone', state=self.state.medusa, grab_body=True))
