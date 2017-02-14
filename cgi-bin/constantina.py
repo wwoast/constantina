@@ -47,6 +47,8 @@ class ConstantinaPage:
         self.filter_terms = ''   # For filtering based on cardtypes
         self.filtered = 0        # Cards excluded from search results by filtering
 
+        # TODO: card insertion logic needs to be considerably more generic if
+        # there are multiple applications in play!
         if self.state.fresh_mode() is True:
             # Create a new page of randomly-assorted images and quotes,
             # along with reverse-time-order News items
@@ -69,7 +71,7 @@ class ConstantinaPage:
             # the bottom of the page).
             syslog.syslog("***** Permalink page workflow *****")
             self.__get_permalink_card()
-            self.cards.append(MedusaCard('heading', 'footer', grab_body=True, permalink=True))
+            self.cards.append(MedusaCard('heading', 'footer', state=self.state.medusa, grab_body=True, permalink=True))
 
         elif self.state.search_mode() is True:
             # Return search results based on the subsequent comma-separated list,
@@ -77,7 +79,7 @@ class ConstantinaPage:
             # TODO: Tokenize all search parameters and remove non-alphanum characters
             # other than plus or hash for hashtags. All input-commas become pluses
             syslog.syslog("***** Search/Filter card workflow *****")
-            self.search_results = MedusaSearch(self.state.page, self.state.max_items, self.state.search, self.state.card_filter, self.state.filtered)
+            self.search_results = MedusaSearch(self.state)
             self.query_terms = self.search_results.query_string
             self.filter_terms = self.search_results.filter_string
             self.filtered = self.search_results.filtered
