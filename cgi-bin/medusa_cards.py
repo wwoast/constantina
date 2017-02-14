@@ -228,7 +228,7 @@ class MedusaState(BaseState):
         """
         # Start by calculating the distance from the next page for each
         # card type. This updates the state.ctype.distance values
-        BaseState.__calculate_last_distance(self, cards, common="news")
+        BaseState._calculate_last_distance(self, cards, common="news")
 
         # Finally, construct the state string for the next page
         export_parts = [self.__export_card_state(),
@@ -253,6 +253,19 @@ class MedusaState(BaseState):
 
         if ((getattr(self, "card_filter") is not None) and
             (self.ctype.filtertype is False)):
+            return True
+        else:
+            return False
+
+
+    def filter_processed_mode(self):
+        """
+        Is it a search state, and did we already convert #hashtag strings
+        into filter queries? In Medusa, #hashtags are always card type filters.
+        """
+        states = self.configured_states()
+        if (('search' in states) or
+            ('card_filter' in states)):
             return True
         else:
             return False
