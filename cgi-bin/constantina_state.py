@@ -88,8 +88,10 @@ class ConstantinaState(BaseState):
             return None
 
         item = getattr(app_state, value)
-        if callable(item):
+        if callable(item) and args is not None:
             return item(*args)   # Unroll the array of args
+        elif callable(item):
+            return item()
         else:
             return item
 
