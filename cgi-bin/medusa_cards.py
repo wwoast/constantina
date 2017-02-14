@@ -96,7 +96,7 @@ class MedusaState(BaseState):
         if self.search is not None:
             searchterms = self.search.split(' ')
             searchterms = filter(None, searchterms)   # remove nulls
-            [ newfilters, removeterms ] = BaseState._process_search_strings('#', searchterms)
+            [ newfilters, removeterms ] = BaseState._process_search_strings(self, '#', searchterms)
             # Remove filter strings from the search state list if they exist
             [searchterms.remove(term) for term in removeterms]
             self.search = searchterms

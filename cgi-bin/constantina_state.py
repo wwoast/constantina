@@ -28,6 +28,7 @@ class ConstantinaState(BaseState):
     """
     def __init__(self, in_state=None):
         BaseState.__init__(self, in_state, None)
+        self.config = GlobalConfig
 
         # Getting defaults from the other states requires us to first import
         # any random seed value. Then, we can finish setting the imported state
@@ -49,7 +50,7 @@ class ConstantinaState(BaseState):
 
         # For the values in the special_states config, create variables, i.e.
         #   state.appearance, state.page
-        for spctype, spcfield in GlobalConfig.items("special_states"):
+        for spctype, spcfield in self.config.items("special_states"):
             setattr(self, spcfield, None)       # All state vals are expected to exist
 
         # Subapplication states are held in this object too
@@ -58,17 +59,17 @@ class ConstantinaState(BaseState):
         # self.dracula = None
 
         # Based on modes, enable Medusa/Zoo/other states
-        if GlobalConfig.get("authentication", "mode") == "blog": 
+        if self.config.get("authentication", "mode") == "blog": 
             self.medusa = MedusaState(self.in_state)
             self.max_items += self.medusa.max_items
             self.filtered += self.medusa.filtered
 
-        if GlobalConfig.get("authentication", "mode") == "zoo":
+        if self.config.get("authentication", "mode") == "zoo":
             self.zoo = ZooState(self.in_state)
             self.max_items += self.zoo.max_items
             self.filtered += self.zoo.filtered
 
-        if GlobalConfig.get("authentication", "mode") == "combined":
+        if self.config.get("authentication", "mode") == "combined":
             self.medusa = MedusaState(self.in_state)
             self.max_items += self.medusa.max_items
             self.filtered += self.medusa.filtered
@@ -99,7 +100,7 @@ class ConstantinaState(BaseState):
         The mode can be a sum of available values, or logic like 'and' or 'or'
         """
         items = []
-        for application in GlobalConfig.get("applications", "enabled").replace(" ","").split(","):
+        for application in self.config.get("applications", "enabled").replace(" ","").split(","):
             items.append(self.get(application, value, args))
         if mode == "append":
             items = filter(None, items)
@@ -164,21 +165,21 @@ class ConstantinaState(BaseState):
             # Read in single char of theme state value
             self.appearance = BaseState._int_translate(self, appearance_state, 1, 0)
 
-        theme_count = len(GlobalConfig.items("themes")) - 1
+        theme_count = len(self.config.items("themes")) - 1
         self.theme = None
         if self.appearance is None:
-            self.theme = GlobalConfig.get("themes", "default")
+            self.theme = self.config.get("themes", "default")
         elif self.appearance >= theme_count:
-            self.theme = GlobalConfig.get("themes", str(self.appearance % theme_count))
+            self.theme = self.config.get("themes", str(self.appearance % theme_count))
         else:
-            self.theme = GlobalConfig.get("themes", str(self.appearance))
+            self.theme = self.config.get("themes", str(self.appearance))
 
         # If the configuration supports a random theme, and we didn't have a
         # theme provided in the initial state, let's choose one randomly
         if (appearance_state is None) and (self.theme == "random"):
             seed()   # Enable non-seeded choice
             choice = randint(0, theme_count - 1)
-            self.theme = GlobalConfig.get("themes", str(choice))
+            self.theme = self.config.get("themes", str(choice))
             if self.seed:   # Re-enable seeded nonrandom choice
                 seed(self.seed)
 
@@ -308,7 +309,7 @@ class ConstantinaState(BaseState):
         already displayed this number of cards, we are out of content.
         """
         card_limit = 0
-        for application in GlobalConfig.get("applications", "enabled").replace(" ", "").split(","):
+        for application in self.config.get("applications", "enabled").replace(" ", "").split(","):
             app_state = getattr(self, application)
             for ctype in app_state.config.get("card_properties", "pagecount").replace(" ", "").split(","):
                 card_limit = card_limit + getattr(app_state, ctype).file_count
