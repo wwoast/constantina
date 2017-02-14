@@ -649,7 +649,7 @@ def create_page(page):
             (page.cards[i].ctype == "topics") or
             (page.cards[i].ctype == "features")):
             # TODO: export_display_state is gone, replaced by theme state
-            output += create_textcard(page.cards[i], page.state.export_display_state())
+            output += create_textcard(page.cards[i], page.state.export_theme_state())
 
         if ((page.cards[i].ctype == "quotes") or
             (page.cards[i].ctype == "heading")):

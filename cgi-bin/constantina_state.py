@@ -210,7 +210,7 @@ class ConstantinaState(BaseState):
         return str(self.seed).replace("0.", "")
 
 
-    def __export_theme_state(self):
+    def export_theme_state(self):
         """If tracking an appearance or theme, include it in state links"""
         appearance_string = None
         if self.appearance is not None:
@@ -223,7 +223,7 @@ class ConstantinaState(BaseState):
         args = [cards, query_terms, filter_terms, filtered_count]
         export_parts = [ self.__export_random_seed(),
                          self.__export_page_count_state(),
-                         self.__export_theme_state(),
+                         self.export_theme_state(),
                          self.get("medusa", "export_state", args),
                          self.get("zoo", "export_state", args) ]
 
