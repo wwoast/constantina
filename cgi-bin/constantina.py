@@ -174,15 +174,16 @@ class ConstantinaPage:
         # HOWEVER if we're beyond the first page of search results, don't add
         # the encyclopedia page again! Use image count as a heuristic for page count.
         # TODO: make sure that medusa is a permissable state!!
-        if self.query_terms.lower() in opendir(CONFIG, 'topics'):
-            encyclopedia = MedusaCard('topics', self.query_terms.lower(), state=self.state.medusa, grab_body=True, search_result=True)
-            self.cards.append(encyclopedia)
+        if "medusa" in CONFIG.get("applications", "enabled").replace(" ","").split(","):
+            if self.query_terms.lower() in opendir(self.state.medusa.config, 'topics'):
+                encyclopedia = MedusaCard('topics', self.query_terms.lower(), state=self.state.medusa, grab_body=True, search_result=True)
+                self.cards.append(encyclopedia)
 
         for application in CONFIG.get("applications", "enabled").replace(" ", "").split(","):
             app_state = getattr(self.state, application)
 
             # Other types of search results come afterwards
-            for ctype in app_state.search:
+            for ctype in app_state.searchtypes:
                 # Manage the encyclopedia cards separately
                 if ctype == 'topics':
                     continue

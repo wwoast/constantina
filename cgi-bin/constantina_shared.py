@@ -150,7 +150,7 @@ class BaseState:
     def __init__(self, in_state=None, config_file=None):
         self.in_state = in_state   # Track the original state string
         self.ctypes = []           # Card types in this application
-        self.search = []           # Cards that are indexed/searchable
+        self.searchtypes = []      # Cards that are indexed/searchable
         self.specials = []         # Special states associated with an app
  
         if config_file is not None:
@@ -205,7 +205,7 @@ class BaseState:
             setattr(self, section, [])
         search_types = self.config.get("card_properties", "search").replace(" ", "").split(",")
         for ctype in search_types: 
-            self.search.append(ctype)
+            self.searchtypes.append(ctype)
         randomize_types = self.config.get("card_properties", "randomize").replace(" ", "").split(",")
         for ctype in randomize_types: 
             self.randomize.append(ctype)
@@ -223,7 +223,7 @@ class BaseState:
         return checkval
 
 
-    def _find_state_variable(self, search):
+    def _find_state_variable(self, query):
         """
         Leveraged by all the other state functions. Find the given state
         variable, either by state variable name, or "number" to find the
@@ -236,20 +236,20 @@ class BaseState:
         output = None
 
         # Random seed is the one all-numeric state variable
-        if search == "seed":
+        if query == "seed":
             hits = [token for token in self.state_vars if token.isdigit()]
             if len(hits) > 0:
                 output = hits[0]
         # Special state variables are singleton values. Typically a
         # two-letter value starting with "x" as the first letter.
-        elif self.config.has_option("special_states", search):
-            hits = [token for token in self.state_vars if token.find(search) == 0]
+        elif self.config.has_option("special_states", query):
+            hits = [token for token in self.state_vars if token.find(query) == 0]
             if len(hits) > 0:
                 output = unquote_plus(hits[0][2:])
         # Individual content card state variables. Each one is a distance
         # from the current page.
-        elif search in [s[0] for s in self.config.options("card_counts")]:
-            hits = [token for token in self.state_vars if token.find(search) == 0]
+        elif query in [s[0] for s in self.config.options("card_counts")]:
+            hits = [token for token in self.state_vars if token.find(query) == 0]
             if len(hits) > 0:
                 output = int(hits[0][1:])
 
