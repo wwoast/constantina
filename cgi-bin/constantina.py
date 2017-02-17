@@ -249,12 +249,9 @@ class ConstantinaPage:
         contents by distributing news articles such that the
         card-type distances are properly represented.
         """
-        # TODO: doing this across subapplications is scary!!
-        if self.state.medusa.news.distance is not None:
-            news_items = int(self.state.medusa.news.distance)
-        else:
-            news_items = 0
+        news_items = int(self.state.medusa.news.count) * self.state.page 
 
+        syslog.syslog("news_items: " + str(news_items))
         # Then add the appropriate page count's worth of news
         for n in xrange(0, news_items):
             self.cards.append(MedusaCard('news', n, state=self.state.medusa, grab_body=False))
@@ -284,6 +281,7 @@ class ConstantinaPage:
         # of where we begin adding new cards to the page, not just
         # tracking the old ones.
         self.cur_len = len(self.cards)
+        syslog.syslog("cur_len: " + str(self.cur_len))
 
 
     def __distribute_cards(self):
