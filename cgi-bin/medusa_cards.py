@@ -122,7 +122,7 @@ class MedusaState(BaseState):
                 filterterms = self.card_filter.split(' ')
                 # Add-filter-cardtypes expects strings that start with #
                 hashtag_process = map(lambda x: "#" + x, filterterms)
-                [ newfilters, removeterms ] = BaseState._process_search_strings('#', hashtag_process)
+                [ newfilters, removeterms ] = BaseState._process_search_strings(self, '#', hashtag_process)
                 # Take off leading #-sigil for card type searches
                 self.card_filter = map(lambda x: x[1:], newfilters)
                 # Record filters being set
