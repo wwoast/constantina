@@ -106,7 +106,7 @@ class ConstantinaPage:
             self.__get_cards()
             self.__distribute_cards()
 
-            if (self.state.news.distance + self.state.news.per_page <= self.state.news.file_count):
+            if self.state.out_of_content(len(self.cards)) is False:
                 # Add a hidden card to trigger loading more data when reached
                 self.cards.insert(len(self.cards) - 7, MedusaCard('heading', 'scrollstone', state=self.state.medusa, grab_body=True))
                 # Finally, add the "next page" tombstone to load more content
@@ -250,8 +250,8 @@ class ConstantinaPage:
         card-type distances are properly represented.
         """
         # TODO: doing this across subapplications is scary!!
-        if self.state.news.distance is not None:
-            news_items = int(self.state.news.distance)
+        if self.state.medusa.news.distance is not None:
+            news_items = int(self.state.medusa.news.distance)
         else:
             news_items = 0
 
@@ -268,16 +268,16 @@ class ConstantinaPage:
         # page, which is important for once we've generated all
         # of this page's content and need to write a new state
         # variable based on the current list of cards.
-        for ctype, card_count in CONFIG.items("card_counts"):
+        for ctype, card_count in self.state.medusa.config.items("card_counts"):
             # Are we doing cardtype filtering, and this isn't an included card type?
-            if self.state.exclude_cardtype(ctype) is True:
+            if self.state.medusa.exclude_cardtype(ctype) is True:
                 continue
-            dist = getattr(self.state, ctype).distance
-            if (len(getattr(self.state, ctype).clist) == 0) or (dist is None):
+            dist = getattr(self.state.medusa, ctype).distance
+            if (len(getattr(self.state.medusa, ctype).clist) == 0) or (dist is None):
                 continue
             # syslog.syslog("ctype, len, and dist: " + str(ctype) + " " + str(len(self.cards)) + " " + str(dist))
             put = len(self.cards) - 1 - int(dist)
-            for cnum in getattr(self.state, ctype).clist:
+            for cnum in getattr(self.state.medusa, ctype).clist:
                 self.cards.insert(put, MedusaCard(ctype, cnum, state=self.state.medusa, grab_body=False))
 
         # Current length should properly track the starting point

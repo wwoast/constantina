@@ -330,6 +330,8 @@ class BaseState:
                 if common_seen is False:
                     getattr(self, common).distance = card.num
                     common_seen = True
+                    syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" %
+                                 (card.ctype, card.num, i, len(cards), len(cards) - hidden_cards))
                 continue
             if card.ctype == 'heading':
                 # Either a tombstone card or a "now loading" card
@@ -344,8 +346,8 @@ class BaseState:
             done_distance.sort()
 
             dist = len(cards) - hidden_cards - i
-            # syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" %
-            #              (card.ctype, dist, i, len(cards), len(cards) - hidden_cards))
+            syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" %
+                         (card.ctype, dist, i, len(cards), len(cards) - hidden_cards))
             getattr(self, card.ctype).distance = str(dist)
             # Early break once we've seen all the card types
             if done_distance == all_ctypes:
