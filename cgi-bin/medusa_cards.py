@@ -247,12 +247,12 @@ class MedusaState(BaseState):
         If this returns true, it means the user either wants cards of this type, or
         that no card filtering is currently in place.
         """
-        ctype = getattr(self, ctype)
-        if ctype == None:   # No app or ctype, so no cards of this type
+        cstate = getattr(self, ctype)
+        if cstate == None:   # No app or ctype, so no cards of this type
             return False
 
         if ((getattr(self, "card_filter") is not None) and
-            (self.ctype.filtertype is False)):
+            (cstate.filtertype is False)):
             return True
         else:
             return False
