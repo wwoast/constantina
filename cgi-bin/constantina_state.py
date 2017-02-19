@@ -202,9 +202,8 @@ class ConstantinaState(BaseState):
         number into the next search state for loading
         """
         page_string = None
-        if self.search_mode() is True:
-            export_page = int(self.page) + 1
-            page_string = "xp" + str(export_page)
+        export_page = int(self.page) + 1
+        page_string = "xp" + str(export_page)
         return page_string
 
 

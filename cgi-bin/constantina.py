@@ -224,7 +224,6 @@ class ConstantinaPage:
         
             permalink_fields = [sv for sv in app_state.specials
                                 if sv.find("permalink") != -1]
-            syslog.syslog(str(permalink_fields) + " -- " + str(app_state.specials))
             for spcfield in permalink_fields:
                 if getattr(app_state, spcfield) is not None:
                     # Permalink value is just a card name
