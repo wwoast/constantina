@@ -222,11 +222,13 @@ class ConstantinaPage:
         for application in CONFIG.get("applications", "enabled").replace(" ", "").split(","):
             app_state = getattr(self.state, application)
         
-            permalink_fields = [sv[1] for sv in appstate.specials
-                                if sv[1].find("permalink") != -1]
+            permalink_fields = [sv for sv in app_state.specials
+                                if sv.find("permalink") != -1]
+            syslog.syslog(str(permalink_fields) + " -- " + str(app_state.specials))
             for spcfield in permalink_fields:
                 if getattr(app_state, spcfield) is not None:
-                    cnum = str(getattr(app_state, spcfield))   # TODO document. wtf?
+                    # Permalink value is just a card name
+                    cnum = str(getattr(app_state, spcfield))
                     # Insert a card after the first heading
                     ctype = spcfield.split("_")[0]
                     self.cards.append(MedusaCard(ctype, cnum, state=app_state, grab_body=True, permalink=True))
