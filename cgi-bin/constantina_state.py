@@ -9,7 +9,7 @@ import syslog
 import ConfigParser
 
 from constantina_shared import GlobalConfig, BaseFiles, BaseState
-from medusa_cards import MedusaState
+from medusa_state import MedusaState
 
 syslog.openlog(ident='constantina_state')
 

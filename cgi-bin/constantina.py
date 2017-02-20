@@ -10,6 +10,7 @@ import ConfigParser
 
 from constantina_shared import BaseFiles, opendir, unroll_newlines
 from constantina_state import ConstantinaState
+from medusa_state import MedusaState
 from medusa_cards import MedusaCard, MedusaSong
 from medusa_search import MedusaSearch
 
