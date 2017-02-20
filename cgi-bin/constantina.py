@@ -1,17 +1,14 @@
 from math import floor
-from random import random, randint, seed
-from PIL import Image
-from datetime import datetime
+from random import randint, seed
 import os
 from sys import stdin
-import lxml.html
 import syslog
 import ConfigParser
 
 from constantina_shared import BaseFiles, opendir, unroll_newlines
 from constantina_state import ConstantinaState
 from medusa_state import MedusaState
-from medusa_cards import MedusaCard, MedusaSong
+from medusa_cards import *
 from medusa_search import MedusaSearch
 
 syslog.openlog(ident='constantina')
@@ -422,218 +419,6 @@ class ConstantinaPage:
 
 
 
-def count_ptags(processed_lines):
-    """
-    Count all the <p> tags. If there's less than three paragraphs, the
-    create_card logic may opt to disable the card's "Read More" link.
-    """
-    ptags = 0
-    for line in processed_lines:
-        if line.find('<p>') >= 0:
-            ptags = ptags + 1
-    return ptags
-
-
-def create_simplecard(card, next_state):
-    """
-    Simple cards with only basic text and images are drawn here.
-    This includes all card.heading and card.quotes, but possibly
-    others as well. Do not apply any special logic to these cards --
-    just get them drawn, whatever tags they might contain.
-    """
-    anchor = card.cfile.split('/').pop()
-
-    output = ""
-    output += """<div class="card %s" id="%s">\n""" % (card.ctype, anchor)
-
-    body_lines = card.body.splitlines()
-    processed_lines = unroll_newlines(body_lines)
-
-    for line in processed_lines:
-        output += line + "\n"
-
-    # For special tombstone cards, insert the state as non-visible text
-    default_string = CONFIG.get("card_defaults", "tombstone")
-    if card.title == default_string:
-        output += """\n<p id="state">%s</p>""" % next_state
-
-    output += """</div>\n"""
-    return output
-
-
-def create_textcard(card, display_state):
-    """
-    All news and features are drawn here. For condensing content,
-    wrap any nested image inside a "read more" bracket that will appear
-    after the 1st paragraph of text. Hide images behind this link too.
-
-    Fill out the next/previous type links based on #anchors done with a
-    descending number. If the next page of content isn't loaded, make
-    the link also load the next page of content before the anchor tag
-    is followed.
-    """
-    # TODO: VET title and topics for reasonable size restrictions
-    topic_header = ""
-    for topic in card.topics:
-        topic_link = """<a class="topicLink" href="javascript:">%s</a>""" % topic
-        if topic_header == "":
-            topic_header = topic_link
-        else:
-            topic_header = topic_header + ", " + topic_link
-    anchor = card.cfile.split('/').pop()
-
-    # The body of a text card consists of paragraphs of text, possibly
-    # with a starting image tag. Wrap all tags other than the first
-    # paragraph tag with a "Expand" style that will keep that text
-    # properly hidden. Then, after the end of the first paragraph, add
-    # a "Read More" link for expanding the other hidden items.
-    output = ""
-    output += """<div class="card %s" id="%s">\n""" % (card.ctype, anchor)
-    output += """   <div class="cardTitle">\n"""
-    if card.permalink is True:
-        output += """      <h2>%s</h2>\n""" % card.title
-        output += """      <p class="subject">%s</p>\n""" % card.cdate
-    else:
-        output += """      <h2><a href="#%s" onclick="cardToggle('%s');">%s</a></h2>\n""" % (anchor, anchor, card.title)
-        output += """      <p class="subject">%s</p>\n""" % topic_header
-    output += """   </div>\n"""
-
-    passed = {}
-    body_lines = card.body.splitlines()
-    processed_lines = unroll_newlines(body_lines)
-    first_line = processed_lines[0]
-
-    # Count all the <p> tags. If there's less than three paragraphs, don't do the
-    # "Read More" logic for that item.
-    ptags = count_ptags(processed_lines)
-
-    for line in processed_lines:
-        # Parsing the whole page only works for full HTML pages
-        e = lxml.html.fromstring(line)
-        if e.tag == 'img':
-            if (line == first_line) and ('img' not in passed):
-                # Check image size. If it's the first line in the body and
-                # it's relatively small, display with the first paragraph.
-                # Add the dot in front to let the URIs be absolute, but the
-                # Python directories be relative to CWD
-                img = Image.open("." + e.attrib['src'])
-                # TODO: am I really an image? Have a bg script tell you
-                if ((img.size[0] > 300) and
-                    (img.size[1] > 220) and
-                    (card.permalink is False) and
-                    (card.search_result is False) and
-                    (ptags >= 3)):
-                    e.attrib.update({"id": "imgExpand"})
-            elif ((ptags >= 3) and (card.permalink is False) and
-                  (card.search_result is False)):
-                # Add a showExtend tag to hide it
-                e.attrib.update({"id": "imgExpand"})
-            else:
-                pass
-
-            # Track that we saw an img tag, and write the tag out
-            output += lxml.html.tostring(e)
-            passed.update({'img': True})
-
-        elif e.tag == 'p':
-            # If further than the first paragraph, write output
-            if 'p' in passed:
-                output += lxml.html.tostring(e)
-            # If more than three paragraphs, and it's a news entry,
-            # and if the paragraph isn't a cute typography exercise...
-            # start hiding extra paragraphs from view
-            elif len(e.text_content()) < 5:
-                output += lxml.html.tostring(e)
-                continue   # Don't mark as passed yet
-
-            elif ((ptags >= 3) and
-                  (card.permalink is False) and
-                  (card.search_result is False)):
-                # First <p> is OK, but follow it with a (Read More) link, and a
-                # div with showExtend that hides all the other elements
-                read_more = """ <a href="#%s" class="showShort" onclick="cardToggle('%s');">(Read&nbsp;More...)</a>""" % (anchor, anchor)
-                prep = lxml.html.tostring(e)
-                output += prep.replace('</p>', read_more + '</p>')
-                output += """<div class="divExpand">\n"""
-
-            else:
-                output += lxml.html.tostring(e)
-
-            # Track that we saw an img tag, and write the tag out
-            passed.update({'p': True})
-
-        else:
-            # pass all other tags unmodified
-            output += line + "\n"
-
-    # End loop. now close the showExtend div if we
-    # added it earlier during tag processing
-    if ((ptags >= 3) and
-        (card.permalink is False) and
-        (card.search_result is False)):
-        output += """   </div>\n"""
-
-    # Convert the appearance value into a string for permalinks
-    # And close the textcard
-    if display_state is not None:
-        permanchor = "/?x" + card.ctype[0] + anchor + ":" + display_state
-    else:
-        permanchor = "/?x" + card.ctype[0] + anchor
-
-    if card.permalink is False:
-        output += """   <div class="cardFooter">\n"""
-        output += """      <div class="bottom">\n"""
-        output += """         <p class="cardNav"><a href="%s">Permalink</a></p>\n""" % permanchor
-        output += """         <p class="postDate">%s</p>\n""" % card.cdate
-        output += """      </div>\n"""
-        output += """   </div>\n"""
-
-    output += """</div>\n"""
-    return output
-
-
-def create_imagecard(card):
-    """
-    Pure image frames should be generated and inserted roughly
-    3 per page of news items. Duplicates of images are OK, as long
-    as we need to keep adding eye candy to the page.
-    """
-    anchor = card.cfile.split('/')[1]
-    # Get URI absolute path out of a Python relative path
-    uripath = "/" + "/".join(card.cfile.split('/')[0:])
-
-    output = ""
-    output += """<div class="card image" id="%s">\n""" % anchor
-    output += """   <img src="%s" />\n""" % uripath
-    output += """</div>\n"""
-    return output
-
-
-
-def create_songcard(card):
-    """
-    Song cards appear in two varieties -- one is made from a
-    single MP3 file, and appears as a focal point. The other type
-    appears as M3U playlist files, and result in multiple songs
-    appearing in a single card list. The M3U version should be
-    randomly sorted, and ideally has no more than 6 songs.
-    """
-
-    output = ""
-    output += """<div class="card song">"""
-    for song in card.songs:
-        # Songs DIR can only be TLD, followed by album, and then songname
-        uripath = "/" + "/".join(song.songfile.split("/")[-4:])
-
-        output += """   <div class="cell">"""
-        output += """      <p class="songName">%s</p>""" % song.songtitle
-        output += """      <a href="%s">MP3 &darr; %s </a>""" % (uripath, song.songlength)
-        output += """   </div>"""
-
-    output += """</div>"""
-    return output
-
-
 def create_page(page):
     """Given a ConstantinaPage object, draw all the cards with content in
     them, Each card type has unique things it must do to process
@@ -652,17 +437,17 @@ def create_page(page):
             (page.cards[i].ctype == "topics") or
             (page.cards[i].ctype == "features")):
             # TODO: export_display_state is gone, replaced by theme state
-            output += create_textcard(page.cards[i], page.state.export_theme_state())
+            output += create_medusa_textcard(page.cards[i], page.state.export_theme_state())
 
         if ((page.cards[i].ctype == "quotes") or
             (page.cards[i].ctype == "heading")):
-            output += create_simplecard(page.cards[i], page.out_state)
+            output += create_medusa_simplecard(page.cards[i], page.out_state, page.state.medusa)
 
         if (page.cards[i].ctype == "images"):
-            output += create_imagecard(page.cards[i])
+            output += create_medusa_imagecard(page.cards[i])
 
         if (page.cards[i].ctype == "songs"):
-            output += create_songcard(page.cards[i])
+            output += create_medusa_songcard(page.cards[i])
 
     return output
 

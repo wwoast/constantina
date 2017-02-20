@@ -355,6 +355,18 @@ class BaseState:
 
 
 
+def count_ptags(processed_lines):
+    """
+    Count all the <p> tags. If there's less than three paragraphs, the
+    create_card logic may opt to disable the card's "Read More" link.
+    """
+    ptags = 0
+    for line in processed_lines:
+        if line.find('<p>') >= 0:
+            ptags = ptags + 1
+    return ptags
+
+
 def unroll_newlines(body_lines):
     """
     Given lines of text, remove all newlines that occur within an
