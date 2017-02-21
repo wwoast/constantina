@@ -5,11 +5,22 @@ from sys import stdin
 import syslog
 import ConfigParser
 
-from constantina_shared import BaseFiles, opendir, unroll_newlines
+from constantina_shared import BaseFiles, opendir
 from constantina_state import ConstantinaState
 from medusa_state import MedusaState
 from medusa_cards import *
 from medusa_search import MedusaSearch
+# from zoo_state import ZooState
+# from zoo_cards import *
+# from zoo_search import ZooSearch
+
+# Look up Cards by application config name, instead of calling
+# MedusaCard/ZooCard directly
+CardClass = { 
+    'medusa'  : MedusaCard
+#   'zoo'     : ZooCard,
+#   'dracula' : DraculaCard
+}
 
 syslog.openlog(ident='constantina')
 # TODO: get rid of this somehow!
@@ -154,7 +165,7 @@ class ConstantinaPage:
 
                 for i in xrange(start, start + card_count):
                     # TODO: specify generic card class for obtaining
-                    card = MedusaCard(ctype, i, state=app_state, grab_body=True)
+                    card = CardClass[application](ctype, i, state=app_state, grab_body=True)
                     # Don't include cards that failed to load content
                     if card.topics != []:
                         self.cards.append(card)
@@ -206,7 +217,7 @@ class ConstantinaPage:
                                 grab_file = k
                                 break
 
-                    card = MedusaCard(ctype, grab_file, state=app_state, grab_body=True, search_result=True)
+                    card = CardClass[application](ctype, grab_file, state=app_state, grab_body=True, search_result=True)
                     # News articles without topic strings won't load. Other card types that
                     # don't have embedded topics will load just fine.
                     if (card.topics != []) or (ctype == 'quotes') or (ctype == 'topics'):
@@ -228,7 +239,7 @@ class ConstantinaPage:
                     cnum = str(getattr(app_state, spcfield))
                     # Insert a card after the first heading
                     ctype = spcfield.split("_")[0]
-                    self.cards.append(MedusaCard(ctype, cnum, state=app_state, grab_body=True, permalink=True))
+                    self.cards.append(CardClass[application](ctype, cnum, state=app_state, grab_body=True, permalink=True))
 
 
     def __get_prior_cards(self):
