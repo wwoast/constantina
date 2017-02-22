@@ -259,6 +259,7 @@ class ConstantinaPage:
         contents by distributing news articles such that the
         card-type distances are properly represented.
         """
+        # TODO: doesn't support zoo cards yet!
         news_items = int(self.state.medusa.news.count) * self.state.page 
 
         # Then add the appropriate page count's worth of news
