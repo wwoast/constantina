@@ -55,6 +55,7 @@ class ConstantinaPage:
         self.query_terms = ''    # Use this locally, in case we happen not to create a search object
         self.filter_terms = ''   # For filtering based on cardtypes
         self.filtered = 0        # Cards excluded from search results by filtering
+        self.applications = CONFIG.get("applications", "enabled").replace(" ", "").split(",")
 
         # TODO: card insertion logic needs to be considerably more generic if
         # there are multiple applications in play!
@@ -138,7 +139,7 @@ class ConstantinaPage:
         # Anything with rules for cards per page, start adding them.
         # Do not grab full data for all but the most recent cards!
         # For older cards, just track their metadata
-        for application in CONFIG.get("applications", "enabled").replace(" ", "").split(","):
+        for application in self.applications:
             app_state = getattr(self.state, application)
             for ctype in app_state.ctypes: 
                 card_count = getattr(app_state, ctype).count
@@ -183,12 +184,12 @@ class ConstantinaPage:
         # HOWEVER if we're beyond the first page of search results, don't add
         # the encyclopedia page again! Use image count as a heuristic for page count.
         # TODO: make sure that medusa is a permissable state!!
-        if "medusa" in CONFIG.get("applications", "enabled").replace(" ","").split(","):
+        if "medusa" in self.applications:
             if self.query_terms.lower() in opendir(self.state.medusa.config, 'topics'):
                 encyclopedia = MedusaCard('topics', self.query_terms.lower(), state=self.state.medusa, grab_body=True, search_result=True)
                 self.cards.append(encyclopedia)
 
-        for application in CONFIG.get("applications", "enabled").replace(" ", "").split(","):
+        for application in self.applications:
             app_state = getattr(self.state, application)
 
             # Other types of search results come afterwards
@@ -228,7 +229,7 @@ class ConstantinaPage:
         """
         Given a utime or card filename, return a permalink page of that type.
         """
-        for application in CONFIG.get("applications", "enabled").replace(" ", "").split(","):
+        for application in self.applications:
             app_state = getattr(self.state, application)
         
             permalink_fields = [sv for sv in app_state.specials
@@ -309,7 +310,7 @@ class ConstantinaPage:
         # non-redist set (news articles)
         c_nodist = {}
 
-        for application in CONFIG.get("applications", "enabled").replace(" ","").split(","):
+        for application in self.applications:
             app_state = getattr(self.state, application)
             for ctype, spacing in app_state.config.items("card_spacing"):
                 # Spacing rules from the last page. Subtract the distance from
