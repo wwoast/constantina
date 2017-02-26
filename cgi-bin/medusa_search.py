@@ -1,3 +1,4 @@
+import os
 from whoosh import index
 from whoosh.fields import Schema, ID, TEXT
 from whoosh.qparser import QueryParser
