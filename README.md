@@ -13,6 +13,7 @@ to host my music and technology site, [Codaworry](http://www.codaworry.com).
 
 ## Changelog
 
+* **0.4.5** - Under-the-hood "sub-application" support, fixed search index generation
 * **0.4.0** - First public release
 
 
@@ -65,6 +66,6 @@ of Unix tools (`ssh` or `sftp`, Python, `uwsgi`). If you have basic footing in t
 technologies, read the [installation and configuration notes](https://github.com/wwoast/constantina/blob/master/docs/ADMIN.md) to get started!
 
 While this is currently a blog engine, I intend Constantina to be a platform
-for small online communities. Eventually I'll implement authentication,
-a web forum, a basic CalDAV calendar, and an IMAP webmail client, all as part of 
-the existing system of cards and config.
+for small online communities. Eventually I'll implement authentication and then
+subapplictions, including a web forum, a basic CalDAV calendar, and an IMAP 
+webmail client. Subapplications will fall into the existing system of cards and config.

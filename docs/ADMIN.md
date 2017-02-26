@@ -78,8 +78,19 @@ RewriteRule ^(.*)$ /cgi-bin/constantina.cgi
 `cgi-bin/constantina.ini` stores all operational configuration for Constantina.
 
  * `[paths].root` is the root of your public HTML directory where files are hosted
-  * The other values in this section are paths for each card type, under `[paths].root`
-   * You shouldn't need to change these
+ * `[authentication]` is not used yet, and should just be set to `blog`.
+ * `[themes]` defines where Constantina's themes are located
+  * Any themes you add must be listed by number, aside from the `default` entry
+  * If the default theme is set to `random`, one of the numbered options is used
+ * `[special_states]` should only be modified if new Constantina functionality is added
+ * `[miscellaneous].max_state_parameters` is the limit on search terms that will be processed.
+  * The default here is 10, so you can't process more than 10 search terms and 10 filter terms
+  * Constantina itself won't process more than 512 characters from any `QUERY_STRING`
+
+`cgi-bin/medusa.ini` stores configuration related to Constantina's blog functionality.
+
+ * `[paths]` values describe where each type of card is stored
+  * You shouldn't need to change these
  * The `[card_counts]` section enforces the number of cards per page, per card-type
  * The `[card_spacing]` section similarly enforces the spacing on the page
  * `[card_filters]` define equivalent "card type" terms for searching
@@ -87,16 +98,9 @@ RewriteRule ^(.*)$ /cgi-bin/constantina.cgi
   * However, the `[card_filters]` section defines alternatives such as *#updates*
  * `[card_properties]` defines logic for how state functions when cards are present
   * *This section should not be changed*
- * `[authentication]` is not used yet, and should just be set to `blog`.
  * `[search]` defines paths and wordlists for Whoosh's search indexing
- * `[themes]` defines where Constantina's themes are located
-  * Any themes you add must be listed by number, aside from the `default` entry
-  * If the default theme is set to `random`, one of the numbered options is used
  * `[special_states]` should only be modified if new card types are added
-  * New text-card types should get a new `_permalink` special state
- * `[miscellaneous].max_state_parameters` is the limit on search terms that will be processed.
-  * The default here is 10, so you can't process more than 10 search terms and 10 filter terms
-  * Constantina itself won't process more than 512 characters from any `QUERY_STRING`
+  * New blog text-card types should get a new `_permalink` special state
 
 
 ##How Cards Work
@@ -106,14 +110,14 @@ the server.
 
 
 ###Card Naming Standards
-| Card Type | Path                 | File Naming Standard     | File Formats   |
-|-----------|----------------------|--------------------------|----------------|
-| news      | cards/news/          | unix-time (`date +%s`)   | Limited HTML   |
-| images    | cards/pictures/      | any filename OK          | `.jpg`, `.png` |
-| songs	    | cards/songs/         | playlist plus subfolder  | `.mp3`, `.m3u` |
-| quotes    | cards/interjections/ | any filename OK          | Limited HTML   |
-| heading   | cards/heading/       | any filename OK          | Limited HTML   |
-| topics    | cards/encyclopedia/  | search-term string match | Limited HTML   |
+| Card Type | Path                  | File Naming Standard     | File Formats   |
+|-----------|-----------------------|--------------------------|----------------|
+| news      | medusa/news/          | unix-time (`date +%s`)   | Limited HTML   |
+| images    | medusa/pictures/      | any filename OK          | `.jpg`, `.png` |
+| songs	    | medusa/songs/         | playlist plus subfolder  | `.mp3`, `.m3u` |
+| quotes    | medusa/interjections/ | any filename OK          | Limited HTML   |
+| heading   | medusa/heading/       | any filename OK          | Limited HTML   |
+| topics    | medusa/encyclopedia/  | search-term string match | Limited HTML   |
 
 For news cards, name these files a unix timestamp and the date that timestamp
 corresponds to will be the stated publishing date of that card. `vim $(date +%s)` 
@@ -164,14 +168,14 @@ Finally, the cards per page values are listed, all of which can be adjusted
 by an admin. The card spacing rules are not shown below, but those values are
 adjustable as well.
 
-| Card Type | Path                 | Layout | Order         | Indexed | Cards/Page |
-|-----------|----------------------|--------|---------------|---------|------------|
-| news      | cards/news/          | Fixed  | Reverse-Time  | Yes     | 10         |
-| images    | cards/pictures/      | Random | Random        | No*     | 4          |
-| songs	    | cards/songs/         | Random | Reverse-Time  | No*     | 1          |
-| quotes    | cards/interjections/ | Random | Random        | Yes     | 3          |
-| heading   | cards/heading/       | Fixed  | Predetermined | No      | 1**        |
-| topics    | cards/encyclopedia/  | Fixed  | Predetermined | Yes     | 1+         |
+| Card Type | Path                  | Layout | Order         | Indexed | Cards/Page |
+|-----------|-----------------------|--------|---------------|---------|------------|
+| news      | medusa/news/          | Fixed  | Reverse-Time  | Yes     | 10         |
+| images    | medusa/pictures/      | Random | Random        | No*     | 4          |
+| songs	    | medusa/songs/         | Random | Reverse-Time  | No*     | 1          |
+| quotes    | medusa/interjections/ | Random | Random        | Yes     | 3          |
+| heading   | medusa/heading/       | Fixed  | Predetermined | No      | 1**        |
+| topics    | medusa/encyclopedia/  | Fixed  | Predetermined | Yes     | 1+         |
 
   * `*`  : May index metadata for these in the future
   * `**` : Just header and footer cards on the first and/or last pages
