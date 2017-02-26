@@ -1,4 +1,3 @@
-import os
 from whoosh import index
 from whoosh.fields import Schema, ID, TEXT
 from whoosh.qparser import QueryParser
@@ -9,34 +8,18 @@ import ConfigParser
 
 from constantina_shared import GlobalConfig, BaseFiles, opendir, unroll_newlines
 
-syslog.openlog(ident='medusa_search')
+syslog.openlog(ident='zoo_search')
 
 
-class MedusaSearch:
+class ZooSearch:
     """
-    Constantina search object -- anything input into the search bar
-    will run through the data managed by this object and the Whoosh index.
-    News objects and Features will both be indexed, along with their last-
-    modified date at the time of indexing.
-
-    The indexes are updated whenever someone starts a search, and there's
-    been a new feature or news item added since the previous search. File
-    modifications in the news/features directory will also trigger reindex
-    for those updated news/feature items.
-
-    We only index non-pointless words, so there's a ignore-index list. This
-    prevents pointless queries to the indexing system, and keeps the index
-    file smaller and quicker to search. Prior to index insertion, an
-    ignore-symbols list will parse text and remove things like punctuation
-    and equals-signs.
-
-    Finally, there is an "index-tree" list where if specific search terms
-    are queried, all related terms are pulled in as well. If the user requests
-
-    the related phrases can be turned off.
+    Constantina search object -- but for zoo posts, they work different.
     """
-    def __init__(self, state):
-        self.config = state.medusa.config
+    # TODO: Modify this from the MedusaSearch in more than just a hack way! :)
+    # TODO: No cardtype filtering here. Zoo filter will either apply this search or not
+    def __init__(self, page, resultcount, unsafe_query_terms):
+        self.config = ConfigParser.SafeConfigParser()
+        self.config.read('zoo.ini')
 
         # Upper limit on the permitted number of searchable items.
         # Since we use this as an array slice, add one to support N-1 elements
@@ -46,10 +29,9 @@ class MedusaSearch:
         self.ignore_symbols = []
         # Regex of words that won't be indexed
         self.ignore_words = ''
-        # After processing unsafe_query or unsafe_filter, save it in the object
+        # After processing unsafe_query, save it in the object
         # Assume we're searching for all terms, unless separated by pluses
         self.query_string = ''
-        self.filter_string = ''
         # The contents of the last file we read
         self.content = ''
         # Notes on what was searched for. This will either be an error
@@ -68,18 +50,14 @@ class MedusaSearch:
         # Max search results per page is equal to the number of cards that would
         # be shown on a normal news page. And while whoosh expects pages starting
         # at one, the page state counting will be from zero
-        self.page = state.page + 1
-        self.resultcount = state.max_items
-        self.filtered = state.filtered
+        self.page = page + 1
+        self.resultcount = resultcount
 
         # File paths for loading things
         self.index_dir = self.config.get('search', 'index_dir')
         self.words_file = self.config.get('search', 'ignore_words')
         self.symobls_file = self.config.get('search', 'ignore_symbols')
         self.search_types = self.config.get("card_properties", "search").replace(" ", "").split(",")
-
-        unsafe_query_terms = state.medusa.search
-        unsafe_filter_terms = state.medusa.card_filter
 
         # Define the indexing schema. Include the mtime to track updated
         # content in the backend, ctype so that we can manage the distribution
@@ -102,32 +80,17 @@ class MedusaSearch:
             # Other functions will expect this to exist regardless.
             self.hits[ctype] = []
 
-        # Process the filter strings first, in case that's all we have
-        if unsafe_filter_terms is not None:
-            self.__process_input(' '.join(unsafe_filter_terms[0:self.max_query_count]), 
-                                     returning="filter")
-
         # Double check if the query terms exist or not
         if unsafe_query_terms is None:
-            if self.filter_string != '':
-                self.__filter_cardtypes()
-                self.searcher.close()
-                return
-            else:
-                self.searcher.close()
-                return
+            self.searcher.close()
+            return
 
         # If the query string is null after processing, don't do anything else.
         # Feed our input as a space-delimited set of terms. NOTE that we limit
         # this in the __import_state function in MedusaState.
         if not self.__process_input(' '.join(unsafe_query_terms[0:self.max_query_count])):
-            if self.filter_string != '':
-                self.__filter_cardtypes()
-                self.searcher.close()
-                return
-            else:
-                self.searcher.close()
-                return
+            self.searcher.close()
+            return
 
         for ctype in self.search_types:
             # Now we have good safe input, but we don't know if our index is
@@ -181,8 +144,6 @@ class MedusaSearch:
         if safe_input != '':
             if returning == "query":
                 self.query_string = safe_input
-            elif returning == "filter":
-                self.filter_string = safe_input
             else:
                 self.content = safe_input
             return 1
@@ -257,34 +218,4 @@ class MedusaSearch:
         # reverse-utime order just like we want for insert into the page
         for result in self.results:
             ctype = result['ctype']
-            # Account for filter strings
-            if self.filter_string != '':
-                if result['ctype'] in self.filter_string.split(' '):
-                    self.hits[ctype].append(result['file'])
-                else:
-                    self.filtered = self.filtered + 1
-            else:
-                self.hits[ctype].append(result['file'])
-
-
-    def __filter_cardtypes(self):
-        """
-        Get a list of cards to return, in response to a card-filter
-        event. These tend to be of a single card type.
-        """
-        # TODO: search_page can have a better query here, for multiple filter types
-        self.parser = QueryParser("content", self.schema)
-
-        for filter_ctype in self.filter_string.split(' '):
-            self.query = self.parser.parse("ctype:" + filter_ctype)
-            # TODO: implement a "search order" card parameter
-            # Some card types get non-reverse-sorting by default
-            self.results = self.searcher.search_page(self.query, self.page, sortedby="file", reverse=True, pagelen=self.resultcount)
-
-            for result in self.results:
-                ctype = result['ctype']
-                # Account for filter strings
-                if result['ctype'] in self.filter_string.split(' '):
-                    self.hits[ctype].append(result['file'])
-                else:
-                    self.filtered = self.filtered + 1
+            self.hits[ctype].append(result['file'])
