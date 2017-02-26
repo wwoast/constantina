@@ -1,3 +1,4 @@
+import os
 from whoosh import index
 from whoosh.fields import Schema, ID, TEXT
 from whoosh.qparser import QueryParser
@@ -31,6 +32,7 @@ class MedusaSearch:
 
     Finally, there is an "index-tree" list where if specific search terms
     are queried, all related terms are pulled in as well. If the user requests
+
     the related phrases can be turned off.
     """
     def __init__(self, state):
@@ -199,6 +201,7 @@ class MedusaSearch:
         # locking, this is the only function that writes to the index.
         writer = self.index.writer()
         card_path = self.config.get("paths", ctype)
+        syslog.syslog(str(fnmtime) + " " + str(filename) + " " + str(ctype))
 
         with open(card_path + "/" + filename, 'r') as indexfh:
             body = ""
@@ -224,6 +227,7 @@ class MedusaSearch:
         # Make sure BaseFiles is populated
         opendir(self.config, ctype)
         card_path = self.config.get("paths", ctype)
+        # syslog.syslog(str(BaseFiles[ctype]))
 
         for filename in BaseFiles[ctype]:
             try:

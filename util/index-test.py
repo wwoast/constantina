@@ -5,18 +5,20 @@ if they don't exist, and do a search for the term "Constantina".
 """
 
 from os import chdir
-from constantina import cw_search
+from constantina_state import ConstantinaState
+from medusa_search import MedusaSearch
 import ConfigParser
 
 CONFIG = ConfigParser.SafeConfigParser()
 CONFIG.read('constantina.ini')
 
 ROOT_DIR = CONFIG.get("paths", "root")
-RESOURCE_DIR = CONFIG.get("paths", "resource")
 
-chdir(ROOT_DIR + "/" + RESOURCE_DIR)
+chdir(ROOT_DIR)
 
 # one page, 20 results per page, search for Constantina, no 
 # filter-page-type terms, and no previously filtered items
-search_results = cw_search(1, 20, ["Constantina"], [], None)
+state = ConstantinaState(None)
+state.medusa.search = ["Constantina"]
+search_results = MedusaSearch(state)
 print str(search_results.hits)
