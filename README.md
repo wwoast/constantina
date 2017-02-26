@@ -67,7 +67,7 @@ technologies, read the [installation and configuration notes](https://github.com
 
 While this is currently a blog engine, I intend Constantina to be a platform
 for small online communities. Eventually I'll implement authentication and then
-subapplictions, including a web forum, a basic CalDAV calendar, and an IMAP 
+sub-applictions, including a web forum, a basic CalDAV calendar, and an IMAP 
 webmail client. Version 0.4.5 introduces some of these semantics:
 
  * The Constantina blog features are called _Medusa_
