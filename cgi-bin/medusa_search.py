@@ -201,7 +201,6 @@ class MedusaSearch:
         # locking, this is the only function that writes to the index.
         writer = self.index.writer()
         card_path = self.config.get("paths", ctype)
-        syslog.syslog(str(fnmtime) + " " + str(filename) + " " + str(ctype))
 
         with open(card_path + "/" + filename, 'r') as indexfh:
             body = ""
@@ -227,7 +226,6 @@ class MedusaSearch:
         # Make sure BaseFiles is populated
         opendir(self.config, ctype)
         card_path = self.config.get("paths", ctype)
-        # syslog.syslog(str(BaseFiles[ctype]))
 
         for filename in BaseFiles[ctype]:
             try:
