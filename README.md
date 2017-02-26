@@ -13,7 +13,7 @@ to host my music and technology site, [Codaworry](http://www.codaworry.com).
 
 ## Changelog
 
-* **0.4.5** - Under-the-hood "sub-application" support, fixed search index generation
+* **0.4.5** - Under-the-hood "sub-application" support. Fixed search index generation
 * **0.4.0** - First public release
 
 
@@ -68,4 +68,8 @@ technologies, read the [installation and configuration notes](https://github.com
 While this is currently a blog engine, I intend Constantina to be a platform
 for small online communities. Eventually I'll implement authentication and then
 subapplictions, including a web forum, a basic CalDAV calendar, and an IMAP 
-webmail client. Subapplications will fall into the existing system of cards and config.
+webmail client. Version 0.4.5 introduces some of these semantics:
+
+ * The Constantina blog features are called _Medusa_
+ * Web forum features in development are called _Zoo_
+ * Eventual IMAP client features will be called _Dracula_
