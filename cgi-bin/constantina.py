@@ -7,6 +7,7 @@ import ConfigParser
 
 from constantina_shared import BaseFiles, opendir
 from constantina_state import ConstantinaState
+from constantina_auth import ConstantinaAuth, authentication, authentication_page
 from medusa_state import MedusaState
 from medusa_cards import *
 from medusa_search import MedusaSearch
@@ -463,18 +464,6 @@ def create_page(page):
     return output
 
 
-def authentication_page(start_response, state):
-    """
-    If Constantina is in "forum" mode, you get the authentication
-    page. You also get an authentication page when you search for
-    a @username in the search bar in "combined" mode.
-    """
-    base = open(state.theme + '/authentication.html', 'r')
-    html = base.read()
-    start_response('200 OK', [('Content-Type', 'text/html')])
-    return html
-
-
 def contents_page(start_response, state):
     """
     Three types of states:
@@ -523,26 +512,6 @@ def contents_page(start_response, state):
 
     # Load html contents into the page with javascript
     return html
-
-
-def authentication():
-    """
-    Super naive test authentication function just as a proof-of-concept
-    for validating my use of environment variabls and forms!
-    """
-    size = int(os.environ.get('CONTENT_LENGTH'))
-    post = {}
-    with stdin as fh:
-        # TODO: max content length, check for EOF
-        inbuf = fh.read(size)
-        for vals in inbuf.split('&'):
-            [key, value] = vals.split('=')
-            post[key] = value
-
-    if (post['username'] == "justin") and (post['password'] == "justin"):
-        return True
-    else:
-        return False
 
 
 def application(env, start_response):
