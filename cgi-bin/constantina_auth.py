@@ -2,7 +2,7 @@ import os
 import time
 from sys import stdin
 import syslog
-import passlib
+from passlib.hash import argon2
 import ConfigParser
 
 syslog.openlog(ident='constantina_auth')
@@ -13,7 +13,7 @@ class ConstantinaAuth:
     Constantina Authentication object. Manages passwords, authentication tokens
     and anything related to users.
     """
-    def __init__():
+    def __init__(self):
         self.config = ConfigParser.SafeConfigParser
         self.config.open('shadow.ini')
         self.user = None
@@ -75,6 +75,47 @@ class ConstantinaAuth:
         """
         pass
 
+
+
+def ConstantinaAccount:
+    """
+    Exists to wrap and check account information in the shadow.ini file.
+    """
+    def __init__(self):
+        self.config = ConfigParser.SafeConfigParser
+        self.config.open('shadow.ini')
+
+    def __validate_user(self, username):
+        """
+        Valid new usernames either don't exist or have less than 50
+        alphanumeric characters in them.
+        """
+        pass
+
+    def __validate_password(self, password):
+        """
+        Validate that new passwords match a given password policy.
+        What should that be? Hmmm...
+        """
+        pass
+
+    def set(self, username, password):
+        """Given username and password, set a shadow entry"""
+        h = argon2.hash(password)
+        # TODO: validate username settings
+        self.config.set(username, h)
+        
+    def check(self, username, password):
+        """Given username and password, check that the login succeeded."""
+        h = self.config.get("users", username)
+        return argon2.verify(password, h)
+
+    def update_hash(self, username, password):
+        """
+        If the argon2 version string has changed, update the hash.
+        Maybe ask for a password change too?
+        """
+        pass
 
 
 def authentication_page(start_response, state):
