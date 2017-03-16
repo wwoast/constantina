@@ -45,31 +45,15 @@ class ConstantinaAuth:
 
     def __regen_cek(self):
         """
-        Regenerate content encryption keys as necessary
+        Regenerate content encryption keys as necessary.
+        TODO: Don't implement until basic tokens are tested
         """
         for keyname in self.regen_cek:
             # self.config.set(stuff)
             pass
 
 
-    def check_user(self, username, password):
-        """
-        Given a username, see if there is an account that exists, and then
-        validate the provided password value
-        """
-        pass
-
-
-    def set_user(self, username, password, existing=True):
-        """
-        Given a username and a password, set a new account password. By default
-        the existing flag makes this only work for accounts that already have a
-        shadow record of some kind.
-        """
-        pass
-
-
-    def check_token(self, token)
+    def check_token(self, token):
         """
         Process a JWE token. In Constantina these come from the users' cookie
         """
@@ -77,7 +61,7 @@ class ConstantinaAuth:
 
 
 
-def ConstantinaAccount:
+class ConstantinaAccount:
     """
     Exists to wrap and check account information in the shadow.ini file.
     """
@@ -85,37 +69,34 @@ def ConstantinaAccount:
         self.config = ConfigParser.SafeConfigParser
         self.config.open('shadow.ini')
 
+
     def __validate_user(self, username):
-        """
-        Valid new usernames either don't exist or have less than 50
-        alphanumeric characters in them.
-        """
-        pass
+        """Valid new usernames are less than 50 characters"""
+        return len(username) < self.config.getint('defaults', 'user_length')
+
 
     def __validate_password(self, password):
         """
         Validate that new passwords match a given password policy.
-        What should that be? Hmmm...
+        What should that be? People want to type these on phones and
+        things, so force 2FA or certificates for security.
         """
-        pass
+        return len(password) < self.config.getint('defaults', 'password_length')
+
 
     def set(self, username, password):
         """Given username and password, set a shadow entry"""
-        h = argon2.hash(password)
-        # TODO: validate username settings
-        self.config.set(username, h)
+        valid = self.__validate_user(username) and self.__validate_password(password)
+        if valid == True:
+            h = argon2.hash(password)
+            self.config.set(username, h)
         
+
     def check(self, username, password):
         """Given username and password, check that the login succeeded."""
         h = self.config.get("users", username)
         return argon2.verify(password, h)
 
-    def update_hash(self, username, password):
-        """
-        If the argon2 version string has changed, update the hash.
-        Maybe ask for a password change too?
-        """
-        pass
 
 
 def authentication_page(start_response, state):
