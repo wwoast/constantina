@@ -1,9 +1,10 @@
 import os
 import time
 from sys import stdin
+import ConfigParser
 import syslog
 from passlib.hash import argon2
-import ConfigParser
+
 
 syslog.openlog(ident='constantina_auth')
 
@@ -14,8 +15,8 @@ class ConstantinaAuth:
     and anything related to users.
     """
     def __init__(self):
-        self.config = ConfigParser.SafeConfigParser
-        self.config.open('shadow.ini')
+        self.config = ConfigParser.SafeConfigParser()
+        self.config.read('shadow.ini')
         self.user = None
         self.token = None
 
@@ -36,10 +37,10 @@ class ConstantinaAuth:
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")
         self.time = time.time()
-        
+
         for keyname in ["key1", "key2"]:
             keydate = self.config.getint(keyname, "date")
-            if self.time > (self.keydate + self.sunset):
+            if self.time > (keydate + self.sunset):
                 self.regen_cek.append(keyname)
 
 
@@ -63,11 +64,12 @@ class ConstantinaAuth:
 
 class ConstantinaAccount:
     """
-    Exists to wrap and check account information in the shadow.ini file.
+    Checks accounts, whether they come from password logins or from things like
+    certificate values passed from an upstream Nginx client-cert verification.
     """
     def __init__(self):
-        self.config = ConfigParser.SafeConfigParser
-        self.config.open('shadow.ini')
+        self.config = ConfigParser.SafeConfigParser()
+        self.config.read('shadow.ini')
 
 
     def __validate_user(self, username):
@@ -84,18 +86,18 @@ class ConstantinaAccount:
         return len(password) < self.config.getint('defaults', 'password_length')
 
 
-    def set(self, username, password):
+    def set_password(self, username, password):
         """Given username and password, set a shadow entry"""
         valid = self.__validate_user(username) and self.__validate_password(password)
-        if valid == True:
-            h = argon2.hash(password)
-            self.config.set(username, h)
-        
+        if valid is True:
+            pwd_hash = argon2.hash(password)
+            self.config.set("passwords", username, pwd_hash)
 
-    def check(self, username, password):
+
+    def check_password(self, username, password):
         """Given username and password, check that the login succeeded."""
-        h = self.config.get("users", username)
-        return argon2.verify(password, h)
+        pwd_hash = self.config.get("users", username)
+        return argon2.verify(password, pwd_hash)
 
 
 
@@ -118,9 +120,9 @@ def authentication():
     """
     size = int(os.environ.get('CONTENT_LENGTH'))
     post = {}
-    with stdin as fh:
-        # TODO: max content length, check for EOF
-        inbuf = fh.read(size)
+    with stdin as rfh:
+        # TODO: max content length, check for EOF (max_request_size_mb)
+        inbuf = rfh.read(size)
         for vals in inbuf.split('&'):
             [key, value] = vals.split('=')
             post[key] = value
