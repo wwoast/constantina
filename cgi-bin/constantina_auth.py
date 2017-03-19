@@ -3,6 +3,7 @@ import time
 from sys import stdin
 import ConfigParser
 import syslog
+import python_jose
 from passlib.hash import argon2
 from constantina_shared import GlobalConfig
 
@@ -14,11 +15,12 @@ class ConstantinaAuth:
     """
     Constantina Authentication object. Manages passwords, authentication tokens
     and anything related to users.
+    TODO: How to take inputs related to arbitrary auth parameters? **kwargs?
     """
-    def __init__(self):
+    def __init__(self, username, password):
         self.config = ConfigParser.SafeConfigParser()
         self.config.read('shadow.ini')
-        self.user = None
+        self.user = ConstantinaAccount(username, password)
         self.token = None
 
         self.lifetime = None
@@ -62,23 +64,34 @@ class ConstantinaAuth:
         pass
 
 
+    def set_token(self, username):
+        """
+        If authentication succeeds, set a token for this user
+        """
+        if self.user.check_password is True:
+            pass   # Create token
+
 
 class ConstantinaAccount:
     """
     Checks accounts, whether they come from password logins or from things like
     certificate values passed from an upstream Nginx client-cert verification.
     """
-    def __init__(self):
+    def __init__(self, username, password):
         self.config = ConfigParser.SafeConfigParser()
         self.config.read('shadow.ini')
+        self.username = username
+        self.password = password
+        self.valid = self.__validate_user(self.username) and 
+                     self.__validate_password(self.password)
 
 
-    def __validate_user(self, username):
-        """Valid new usernames are less than 50 characters"""
-        return len(username) < self.config.getint('defaults', 'user_length')
+    def __validate_user(self):
+        """Valid new usernames are less than 24 characters"""
+        return len(self.username) < self.config.getint('defaults', 'user_length')
 
 
-    def __validate_password(self, password):
+    def __validate_password(self):
         """
         Validate that new passwords match a given password policy.
         What should that be? People want to type these on phones and
@@ -87,18 +100,20 @@ class ConstantinaAccount:
         return len(password) < self.config.getint('defaults', 'password_length')
 
 
-    def set_password(self, username, password):
+    def set_password(self):
         """Given username and password, set a shadow entry"""
-        valid = self.__validate_user(username) and self.__validate_password(password)
-        if valid is True:
-            pwd_hash = argon2.hash(password)
-            self.config.set("passwords", username, pwd_hash)
+        if self.valid is True:
+            pwd_hash = argon2.hash(self.password)
+            self.config.set("passwords", self.username, pwd_hash)
+            return True
+        else:
+            return False
 
 
-    def check_password(self, username, password):
+    def check_password(self):
         """Given username and password, check that the login succeeded."""
-        pwd_hash = self.config.get("users", username)
-        return argon2.verify(password, pwd_hash)
+        pwd_hash = self.config.get("users", self.username)
+        return argon2.verify(self.password, pwd_hash)
 
 
 
@@ -117,7 +132,7 @@ def authentication_page(start_response, state):
 def authentication():
     """
     Super naive test authentication function just as a proof-of-concept
-    for validating my use of environment variabls and forms!
+    for validating my use of environment variables and forms!
     """
     read_size = int(os.environ.get('CONTENT_LENGTH'))
     max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
