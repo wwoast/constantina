@@ -3,7 +3,8 @@ import time
 from sys import stdin
 import ConfigParser
 import syslog
-import python_jose
+from jwcrypto import jws, jwk
+from jwcrypto.common import json_encode
 from passlib.hash import argon2
 from constantina_shared import GlobalConfig
 
@@ -29,7 +30,7 @@ class ConstantinaAuth:
         self.exp = None
         self.nbf = None
         self.sunset = None
-        self.regen_cek = []
+        self.regen_jwk = []
 
 
     def __read_shadow_settings(self):
@@ -47,7 +48,7 @@ class ConstantinaAuth:
                 self.regen_cek.append(keyname)
 
 
-    def __regen_cek(self):
+    def __regen_jwk(self):
         """
         Regenerate content encryption keys as necessary.
         TODO: Don't implement until basic tokens are tested
@@ -55,6 +56,10 @@ class ConstantinaAuth:
         for keyname in self.regen_cek:
             # self.config.set(stuff)
             pass
+
+
+    def generate_jwk(self, force=False)
+        for keyname in ["key1", "key2"]
 
 
     def check_token(self, token):
