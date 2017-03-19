@@ -4,6 +4,7 @@ from sys import stdin
 import ConfigParser
 import syslog
 from passlib.hash import argon2
+from constantina_shared import GlobalConfig
 
 
 syslog.openlog(ident='constantina_auth')
@@ -118,11 +119,14 @@ def authentication():
     Super naive test authentication function just as a proof-of-concept
     for validating my use of environment variabls and forms!
     """
-    size = int(os.environ.get('CONTENT_LENGTH'))
+    read_size = int(os.environ.get('CONTENT_LENGTH'))
+    max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
+    if read_size >= max_size:
+        read_size = max_size
+
     post = {}
     with stdin as rfh:
-        # TODO: max content length, check for EOF (max_request_size_mb)
-        inbuf = rfh.read(size)
+        inbuf = rfh.read(read_size)
         for vals in inbuf.split('&'):
             [key, value] = vals.split('=')
             post[key] = value
