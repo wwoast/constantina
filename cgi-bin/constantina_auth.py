@@ -1,6 +1,6 @@
 import os
-import time
 from sys import stdin
+from uuid import uuid4
 import ConfigParser
 import syslog
 import json
@@ -23,17 +23,18 @@ class ConstantinaAuth:
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read('shadow.ini')
         self.user = ConstantinaAccount(username, password)
-        self.token = None
-        self.lifetime = None
-        self.sunset = None
-        self.exp = None
-        self.time = None
-        self.nbf = None
-        self.sunset = None
+        self.lifetime = self.config.getint("key_settings", "lifetime")
+        self.sunset = self.config.getint("key_settings", "sunset")
         self.regen_jwk = []
         self.jwk = {}       # One of N keys for signing/encryption
         self.jwk_iat = {}   # Expiry dates for the JWKs
-
+        self.token = None
+        self.aud = None     # JWT audience (i.e. hostname)
+        self.exp = None     # JWT expiration time
+        self.iat = None     # JWT issued-at time
+        self.nbf = None     # JWT not-before time
+        self.sub = None     # JWT subject (subject_id/uesrname)
+        
 
     def __read_shadow_settings(self):
         """
@@ -42,7 +43,7 @@ class ConstantinaAuth:
         """
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")
-        self.time = time.time()
+        self.time = jwt.time.time()
 
         for keyname in ["key_last", "key_current"]:
             keydate = self.config.getint(keyname, "date")
@@ -66,12 +67,12 @@ class ConstantinaAuth:
         key_format = self.config.get("defaults", "key_format")
         key_size = self.config.getint("defaults", "key_size")
         self.jwk[name] = jwk.JWK(generate=key_format, size=key_size)
+        # Whatever key properties exist, set them in the config
         data = json.loads(self.jwk[name].export())
         for hash_key in data.keys:
-            # Whatever key properties exist, set them here
             self.config.set(self.jwk[name], hash_key, data[hash_key])
         # When did we create this key? Record this detail
-        self.jwk_iat[name] = int(time.time())
+        self.jwk_iat[name] = int(jwt.time.time())
         self.config.set(name, "date", self.jwk_iat[name])
 
 
@@ -100,17 +101,36 @@ class ConstantinaAuth:
         signed claims that are of interest
         """
         signing_algorithm = self.config.get("defaults", "signing_algorithm")
+        subject_id = self.config.get("defaults", "subject_id")
         signing_key = self.__read_key("key_current")
-        # TODO: Set claims!
+        self.iat = int(jwt.time.time())
+        self.aud = GlobalConfig.get("domain", "hostname")
+        self.sub = subject_id + "/" + self.user.username
+        self.nbf = self.iat - 60
+        self.exp = self.iat + self.lifetime
+        jti = uuid4().int
         claims = {
-            "a": "b",
+            "sub": self.sub,
+            "nbf": self.nbf,
+            "iat": self.iat,
+            "jti": jti,
+            "aud": self.aud,
+            "exp": self.exp
         }
         header = {
             "alg": signing_algorithm
         }
         self.token = jwt.JWT(header=header, claims=claims)
         self.token.make_signed_token(signing_key)
-        
+
+
+    def __create_jwe(self):
+        """
+        Create a JWE token.
+        """
+        self.token = self.__create_jwt()
+        pass
+
 
     def check_token(self, token):
         """
@@ -151,7 +171,7 @@ class ConstantinaAccount:
         What should that be? People want to type these on phones and
         things, so force 2FA or certificates for security.
         """
-        return len(password) < self.config.getint('defaults', 'password_length')
+        return len(self.password) < self.config.getint('defaults', 'password_length')
 
 
     def set_password(self):
