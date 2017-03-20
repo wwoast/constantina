@@ -3,6 +3,7 @@ import time
 from sys import stdin
 import ConfigParser
 import syslog
+import json
 from jwcrypto import jws, jwk
 from jwcrypto.common import json_encode
 from passlib.hash import argon2
@@ -42,7 +43,7 @@ class ConstantinaAuth:
         self.sunset = self.config.getint("key_settings", "sunset")
         self.time = time.time()
 
-        for keyname in ["sign_1", "sign_2", "encrypt_1", "encrypt_2"]:
+        for keyname in ["key_last", "key_current"]:
             keydate = self.config.getint(keyname, "date")
             if self.time > (keydate + self.sunset):
                 self.regen_jwk.append(keyname)
@@ -50,22 +51,25 @@ class ConstantinaAuth:
 
     def __regen_all_jwk(self):
         """
-        Regenerate content encryption keys as necessary.
-        TODO: Don't implement until basic tokens are tested
+        Regenerate any expired JWK shared secret keys in the config file.
         """
+        key_format = self.config.get("defaults", "key_format")
+        key_size = self.config.getint("defaults", "key_size")
         for keyname in self.regen_jwk:
-            if keyname.find("encrypt") == 0:
-                generate_jwk(self, "oct", )
-            # self.config.set(stuff)
-            pass
+            keyname = jwk.JWK(generate=key_format, size=key_size)
+            data = json.loads(keyname.export())
+            for hash_key in data.keys:
+                # Whatever key properties exist, set them here
+                self.config.set(keyname, hash_key, data[hash_key])
+            # TODO: Set the date that we did this
 
 
-    def generate_jwk(self, alg, force=False):
+    def __create_jwt(self):
         """
-        Generate keys for signing or encryption. Encryption keys are symmetric
-        secrets stored on the server only. Signing keys are RSA-OAEP.
+        Create a signed JWT with the key_current
         """
-
+        pass
+        
 
     def check_token(self, token):
         """
@@ -78,8 +82,8 @@ class ConstantinaAuth:
         """
         If authentication succeeds, set a token for this user
         """
-        if self.user.check_password is True:
-            pass   # Create token
+        if self.user.check_password() is True:
+            self.__create_jwt():
 
 
 class ConstantinaAccount:
