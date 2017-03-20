@@ -4,7 +4,7 @@ from sys import stdin
 import ConfigParser
 import syslog
 import json
-from jwcrypto import jws, jwk
+from jwcrypto import jws, jwk, jwt
 from jwcrypto.common import json_encode
 from passlib.hash import argon2
 from constantina_shared import GlobalConfig
@@ -24,14 +24,15 @@ class ConstantinaAuth:
         self.config.read('shadow.ini')
         self.user = ConstantinaAccount(username, password)
         self.token = None
-
         self.lifetime = None
         self.sunset = None
-        self.time = None
         self.exp = None
+        self.time = None
         self.nbf = None
         self.sunset = None
         self.regen_jwk = []
+        self.jwk = {}       # One of N keys for signing/encryption
+        self.jwk_iat = {}   # Expiry dates for the JWKs
 
 
     def __read_shadow_settings(self):
@@ -53,22 +54,62 @@ class ConstantinaAuth:
         """
         Regenerate any expired JWK shared secret keys in the config file.
         """
+        for keyname in self.regen_jwk:
+            self.__write_key(keyname)
+
+
+    def __write_key(self, name):
+        """
+        Given a keyname, generate the key and write it to the config file.
+        Persist the JWK key itself by "name" into the self.jwk{} dict
+        """
         key_format = self.config.get("defaults", "key_format")
         key_size = self.config.getint("defaults", "key_size")
-        for keyname in self.regen_jwk:
-            keyname = jwk.JWK(generate=key_format, size=key_size)
-            data = json.loads(keyname.export())
-            for hash_key in data.keys:
-                # Whatever key properties exist, set them here
-                self.config.set(keyname, hash_key, data[hash_key])
-            # TODO: Set the date that we did this
+        self.jwk[name] = jwk.JWK(generate=key_format, size=key_size)
+        data = json.loads(self.jwk[name].export())
+        for hash_key in data.keys:
+            # Whatever key properties exist, set them here
+            self.config.set(self.jwk[name], hash_key, data[hash_key])
+        # When did we create this key? Record this detail
+        self.jwk_iat[name] = int(time.time())
+        self.config.set(name, "date", self.jwk_iat[name])
+
+
+    def __read_key(self, name):
+        """
+        Read the desired key from the configuration file, and load it as
+        a JWK for purpose of signing or encryption. Parameters here that are
+        not part of the JWK structure are stored in metadata{} instead.
+        Persist the JWK key itself by "name" into the self.jwk{} dict
+        """
+        jwk_data = {}
+        metadata = {}
+        exclude = ["date"]
+        for hash_key, value in self.config.items(name):
+            jwk_data[hash_key] = value
+        for field in exclude:
+            metadata[field] = jwk_data[field]
+            del jwk_data[field]
+        self.jwk[name] = json.dumps(jwk_data)   # Equivalent to the jwk.JWK call
+        self.jwk_iat[name] = metadata["date"]
 
 
     def __create_jwt(self):
         """
-        Create a signed JWT with the key_current
+        Create a signed JWT with the key_current, and define any of the
+        signed claims that are of interest
         """
-        pass
+        signing_algorithm = self.config.get("defaults", "signing_algorithm")
+        signing_key = self.__read_key("key_current")
+        # TODO: Set claims!
+        claims = {
+            "a": "b",
+        }
+        header = {
+            "alg": signing_algorithm
+        }
+        self.token = jwt.JWT(header=header, claims=claims)
+        self.token.make_signed_token(signing_key)
         
 
     def check_token(self, token):
@@ -83,7 +124,7 @@ class ConstantinaAuth:
         If authentication succeeds, set a token for this user
         """
         if self.user.check_password() is True:
-            self.__create_jwt():
+            self.__create_jwt()
 
 
 class ConstantinaAccount:
