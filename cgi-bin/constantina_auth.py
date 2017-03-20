@@ -19,7 +19,7 @@ class ConstantinaAuth:
     TODO: How to take inputs related to arbitrary auth parameters? **kwargs?
     """
     def __init__(self, username, password):
-        self.config = ConfigParser.SafeConfigParser()
+        self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read('shadow.ini')
         self.user = ConstantinaAccount(username, password)
         self.token = None
@@ -42,24 +42,29 @@ class ConstantinaAuth:
         self.sunset = self.config.getint("key_settings", "sunset")
         self.time = time.time()
 
-        for keyname in ["key1", "key2"]:
+        for keyname in ["sign_1", "sign_2", "encrypt_1", "encrypt_2"]:
             keydate = self.config.getint(keyname, "date")
             if self.time > (keydate + self.sunset):
-                self.regen_cek.append(keyname)
+                self.regen_jwk.append(keyname)
 
 
-    def __regen_jwk(self):
+    def __regen_all_jwk(self):
         """
         Regenerate content encryption keys as necessary.
         TODO: Don't implement until basic tokens are tested
         """
-        for keyname in self.regen_cek:
+        for keyname in self.regen_jwk:
+            if keyname.find("encrypt") == 0:
+                generate_jwk(self, "oct", )
             # self.config.set(stuff)
             pass
 
 
-    def generate_jwk(self, force=False)
-        for keyname in ["key1", "key2"]
+    def generate_jwk(self, alg, force=False):
+        """
+        Generate keys for signing or encryption. Encryption keys are symmetric
+        secrets stored on the server only. Signing keys are RSA-OAEP.
+        """
 
 
     def check_token(self, token):
@@ -83,12 +88,11 @@ class ConstantinaAccount:
     certificate values passed from an upstream Nginx client-cert verification.
     """
     def __init__(self, username, password):
-        self.config = ConfigParser.SafeConfigParser()
+        self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read('shadow.ini')
         self.username = username
         self.password = password
-        self.valid = self.__validate_user(self.username) and 
-                     self.__validate_password(self.password)
+        self.valid = self.__validate_user() and self.__validate_password()
 
 
     def __validate_user(self):
