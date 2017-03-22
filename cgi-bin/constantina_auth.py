@@ -128,7 +128,7 @@ class ConstantinaAuth:
 
     def __create_jwe(self):
         """
-        Create a JWE token whose payload is a signed JWT.
+        Create a JWE token whose "claims" set (payload) is a signed JWT.
         """
         self.jwt = self.__create_jwt()
         encryption_key = self.__read_key("encryption_current")
