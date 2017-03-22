@@ -4,7 +4,7 @@ from uuid import uuid4
 import ConfigParser
 import syslog
 import json
-from jwcrypto import jws, jwk, jwt
+from jwcrypto import jws, jwk, jwt, jwe
 from jwcrypto.common import json_encode
 from passlib.hash import argon2
 from constantina_shared import GlobalConfig
@@ -28,13 +28,15 @@ class ConstantinaAuth:
         self.regen_jwk = []
         self.jwk = {}       # One of N keys for signing/encryption
         self.jwk_iat = {}   # Expiry dates for the JWKs
-        self.token = None
+        self.jwe = None     # The encrypted token
+        self.jwt = None     # The internal signed token
+        self.serial = None  # The serialized output that's read or written
         self.aud = None     # JWT audience (i.e. hostname)
         self.exp = None     # JWT expiration time
         self.iat = None     # JWT issued-at time
         self.nbf = None     # JWT not-before time
         self.sub = None     # JWT subject (subject_id/uesrname)
-        
+
 
     def __read_shadow_settings(self):
         """
@@ -45,7 +47,7 @@ class ConstantinaAuth:
         self.sunset = self.config.getint("key_settings", "sunset")
         self.time = jwt.time.time()
 
-        for keyname in ["key_last", "key_current"]:
+        for keyname in ["encrypt_last", "encrypt_current", "sign_last", "sign_current"]:
             keydate = self.config.getint(keyname, "date")
             if self.time > (keydate + self.sunset):
                 self.regen_jwk.append(keyname)
@@ -102,7 +104,7 @@ class ConstantinaAuth:
         """
         signing_algorithm = self.config.get("defaults", "signing_algorithm")
         subject_id = self.config.get("defaults", "subject_id")
-        signing_key = self.__read_key("key_current")
+        signing_key = self.__read_key("sign_current")
         self.iat = int(jwt.time.time())
         self.aud = GlobalConfig.get("domain", "hostname")
         self.sub = subject_id + "/" + self.user.username
@@ -120,23 +122,81 @@ class ConstantinaAuth:
         header = {
             "alg": signing_algorithm
         }
-        self.token = jwt.JWT(header=header, claims=claims)
-        self.token.make_signed_token(signing_key)
+        self.jwt = jwt.JWT(header=header, claims=claims)
+        self.jwt.make_signed_token(signing_key)
 
 
     def __create_jwe(self):
         """
-        Create a JWE token.
+        Create a JWE token whose payload is a signed JWT.
         """
-        self.token = self.__create_jwt()
-        pass
+        self.jwt = self.__create_jwt()
+        encryption_key = self.__read_key("encryption_current")
+        encryption_parameters = {
+            "alg": self.config.get("defaults", "encryption_algorithm"),
+            "enc": self.config.get("defaults", "encryption_mode")
+        }
+        payload = self.jwt.serialize()
+        self.jwe = jwt.JWT(header=encryption_parameters, claims=payload)
+        self.jwe.make_encrypted_token(encryption_key)
+
+
+    def __decrypt_jwe(self, serial, keyname):
+        """
+        Try decrpyting a JWE with a key. If successful, return true.
+        """
+        try:
+            self.jwe = jwt.JWT(key=self.jwk[keyname], jwt=serial)
+            return True
+        except:
+            return False
+
+
+    def __check_jwe(self, serial):
+        """
+        Given a serialized blob, parse it as a JWE token. If it fails, return
+        false. If it succeeds, return true, and set self.jwe to be the
+        serialized JWT inside the JWE.
+        """
+        for keyname in ["encrypt_current", "encrypt_last"]:
+            if self.__decrypt_jwe(serial, keyname) is True:
+                return True
+        return False
+
+
+    def __validate_jwt(self, serial, keyname):
+        """
+        Try validating the signature of a JWT and its claims.
+        If successful, return true.
+        """
+        try:
+            self.jwt = jwt.JWT(key=self.jwk[keyname], jwt=serial)
+            return True
+        except:
+            return False
+
+
+    def __check_jwt(self, serial):
+        """
+        Given a serialized blob, parse it as a JWT token. If it fails, return
+        false. If it succeeds, return true, and set self.jwt to be the JWT.
+        """
+        for keyname in ["sign_current", "sign_last"]:
+            if self.__validate_jwt(serial, keyname) is True:
+                return True
+        return False
 
 
     def check_token(self, token):
         """
-        Process a JWE token. In Constantina these come from the users' cookie
+        Process a JWE token. In Constantina these come from the users' cookie.
+        If all the validation works, return True, and self.jwt is set with a
+        valid JWT. If any part of this fails, do not set a cookie and return False.
         """
-        pass
+        if self.__check_jwe(token) is True:
+            if self.__check_jwt(self.jwe.claims) is True:
+                return True
+        return False
 
 
     def set_token(self, username):
@@ -144,7 +204,8 @@ class ConstantinaAuth:
         If authentication succeeds, set a token for this user
         """
         if self.user.check_password() is True:
-            self.__create_jwt()
+            self.__create_jwe()
+            self.serial = self.jwe.serialize()
 
 
 class ConstantinaAccount:
