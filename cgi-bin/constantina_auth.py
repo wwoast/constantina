@@ -22,7 +22,7 @@ class ConstantinaAuth:
     def __init__(self, username, password):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read('shadow.ini')
-        self.user = ConstantinaAccount(username, password)
+        self.account = ConstantinaAccount()
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")
         self.regen_jwk = []
@@ -36,6 +36,9 @@ class ConstantinaAuth:
         self.iat = None     # JWT issued-at time
         self.nbf = None     # JWT not-before time
         self.sub = None     # JWT subject (subject_id/uesrname)
+
+        # TODO: Authentication modes
+        self.account.login_password(username, password)
 
 
     def __read_shadow_settings(self):
@@ -107,7 +110,7 @@ class ConstantinaAuth:
         signing_key = self.__read_key("sign_current")
         self.iat = int(jwt.time.time())
         self.aud = GlobalConfig.get("domain", "hostname")
-        self.sub = subject_id + "/" + self.user.username
+        self.sub = subject_id + "/" + self.account.username
         self.nbf = self.iat - 60
         self.exp = self.iat + self.lifetime
         jti = uuid4().int
@@ -170,6 +173,7 @@ class ConstantinaAuth:
         If successful, return true.
         """
         try:
+            # TODO: How to check date prior to signing?
             self.jwt = jwt.JWT(key=self.jwk[keyname], jwt=serial)
             return True
         except:
@@ -195,6 +199,7 @@ class ConstantinaAuth:
         """
         if self.__check_jwe(token) is True:
             if self.__check_jwt(self.jwe.claims) is True:
+                # TODO: Set ConstantinaAccount object accordingly so there's a valid user
                 return True
         return False
 
@@ -203,9 +208,10 @@ class ConstantinaAuth:
         """
         If authentication succeeds, set a token for this user
         """
-        if self.user.check_password() is True:
+        if self.account.valid is True:
             self.__create_jwe()
             self.serial = self.jwe.serialize()
+
 
 
 class ConstantinaAccount:
@@ -213,12 +219,35 @@ class ConstantinaAccount:
     Checks accounts, whether they come from password logins or from things like
     certificate values passed from an upstream Nginx client-cert verification.
     """
-    def __init__(self, username, password):
+    def __init__(self):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read('shadow.ini')
+        self.username = None
+        self.password = None
+        self.valid = False
+
+
+    def login_password(self, username, password):
+        """
+        Given a username and password, check against entries in the shadow file
+        and if the login is valid, and username/passwords meet the given policy,
+        return True.
+        """
         self.username = username
         self.password = password
-        self.valid = self.__validate_user() and self.__validate_password()
+        self.valid = (self.__validate_user() and
+                      self.__validate_password() and
+                      self.__check_password())
+        return self.valid
+
+
+    def login_cookie(self, username):
+        """
+        Obtained values from an encrypted JWE cookie. Set these and be done.
+        """
+        self.username = username
+        self.valid = self.__validate_user()
+        return self.valid
 
 
     def __validate_user(self):
@@ -235,6 +264,12 @@ class ConstantinaAccount:
         return len(self.password) < self.config.getint('defaults', 'password_length')
 
 
+    def __check_password(self):
+        """Given username and password, check that the login succeeded."""
+        pwd_hash = self.config.get("users", self.username)
+        return argon2.verify(self.password, pwd_hash)
+
+
     def set_password(self):
         """Given username and password, set a shadow entry"""
         if self.valid is True:
@@ -243,12 +278,6 @@ class ConstantinaAccount:
             return True
         else:
             return False
-
-
-    def check_password(self):
-        """Given username and password, check that the login succeeded."""
-        pwd_hash = self.config.get("users", self.username)
-        return argon2.verify(self.password, pwd_hash)
 
 
 
@@ -266,8 +295,9 @@ def authentication_page(start_response, state):
 
 def authentication():
     """
-    Super naive test authentication function just as a proof-of-concept
-    for validating my use of environment variables and forms!
+    If a cookie is present, validate the JWE inside the cookie.
+    If a POST comes in, check the given username and password before
+    handing out a new cookie with a JWE value.
     """
     read_size = int(os.environ.get('CONTENT_LENGTH'))
     max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
@@ -286,4 +316,4 @@ def authentication():
     if auth.jwe is not None:
         return True
     else:
-        return False
+        return None

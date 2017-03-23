@@ -6,7 +6,7 @@ import syslog
 
 from constantina_shared import BaseFiles, opendir
 from constantina_state import ConstantinaState
-from constantina_auth import authentication, authentication_page
+from constantina_auth import ConstantinaAuth, authentication, authentication_page
 from medusa_cards import *
 from medusa_search import MedusaSearch
 # from zoo_state import ZooState
@@ -540,8 +540,9 @@ def application(env, start_response):
     state = ConstantinaState(in_state)   # Create state object
     auth_mode = CONFIG.get("authentication", "mode")
 
+    auth = authentication()
     if os.environ.get('REQUEST_METHOD') == 'POST':
-        if authentication() is True:
+        if auth.user.valid is True:
             return contents_page(start_response, state)
         else:
             return authentication_page(start_response, state)

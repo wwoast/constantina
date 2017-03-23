@@ -10,6 +10,7 @@ import ConfigParser
 
 from constantina_shared import GlobalConfig, BaseFiles, BaseState
 from medusa_state import MedusaState
+from zoo_state import ZooState
 
 syslog.openlog(ident='constantina_state')
 
@@ -32,7 +33,7 @@ class ConstantinaState(BaseState):
 
         # Getting defaults from the other states requires us to first import
         # any random seed value. Then, we can finish setting the imported state
-        self.__import_random_seed()			
+        self.__import_random_seed()
         self.__set_state_defaults()
         self.__import_state()
 
@@ -40,7 +41,7 @@ class ConstantinaState(BaseState):
     def __set_state_defaults(self):
         """
         Set default values for special_state properties and normal content-card
-        properties, as well as upper limits on how many cards can exist on a 
+        properties, as well as upper limits on how many cards can exist on a
         single Constantina page for this type of application. Doing so means we
         must import all of the sub-application states here, rather than in the
         import function like you'd do intuitively :(
@@ -59,7 +60,7 @@ class ConstantinaState(BaseState):
         # self.dracula = None
 
         # Based on modes, enable Medusa/Zoo/other states
-        if self.config.get("authentication", "mode") == "blog": 
+        if self.config.get("authentication", "mode") == "blog":
             self.medusa = MedusaState(self.in_state)
             self.max_items += self.medusa.max_items
             self.filtered += self.medusa.filtered
@@ -80,7 +81,7 @@ class ConstantinaState(BaseState):
 
     def get(self, application, value, args=None):
         """
-        Allow retrieving a medusa/zoo state value or function, or returning a 
+        Allow retrieving a medusa/zoo state value or function, or returning a
         default None value.
         """
         app_state = getattr(self, application, None)
@@ -154,7 +155,7 @@ class ConstantinaState(BaseState):
 
     def __import_theme_state(self):
         """
-        In the top-level state object, we track an appearance variable, which 
+        In the top-level state object, we track an appearance variable, which
         corresponds to the exact state variable imported (and exported) for the
         appearance of the entire Constantina site.
 
@@ -256,7 +257,7 @@ class ConstantinaState(BaseState):
 
     def permalink_mode(self):
         """Is one of the permalink modes on?"""
-	# TODO: check other states for active permalinks!
+	    # TODO: check other states for active permalinks!
         if ((self.medusa.news_permalink is not None) or
             (self.medusa.features_permalink is not None) or
             (self.medusa.topics_permalink is not None)):
