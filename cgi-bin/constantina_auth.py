@@ -199,7 +199,7 @@ class ConstantinaAuth:
         return False
 
 
-    def set_token(self, username):
+    def set_token(self):
         """
         If authentication succeeds, set a token for this user
         """
@@ -281,7 +281,9 @@ def authentication():
             [key, value] = vals.split('=')
             post[key] = value
 
-    if (post['username'] == "justin") and (post['password'] == "justin"):
+    auth = ConstantinaAuth(post["username"], post["password"])
+    auth.set_token()
+    if auth.jwe is not None:
         return True
     else:
         return False
