@@ -19,7 +19,7 @@ class ConstantinaAuth:
     and anything related to users.
     TODO: How to take inputs related to arbitrary auth parameters? **kwargs?
     """
-    def __init__(self, username, password):
+    def __init__(self, mode, **kwargs):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read('shadow.ini')
         self.account = ConstantinaAccount()
@@ -30,15 +30,26 @@ class ConstantinaAuth:
         self.jwk_iat = {}   # Expiry dates for the JWKs
         self.jwe = None     # The encrypted token
         self.jwt = None     # The internal signed token
-        self.serial = None  # The serialized output that's read or written
+        self.serial = None  # Token serialized and read/written into cookies
         self.aud = None     # JWT audience (i.e. hostname)
         self.exp = None     # JWT expiration time
         self.iat = None     # JWT issued-at time
         self.nbf = None     # JWT not-before time
         self.sub = None     # JWT subject (subject_id/uesrname)
 
-        # TODO: Authentication modes
-        self.account.login_password(username, password)
+        if mode == "password":
+            # Check username and password, and if the login was valid, the
+            # set_token logic will go through
+            self.account.login_password(**kwargs)
+            self.set_token()
+        elif mode == "cookie":
+            # Check if the token is valid, and if it was, the token and account
+            # objects will be properly set.
+            if self.check_token(**kwargs) is True:
+                self.account.login_cookie(username)   # TODO: how to get username!?
+        else:
+            # No token or valid account
+            pass
 
 
     def __read_shadow_settings(self):
@@ -199,7 +210,7 @@ class ConstantinaAuth:
         """
         if self.__check_jwe(token) is True:
             if self.__check_jwt(self.jwe.claims) is True:
-                # TODO: Set ConstantinaAccount object accordingly so there's a valid user
+                self.serial = self.jwe.serialize()
                 return True
         return False
 
