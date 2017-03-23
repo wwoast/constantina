@@ -1,14 +1,12 @@
 from math import floor
 from random import randint, seed
 import os
-from sys import stdin
-import syslog
 import ConfigParser
+import syslog
 
 from constantina_shared import BaseFiles, opendir
 from constantina_state import ConstantinaState
-from constantina_auth import ConstantinaAuth, authentication, authentication_page
-from medusa_state import MedusaState
+from constantina_auth import authentication, authentication_page
 from medusa_cards import *
 from medusa_search import MedusaSearch
 # from zoo_state import ZooState
@@ -100,7 +98,7 @@ class ConstantinaPage:
             # If the results have filled up the page, try and load more results
             syslog.syslog("page:%d  maxitems:%d  max-filter:%d  cardlen:%d" % (self.state.page, self.state.max_items, self.state.max_items - self.filtered, len(self.cards)))
             # TODO: this logic has issues
-            if ((self.state.max_items - self.filtered) * (self.state.page + 1) <= len(self.cards)):
+            if (self.state.max_items - self.filtered) * (self.state.page + 1) <= len(self.cards):
                 # Add a hidden card to trigger loading more data when reached
                 self.cards.insert(len(self.cards) - 7, MedusaCard('heading', 'scrollstone', state=self.state.medusa, grab_body=True))
                 # Finally, add the "next page" tombstone to load more content
@@ -321,7 +319,7 @@ class ConstantinaPage:
                 distance = getattr(app_state, ctype).distance
                 if distance is None:
                     distance = 0
-    
+
                 if distance >= spacing:   # Prev page ctype card not close
                     c_dist[ctype] = 0
                 elif (lstop == 0) and (distance == 0):   # No pages yet
@@ -331,7 +329,7 @@ class ConstantinaPage:
                 # syslog.syslog("*** initial spacing: ctype:%s  spacing:%d  c_dist:%d  distance:%d  lstop:%d" % ( ctype, spacing, c_dist[ctype], distance, lstop))
                 c_redist[ctype] = []
                 c_nodist[ctype] = []
-    
+
             # Make arrays of each card type, so we can random-jump their inserts later.
             for i in xrange(lstop, total):
                 ctype = self.cards[i].ctype
@@ -342,16 +340,16 @@ class ConstantinaPage:
                 else:
                     # Take all non-news cards out
                     c_redist[ctype].append(self.cards[i])
-    
+
             # Erase this snippet of the cards array, so we can reconstruct
             # it manually. Keep popping from the point where we snipped things
             for i in xrange(lstop, total):
                 self.cards.pop(lstop)
-    
+
             # Now, add the news cards back
             for j in xrange(0, len(c_nodist['news'])):
                 self.cards.insert(lstop + j, c_nodist['news'][j])
-    
+
             # Now, for each type of non-news card, figure out the starting point
             # where cards can be inserted, follow the spacing rules, and redist
             # them throughout the cards.
@@ -363,7 +361,7 @@ class ConstantinaPage:
                 # Are we doing cardtype filtering, and this isn't an included card type?
                 if app_state.exclude_cardtype(ctype) is True:
                     continue
-    
+
                 # Max distance between cards of this type on a page
                 norm_dist = getattr(app_state, ctype).spacing
                 # Number of input cards we're working with
@@ -376,15 +374,15 @@ class ConstantinaPage:
                 max_dist = effective_pdist
                 if card_count >= 1:
                     max_dist = floor(effective_pdist / card_count)
-    
+
                 # If less cards on the page then expected, degrade
                 if max_dist < norm_dist:
                     max_dist = norm_dist
                     norm_dist = max_dist - 1
-    
+
                 # Let jumps be non-deterministic
                 seed()
-    
+
                 # Start with an initial shorter distance for shuffling.
                 # The furthest initial insert spot isn't the "first space", but
                 # the maximum insert distance before spacing rules are not possible
@@ -395,7 +393,6 @@ class ConstantinaPage:
                 cards_ahead = card_count - next_cnt
                 end_jrange = cur_p_dist - (cards_ahead * norm_dist)
                 # syslog.syslog("*** dist initial: ctype:%s  cnt:%d  spacing:%d cur_pd:%d  sj:%d  ej:%d" % ( ctype, len(c_redist[ctype]), norm_dist, cur_p_dist, start_jrange, end_jrange))
-    
                 # Add back the cards. NOTE all jumpranges must be offsets from lstop,
                 # not specific indexes that refer to the insert points in the array
                 for k in xrange(0, card_count):
@@ -404,13 +401,12 @@ class ConstantinaPage:
                         jump = start_jrange
                     else:
                         jump = randint(start_jrange, end_jrange)
-    
+
                     ins_index = lstop + jump
-    
+
                     card = c_redist[ctype][k]
                     self.cards.insert(ins_index, card)
                     # syslog.syslog("k:%d  ins_index:%d  jump:%d  cur_pd:%d  sj:%d  ej:%d" % ( k, ins_index, jump, cur_p_dist, start_jrange, end_jrange))
-    
                     # For next iteration, spacing is at least space distance away from
                     # the current insert, and no further than the distance by which
                     # future spacing rules are not possible to follow.
@@ -419,12 +415,11 @@ class ConstantinaPage:
                     next_cnt = next_cnt + 1
                     cards_ahead = card_count - next_cnt
                     end_jrange = cur_p_dist - (cards_ahead * norm_dist)
-    
-    
+
             # Return seed to previous deterministic value, if it existed
             if self.state.seed:
                 seed(self.state.seed)
-    
+
         # Lastly, add the topics cards back
         for j in xrange(0, len(c_nodist['topics'])):
             self.cards.insert(lstop + j, c_nodist['topics'][j])
@@ -472,7 +467,9 @@ def contents_page(start_response, state):
         One news or feature, footer, link to the main page
     3) Easter eggs
     """
+    # TODO: add cookies as part of the start_response headers
     substitute = '<!-- Contents go here -->'
+    headers = [('Content-Type', 'text/html')]
 
     # Fresh new HTML, no previous state provided
     if state.fresh_mode() is True:
@@ -480,7 +477,7 @@ def contents_page(start_response, state):
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
         html = html.replace(substitute, create_page(page))
-        start_response('200 OK', [('Content-Type', 'text/html')])
+        start_response('200 OK', headers)
 
     # Permalink page of some kind
     elif state.permalink_mode() is True:
@@ -488,7 +485,7 @@ def contents_page(start_response, state):
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
         html = html.replace(substitute, create_page(page))
-        start_response('200 OK', [('Content-Type', 'text/html')])
+        start_response('200 OK', headers)
 
     # Did we get an empty search? If so, reshuffle
     elif state.reshuffle_mode() is True:
@@ -496,19 +493,19 @@ def contents_page(start_response, state):
         state = ConstantinaState(None)
         page = ConstantinaPage(state)
         html = create_page(page)
-        start_response('200 OK', [('Content-Type', 'text/html')])
+        start_response('200 OK', headers)
 
     # Doing a search or a filter process
     elif state.search_mode() is True:
         page = ConstantinaPage(state)
         html = create_page(page)
-        start_response('200 OK', [('Content-Type', 'text/html')])
+        start_response('200 OK', headers)
 
     # Otherwise, there is state, but no special headers.
     else:
         page = ConstantinaPage(state)
         html = create_page(page)
-        start_response('200 OK', [('Content-Type', 'text/html')])
+        start_response('200 OK', headers)
 
     # Load html contents into the page with javascript
     return html
@@ -560,5 +557,5 @@ def application(env, start_response):
 # TODO: pass QUERY_STRING as a CLI argument
 if __name__ == "__main__":
     stub = lambda a, b: a.strip()
-    html = application(True, stub)
-    print html
+    html_body = application(True, stub)
+    print html_body
