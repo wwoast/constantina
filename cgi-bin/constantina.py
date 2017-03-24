@@ -542,7 +542,7 @@ def application(env, start_response):
 
     auth = authentication()
     if os.environ.get('REQUEST_METHOD') == 'POST':
-        if auth.user.valid is True:
+        if auth.account.valid is True:
             return contents_page(start_response, state)
         else:
             return authentication_page(start_response, state)

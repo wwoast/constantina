@@ -17,7 +17,6 @@ class ConstantinaAuth:
     """
     Constantina Authentication object. Manages passwords, authentication tokens
     and anything related to users.
-    TODO: How to take inputs related to arbitrary auth parameters? **kwargs?
     """
     def __init__(self, mode, **kwargs):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
@@ -35,7 +34,7 @@ class ConstantinaAuth:
         self.exp = None     # JWT expiration time
         self.iat = None     # JWT issued-at time
         self.nbf = None     # JWT not-before time
-        self.sub = None     # JWT subject (subject_id/uesrname)
+        self.sub = None     # JWT subject (subject_id/username)
 
         if mode == "password":
             # Check username and password, and if the login was valid, the
@@ -46,7 +45,7 @@ class ConstantinaAuth:
             # Check if the token is valid, and if it was, the token and account
             # objects will be properly set.
             if self.check_token(**kwargs) is True:
-                self.account.login_cookie(username)   # TODO: how to get username!?
+                self.account.login_cookie(self.sub)
         else:
             # No token or valid account
             pass
@@ -59,7 +58,7 @@ class ConstantinaAuth:
         """
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")
-        self.time = jwt.time.time()
+        self.time = int(jwt.time.time())
 
         for keyname in ["encrypt_last", "encrypt_current", "sign_last", "sign_current"]:
             keydate = self.config.getint(keyname, "date")
@@ -140,6 +139,18 @@ class ConstantinaAuth:
         self.jwt.make_signed_token(signing_key)
 
 
+    def __read_jwt_claims(self):
+        """
+        Once a JWE and JWT have been checked, read in all of their
+        claims data into the auth object.
+        """
+        self.iat = self.jwt.claims["iat"]
+        self.aud = self.jwt.claims["aud"]
+        self.sub = self.jwt.claims["sub"]
+        self.nbf = self.jwt.claims["nbf"]
+        self.exp = self.jwt.claims["exp"]
+
+
     def __create_jwe(self):
         """
         Create a JWE token whose "claims" set (payload) is a signed JWT.
@@ -205,12 +216,14 @@ class ConstantinaAuth:
     def check_token(self, token):
         """
         Process a JWE token. In Constantina these come from the users' cookie.
-        If all the validation works, return True, and self.jwt is set with a
-        valid JWT. If any part of this fails, do not set a cookie and return False.
+        If all the validation works, self.jwt becomes a valid JWT, read in the
+        JWT's claims, and return True.
+        If any part of this fails, do not set a cookie and return False.
         """
         if self.__check_jwe(token) is True:
             if self.__check_jwt(self.jwe.claims) is True:
                 self.serial = self.jwe.serialize()
+                self.__read_jwt_claims()
                 return True
         return False
 
@@ -233,9 +246,10 @@ class ConstantinaAccount:
     def __init__(self):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read('shadow.ini')
+        self.valid = False
         self.username = None
         self.password = None
-        self.valid = False
+        self.subject = None
 
 
     def login_password(self, username, password):
@@ -252,13 +266,24 @@ class ConstantinaAccount:
         return self.valid
 
 
-    def login_cookie(self, username):
+    def login_cookie(self, sub):
         """
         Obtained values from an encrypted JWE cookie. Set these and be done.
         """
-        self.username = username
-        self.valid = self.__validate_user()
+        self.subject = sub
+        self.valid = (self.__validate_user() and
+                      self.__validate_subject_id())
         return self.valid
+
+
+    def __validate_subject_id(self):
+        """
+        The subject_id comes from a token's subject in the form "subject_id/username".
+        If the incoming subject_id matches the domain value in GlobalConfig, then we
+        consider it valid.
+        """
+        (test_id, self.username) = self.subject.split("/")
+        return test_id == GlobalConfig.get("domain", "hostname")
 
 
     def __validate_user(self):
@@ -322,7 +347,11 @@ def authentication():
             [key, value] = vals.split('=')
             post[key] = value
 
-    auth = ConstantinaAuth(post["username"], post["password"])
+    auth_params = {
+        "username": post["username"],
+        "password": post["password"]
+    }
+    auth = ConstantinaAuth("password", auth_params)
     auth.set_token()
     if auth.jwe is not None:
         return True
