@@ -2,10 +2,9 @@ import os
 from sys import stdin
 from uuid import uuid4
 import ConfigParser
-import syslog
 import json
-from jwcrypto import jws, jwk, jwt, jwe
-from jwcrypto.common import json_encode
+import syslog
+from jwcrypto import jwk, jwt
 from passlib.hash import argon2
 from constantina_shared import GlobalConfig
 
@@ -347,11 +346,7 @@ def authentication():
             [key, value] = vals.split('=')
             post[key] = value
 
-    auth_params = {
-        "username": post["username"],
-        "password": post["password"]
-    }
-    auth = ConstantinaAuth("password", auth_params)
+    auth = ConstantinaAuth("password", username=post["username"], password=post["password"])
     auth.set_token()
     if auth.jwe is not None:
         return True
