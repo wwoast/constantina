@@ -6,10 +6,10 @@ import json
 import syslog
 from jwcrypto import jwk, jwt
 from passlib.hash import argon2
-from constantina_shared import GlobalConfig
+from Constantina.shared import GlobalConfig
 
 
-syslog.openlog(ident='constantina_auth')
+syslog.openlog(ident='Constantina.auth')
 
 
 class ConstantinaAuth:

@@ -8,11 +8,11 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
-from constantina_shared import GlobalConfig, BaseFiles, BaseState
-from medusa_state import MedusaState
-from zoo_state import ZooState
+from Constantina.shared import GlobalConfig, BaseFiles, BaseState
+from Constantina.medusa.state import MedusaState
+from Constantina.zoo.state import ZooState
 
-syslog.openlog(ident='constantina_state')
+syslog.openlog(ident='Constantina.state')
 
 
 class ConstantinaState(BaseState):

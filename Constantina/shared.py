@@ -6,7 +6,7 @@ from math import floor
 from random import randint, seed, shuffle
 from urllib import unquote_plus
 
-syslog.openlog(ident='constantina_shared')
+syslog.openlog(ident='Constantina.shared')
 
 GlobalConfig = ConfigParser.SafeConfigParser()
 GlobalConfig.read('constantina.ini')

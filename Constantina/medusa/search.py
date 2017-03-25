@@ -7,9 +7,9 @@ import lxml.html
 import syslog
 import ConfigParser
 
-from constantina_shared import GlobalConfig, BaseFiles, opendir, unroll_newlines
+from Constantina.shared import GlobalConfig, BaseFiles, opendir, unroll_newlines
 
-syslog.openlog(ident='medusa_search')
+syslog.openlog(ident='Constantina.medusa.search')
 
 
 class MedusaSearch:

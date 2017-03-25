@@ -10,9 +10,9 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
-from constantina_shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, count_ptags, opendir, unroll_newlines
+from Constantina.shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, count_ptags, opendir, unroll_newlines
 
-syslog.openlog(ident='medusa_cards')
+syslog.openlog(ident='Constantina.medusa.cards')
 
 
 class MedusaCard:
