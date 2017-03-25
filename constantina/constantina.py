@@ -4,14 +4,14 @@ import os
 import ConfigParser
 import syslog
 
-from constantina.shared import BaseFiles, opendir
-from constantina.state import ConstantinaState
-from constantina.auth import ConstantinaAuth, authentication, authentication_page
-from constantina.medusa.cards import *
-from constantina.medusa.search import MedusaSearch
-# from constantina.zoo.state import ZooState
-# from constantina.zoo.cards import *
-# from constantina.zoo.search import ZooSearch
+from shared import BaseFiles, opendir
+from state import ConstantinaState
+from auth import ConstantinaAuth, authentication, authentication_page
+from medusa.cards import *
+from medusa.search import MedusaSearch
+# from zoo.state import ZooState
+# from zoo.cards import *
+# from zoo.search import ZooSearch
 
 # Look up Cards by application config name, instead of calling
 # MedusaCard/ZooCard directly

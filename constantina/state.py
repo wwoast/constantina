@@ -8,9 +8,9 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
-from constantina.shared import GlobalConfig, BaseFiles, BaseState
-from constantina.medusa.state import MedusaState
-from constantina.zoo.state import ZooState
+from shared import GlobalConfig, BaseFiles, BaseState
+from medusa.state import MedusaState
+from zoo.state import ZooState
 
 syslog.openlog(ident='constantina.state')
 
