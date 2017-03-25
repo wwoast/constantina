@@ -8,11 +8,11 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
-from Constantina.zoo.cards import ZooCard
-from Constantina.zoo.state import ZooState
-from Constantina.shared import BaseFiles, BaseCardType, opendir
+from constantina.zoo.cards import ZooCard
+from constantina.zoo.state import ZooState
+from constantina.shared import BaseFiles, BaseCardType, opendir
 
-syslog.openlog(ident='Constantina.zoo.cards')
+syslog.openlog(ident='constantina.zoo.cards')
 
 
 class ZooCard:

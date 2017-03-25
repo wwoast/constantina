@@ -1,9 +1,9 @@
 import syslog
 import ConfigParser
 
-from Constantina.shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, opendir
+from constantina.shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, opendir
 
-syslog.openlog(ident='Constantina.medusa.state')
+syslog.openlog(ident='constantina.medusa.state')
 
 
 class MedusaState(BaseState):

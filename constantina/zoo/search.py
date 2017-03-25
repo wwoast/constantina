@@ -6,9 +6,9 @@ import lxml.html
 import syslog
 import ConfigParser
 
-from Constantina.shared import GlobalConfig, BaseFiles, opendir, unroll_newlines
+from constantina.shared import GlobalConfig, BaseFiles, opendir, unroll_newlines
 
-syslog.openlog(ident='Constantina.zoo.search')
+syslog.openlog(ident='constantina.zoo.search')
 
 
 class ZooSearch:

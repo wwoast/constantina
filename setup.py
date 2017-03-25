@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
+import distutils
 from distutils.core import setup
 import sys
 
 """
-Constantina installer script. Based on the configuration settings in
+constantina installer script. Based on the configuration settings in
 constantina.ini, generate initial jws/jwk values, an initial admin
 password, and move all relevant files into their final directories.
 """
@@ -21,16 +22,9 @@ Programming Language :: Python :: 2
 Programming Language :: Python :: 2.7""".splitlines(),
 
     'packages': [
-        'Constantina',
-        'Constantina.auth',
-        'Constantina.shared',
-        'Constantina.state',
-        'Constantina.medusa.cards',
-        'Constantina.medusa.search',
-        'Constantina.medusa.state',
-        'Constantina.zoo.cards',
-        'Constantina.zoo.search',
-        'Constantina.zoo.state',
+        'constantina',
+        'constantina.medusa',
+        'constantina.zoo',
     ],
 }
 
