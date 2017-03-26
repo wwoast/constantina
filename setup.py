@@ -62,6 +62,7 @@ Programming Language :: Python :: 2.7""".splitlines(),
         self.distutils_args['data_files'] = [
             (self.config_path, ["config/constantina.ini", 
                                 "config/medusa.ini", 
+                                "config/shadow.ini", 
                                 "config/zoo.ini"])
         ]
 
@@ -94,6 +95,7 @@ Programming Language :: Python :: 2.7""".splitlines(),
 if __name__ == '__main__':
     config_object = SetupConfig()
     try:
+        # TODO: only on install should site_specifics and update_configs work!
         config_object.site_specifics()		# Define site-specific settings for a Constantina instance
         config_object.data_files()		# Where do files and configs go?
         setup(**config_object.distutils_args)	# Run disttools setup
