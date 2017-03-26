@@ -4,7 +4,7 @@ import os
 import ConfigParser
 import syslog
 
-from shared import BaseFiles, opendir
+from shared import GlobalConfig, BaseFiles, opendir
 from state import ConstantinaState
 from auth import ConstantinaAuth, authentication, authentication_page
 from medusa.cards import *
@@ -23,8 +23,6 @@ CardClass = {
 
 syslog.openlog(ident='constantina')
 # TODO: get rid of this somehow!
-CONFIG = ConfigParser.SafeConfigParser()
-CONFIG.read('constantina.ini')
 
 
 class ConstantinaPage:
@@ -54,7 +52,7 @@ class ConstantinaPage:
         self.query_terms = ''    # Use this locally, in case we happen not to create a search object
         self.filter_terms = ''   # For filtering based on cardtypes
         self.filtered = 0        # Cards excluded from search results by filtering
-        self.applications = CONFIG.get("applications", "enabled").replace(" ", "").split(",")
+        self.applications = GlobalConfig.get("applications", "enabled").replace(" ", "").split(",")
 
         # TODO: card insertion logic needs to be considerably more generic if
         # there are multiple applications in play!
@@ -528,7 +526,7 @@ def application(env, start_response):
     generate a special randomized page just for that link,
     with an introduction, footers, an image, and more...
     """
-    root_dir = CONFIG.get("paths", "root")
+    root_dir = GlobalConfig.get("paths", "root")
     os.chdir(root_dir)
     in_state = os.environ.get('QUERY_STRING')
     if (in_state is not None) and (in_state != ''):
@@ -538,7 +536,7 @@ def application(env, start_response):
         in_state = None
 
     state = ConstantinaState(in_state)   # Create state object
-    auth_mode = CONFIG.get("authentication", "mode")
+    auth_mode = GlobalConfig.get("authentication", "mode")
 
     auth = authentication()
     if os.environ.get('REQUEST_METHOD') == 'POST':

@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+import sys
 import syslog
 import ConfigParser
 from math import floor
@@ -9,7 +10,13 @@ from urllib import unquote_plus
 syslog.openlog(ident='constantina.shared')
 
 GlobalConfig = ConfigParser.SafeConfigParser()
-GlobalConfig.read('constantina.ini')
+# Configuration setup must find the Global Config file in one of these paths.
+# Once you have GlobalConfig, the other config files can then be enumerated.
+ConfigOptions = [
+    sys.prefix + "/etc/constantina/constantina.ini",
+    "/etc/constantina/constantina.ini"
+]
+GlobalConfig.read(ConfigOptions)
 
 # Only do opendir once per directory, and store results here
 # The other Constantina modules need access to this "globally".
