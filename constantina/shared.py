@@ -13,8 +13,8 @@ GlobalConfig = ConfigParser.SafeConfigParser()
 # Configuration setup must find the Global Config file in one of these paths.
 # Once you have GlobalConfig, the other config files can then be enumerated.
 ConfigOptions = [
-    sys.prefix + "/etc/constantina/constantina.ini",
-    "/etc/constantina/constantina.ini"
+    sys.prefix + "/etc/constantina/" + os.environ.get("INSTANCE") + "/constantina.ini",
+    "/etc/constantina/" + os.environ.get("INSTANCE") + "constantina.ini"
 ]
 GlobalConfig.read(ConfigOptions)
 

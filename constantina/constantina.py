@@ -509,7 +509,7 @@ def contents_page(start_response, state):
     return html
 
 
-def application(env, start_response):
+def application(env, start_response, instance="default"):
     """
     uwsgi entry point and main Constantina application.
 
@@ -537,6 +537,8 @@ def application(env, start_response):
 
     state = ConstantinaState(in_state)   # Create state object
     auth_mode = GlobalConfig.get("authentication", "mode")
+
+    syslog.syslog(instance)
 
     auth = authentication()
     if os.environ.get('REQUEST_METHOD') == 'POST':

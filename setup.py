@@ -10,7 +10,8 @@ constantina.ini, generate initial jws/jwk values, an initial admin
 password, and move all relevant files into their final directories.
 """
 
-
+instance_name = "default"
+config_path = None
 setup_args = {
     'name': "constantina",
     'version': "0.5.0-alpha",
@@ -34,8 +35,9 @@ Programming Language :: Python :: 2.7""".splitlines(),
 def interactive_setup():
     """
     Read in values for setting up Constantina, including:
-    - Name of the domain we're using 
-    - ...
+    - Name of the Constantina instance [test/staging/prod/<name>]
+    - The domain this instance will be listening on
+    - The webroot that Constantina's HTML will copy into
     """ 
     pass
 
@@ -57,13 +59,25 @@ def setup_paths():
         (config_path, ["config/constantina.ini", 
                        "config/medusa.ini", 
                        "config/zoo.ini"])
-    ]    
+    ]
+
+
+
+def update_configs():
+    """
+    Update constantina.ini with relevant site-specific settings for the blog:
+    - The domain hostname that the site is using
+    - The paths.config value where config files live
+    """
+    # Update the configuration parameters that are relevant
+    pass
 
 
 if __name__ == '__main__':
     try:
-        setup_paths()
-        setup(**setup_args)
+        setup_paths()		# Where do files and configs go?
+        setup(**setup_args)     # Run disttools setup
+        update_configs()
     except distutils.errors.DistutilsPlatformError, ex:
         print
         print str(ex)

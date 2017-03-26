@@ -48,6 +48,7 @@ plugin       = python
 wsgi-file    = /path/to/constantina.py
 processes    = 3
 procname     = constantina
+env          = INSTANCE=default
 max-requests = 5
 master
 close-on-exec
@@ -71,11 +72,12 @@ RewriteEngine on
 # Replace /cgi-bin/ with your hosting provider's specified scripts folder
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^(.*)$ /cgi-bin/constantina.cgi
+SetEnv INSTANCE default
 ```
 
 
 ##Configuration Settings
-`cgi-bin/constantina.ini` stores all operational configuration for Constantina.
+`/etc/constantina/<INSTANCE>/constantina.ini` stores all operational configuration for Constantina.
 
  * `[paths].root` is the root of your public HTML directory where files are hosted
  * `[authentication]` is not used yet, and should just be set to `blog`.
@@ -87,7 +89,7 @@ RewriteRule ^(.*)$ /cgi-bin/constantina.cgi
   * The default here is 10, so you can't process more than 10 search terms and 10 filter terms
   * Constantina itself won't process more than 512 characters from any `QUERY_STRING`
 
-`cgi-bin/medusa.ini` stores configuration related to Constantina's blog functionality.
+`/etc/constantina/<INSTANCE>/medusa.ini` stores configuration related to Constantina's blog functionality.
 
  * `[paths]` values describe where each type of card is stored
   * You shouldn't need to change these
