@@ -10,6 +10,7 @@ constantina.ini, generate initial jws/jwk values, an initial admin
 password, and move all relevant files into their final directories.
 """
 
+
 setup_args = {
     'name': "constantina",
     'version': "0.5.0-alpha",
@@ -30,8 +31,38 @@ Programming Language :: Python :: 2.7""".splitlines(),
 }
 
 
+def interactive_setup():
+    """
+    Read in values for setting up Constantina, including:
+    - Name of the domain we're using 
+    - ...
+    """ 
+    pass
+
+
+def setup_paths():
+    """
+    Install the html data in the directory of your choosing, by default
+    /var/www/<hostname>/constantina. TOWRITE
+
+    Install config files for Constantina in /etc/constantina unless we're 
+    using a special config prefix like /usr/local, in which case we put
+    configs in /usr/local/etc/constantina.
+    """
+    config_path = sys.prefix + "/etc/constantina"
+    if sys.prefix == "/usr":
+        config_path = "/etc/constantina"
+
+    setup_args['data_files'] = [
+        (config_path, ["config/constantina.ini", 
+                       "config/medusa.ini", 
+                       "config/zoo.ini"])
+    ]    
+
+
 if __name__ == '__main__':
     try:
+        setup_paths()
         setup(**setup_args)
     except distutils.errors.DistutilsPlatformError, ex:
         print
