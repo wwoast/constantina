@@ -8,7 +8,7 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
-from .. shared import BaseFiles, BaseCardType, opendir
+from constantina.shared import BaseFiles, BaseCardType, opendir
 
 syslog.openlog(ident='constantina.zoo.cards')
 

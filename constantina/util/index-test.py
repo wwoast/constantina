@@ -3,11 +3,11 @@
 Run this script at the shell, and it will create the search indexes
 if they don't exist, and do a search for the term "Constantina".
 """
-
 from os import chdir
-from constantina_state import ConstantinaState
-from medusa_search import MedusaSearch
 import ConfigParser
+
+from constantina.state import ConstantinaState
+from constantina.medusa.search import MedusaSearch
 
 CONFIG = ConfigParser.SafeConfigParser()
 CONFIG.read('constantina.ini')

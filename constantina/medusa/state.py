@@ -1,7 +1,7 @@
 import syslog
 import ConfigParser
 
-from .. shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, opendir
+from constantina.shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, opendir
 
 syslog.openlog(ident='constantina.medusa.state')
 
