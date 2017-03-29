@@ -2,7 +2,7 @@
 
 import distutils
 import distutils.cmd
-import disttools.log
+import distutils.log
 from distutils.core import setup
 import sys
 import ConfigParser
@@ -69,12 +69,11 @@ class InstallPyCommand(setuptools.command.install.install):
         self.run_command('config')
 
 
-
 if __name__ == '__main__':
     # Install the files, and then run a configure script afterwards
     # if we used the "install" command.
     try:
-        setup({
+        distutils_config = {
             'name': "constantina",
             'version': "0.5.0-alpha",
             'description': "a dynamic-content blog platform for \"grazing\"",
@@ -84,17 +83,16 @@ if __name__ == '__main__':
             'classifiers':"""Programming Language :: Python
 Programming Language :: Python :: 2
 Programming Language :: Python :: 2.7""".splitlines(),
-
             'packages': [
                 'constantina',
                 'constantina.medusa',
                 'constantina.zoo',
             ],
-
             'cmdclass': {
                 'config': ConfigurePyCommand
             }
-        })
+        }
+        setup(**distutils_config)
 
     except distutils.errors.DistutilsPlatformError, ex:
         print

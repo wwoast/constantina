@@ -9,12 +9,13 @@ from urllib import unquote_plus
 
 syslog.openlog(ident='constantina.shared')
 
+Instance = os.environ.get("INSTANCE") or "default"
 GlobalConfig = ConfigParser.SafeConfigParser()
 # Configuration setup must find the Global Config file in one of these paths.
 # Once you have GlobalConfig, the other config files can then be enumerated.
 ConfigOptions = [
-    sys.prefix + "/etc/constantina/" + os.environ.get("INSTANCE") + "/constantina.ini",
-    "/etc/constantina/" + os.environ.get("INSTANCE") + "constantina.ini"
+    sys.prefix + "/etc/constantina/" + Instance + "/constantina.ini",
+    "/etc/constantina/" + Instance + "/constantina.ini"
 ]
 GlobalConfig.read(ConfigOptions)
 
