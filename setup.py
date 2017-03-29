@@ -3,7 +3,7 @@
 import distutils
 import distutils.cmd
 import distutils.log
-from distutils.core import setup
+from distutils.core import setup, Command
 import os
 import sys
 import ConfigParser
@@ -22,9 +22,9 @@ class ConfigurePyCommand(distutils.cmd.Command):
     """Custom command for doing configuration steps"""
     description = 'configure Constantina defaults for a site'
     user_options = [
-        ('instance', 'i', 'config directory isolation: /etc/constantina/<instance>'),
-        ('hostname', 'h', 'hostname that Constantina will run on'),
-        ('config', 'c', 'path to the configuration directory')
+        ('instance=', 'i', 'config directory isolation: /etc/constantina/<instance>'),
+        ('hostname=', 'h', 'hostname that Constantina will run on'),
+        ('config=', 'c', 'path to the configuration directory')
     ]
 
     def initialize_options(self):
@@ -39,14 +39,16 @@ class ConfigurePyCommand(distutils.cmd.Command):
 
     def finalize_options(self):
         """Look for unacceptable inputs"""
-        if len(self.instance) == 0:
-            self.instance = "default"
-        if len(self.hostname) == 0:
-            self.hostname = gethostname()
+        assert (isinstance(self.instance, str) and 
+                len(self.instance) > 0 and 
+                len(self.instance) < 32), 'Invalid instance name'
+        assert isinstance(self.hostname, str), 'Invalid host name'
+        assert isinstance(self.root, str)
+        assert isinstance(self.config, str)
 
     def run(self):
         """Run a configuration script post-install"""
-        command = [sys.prefix + '/constantina_configure.py']
+        command = ['./bin/constantina_configure.py']
         if self.instance:
             command.append('--instance=%s' % self.instance)
         if self.hostname:
@@ -93,7 +95,10 @@ Programming Language :: Python :: 2.7""".splitlines(),
             'cmdclass': {
                 'config': ConfigurePyCommand,
                 'install': InstallPyCommand
-            }
+            },
+            'scripts': [
+                'bin/constantina_configure.py'
+            ]
         }
         setup(**distutils_config)
 
