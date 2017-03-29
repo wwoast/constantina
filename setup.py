@@ -4,11 +4,13 @@ import distutils
 import distutils.cmd
 import distutils.log
 from distutils.core import setup
+import os
 import sys
 import ConfigParser
 import setuptools.command.install
 from random import choice, randint
 from socket import gethostname
+import subprocess
 
 """
 constantina installer script. Based on the configuration settings in
@@ -89,7 +91,8 @@ Programming Language :: Python :: 2.7""".splitlines(),
                 'constantina.zoo',
             ],
             'cmdclass': {
-                'config': ConfigurePyCommand
+                'config': ConfigurePyCommand,
+                'install': InstallPyCommand
             }
         }
         setup(**distutils_config)
