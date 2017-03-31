@@ -3,19 +3,18 @@
 import distutils
 import distutils.cmd
 import distutils.log
-from distutils.core import setup, Command
+from distutils.core import setup
 import os
 import sys
-import ConfigParser
-import setuptools.command.install
-from random import choice, randint
 from socket import gethostname
 import subprocess
+import setuptools.command.install
+
 
 """
-constantina installer script. Based on the configuration settings in
-constantina.ini, generate initial jws/jwk values, an initial admin
-password, and move all relevant files into their final directories.
+Constantina installer script. The installer script by default will also run
+a configuration script intended to set up reasonable defaults for an instance
+of Constantina.
 """
 
 class ConfigurePyCommand(distutils.cmd.Command):
@@ -39,8 +38,8 @@ class ConfigurePyCommand(distutils.cmd.Command):
 
     def finalize_options(self):
         """Look for unacceptable inputs"""
-        assert (isinstance(self.instance, str) and 
-                len(self.instance) > 0 and 
+        assert (isinstance(self.instance, str) and
+                len(self.instance) > 0 and
                 len(self.instance) < 32), 'Invalid instance name'
         assert isinstance(self.hostname, str), 'Invalid host name'
         assert isinstance(self.root, str)
@@ -77,7 +76,7 @@ if __name__ == '__main__':
     # Install the files, and then run a configure script afterwards
     # if we used the "install" command.
     try:
-        distutils_config = {
+        constantina = {
             'name': "constantina",
             'version': "0.5.0-alpha",
             'description': "a dynamic-content blog platform for \"grazing\"",
@@ -100,7 +99,7 @@ Programming Language :: Python :: 2.7""".splitlines(),
                 'bin/constantina_configure.py'
             ]
         }
-        setup(**distutils_config)
+        setup(**constantina)
 
     except distutils.errors.DistutilsPlatformError, ex:
         print
