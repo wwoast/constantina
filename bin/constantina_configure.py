@@ -25,7 +25,7 @@ class ConstantinaConfig:
     """
     def __init__(self):
         self.settings = ConfigParser.SafeConfigParser(allow_no_value=True)
-        self.exception.exists = Exception("value already set: %s %s %s")
+        self.exception_exists = Exception("value already set: %s %s %s")
         self.default = ConstantinaDefaults()
 
     def configure(self, section, option, value, force=False):
@@ -38,7 +38,7 @@ class ConstantinaConfig:
         if test == None or force==True:
             self.settings.set(section, option, value)
         else:
-            raise self.exception.exists % (section, option, test)
+            raise self.exception_exists % (section, option, test)
 
     def update_configs(self):
         """Make config changes once the config files are staged"""
@@ -58,7 +58,8 @@ class ConstantinaConfig:
         return value
 
     def read_inputs(self, prompt):
-
+        """Any values that still need to be set should be processed here."""
+        pass
 
 
 
@@ -71,11 +72,11 @@ def main():
     c = ConstantinaConfig()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "instance", nargs='?', help="config directory isolation: /etc/constantina/<instance>", default=c.default.instance)
-    parser.add_argument("-n", "hostname", nargs='?', help="hostname that Constantina will run on", default=c.default.hostname)
-    parser.add_argument("-c", "config", nargs='?', help="path to the configuraiton directory", default=c.default.config)
-    parser.add_argument("-r", "root", nargs='?', help="where Constantina publichtml resources are served from", default=c.default.root)
-    parser.add_argument("force", help="force overwrite existing configurations", action='store_true', default=c.default.force)
+    parser.add_argument("-i", "--instance", nargs='?', help="config directory isolation: /etc/constantina/<instance>", default=c.default.instance)
+    parser.add_argument("-n", "--hostname", nargs='?', help="hostname that Constantina will run on", default=c.default.hostname)
+    parser.add_argument("-c", "--config", nargs='?', help="path to the configuraiton directory", default=c.default.config)
+    parser.add_argument("-r", "--root", nargs='?', help="where Constantina publichtml resources are served from", default=c.default.root)
+    parser.add_argument("--force", help="force overwrite existing configurations", action='store_true', default=c.default.force)
     parser.parse_args(namespace=c)
 
 

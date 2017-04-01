@@ -35,7 +35,7 @@ class ConfigurePyCommand(distutils.cmd.Command):
         self.config = sys.prefix + "/etc/constantina/" + self.instance
         if sys.prefix == "/usr":
             # Default prefix? Just put config in /etc
-            self.config_path = "/etc/constantina/" + self.instance
+            self.config = "/etc/constantina/" + self.instance
 
     def finalize_options(self):
         """Look for unacceptable inputs"""
@@ -50,14 +50,13 @@ class ConfigurePyCommand(distutils.cmd.Command):
         """Run a configuration script post-install"""
         command = ['./bin/constantina_configure.py']
         if self.instance:
-            command.append('--instance=%s' % self.instance)
+            command.append('--instance %s' % self.instance)
         if self.hostname:
-            command.append('--hostname=%s' % self.hostname)
+            command.append('--hostname %s' % self.hostname)
         if self.root:
-            command.append('--root=%s' % self.root)
+            command.append('--root %s' % self.root)
         if self.config:
-            command.append('--config=%s' % self.config)
-        command.append(os.getcwd())
+            command.append('--config %s' % self.config)
         self.announce(
             'Running command: %s' % str(command),
             level=distutils.log.INFO)
