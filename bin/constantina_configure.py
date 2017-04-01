@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from getpass import getuser
 import sys
 import argparse
 import ConfigParser
@@ -12,6 +13,7 @@ class ConstantinaDefaults:
         self.force = False
         self.hostname = gethostname()
         self.root = "/var/www/constantina"
+        self.user = getuser()   # Unix user account the server runs in
         self.config = sys.prefix + "/etc/constantina/" + self.instance
         self.templates = sys.prefix, "/etc/constantina/templates"
         if sys.prefix == "/usr":
@@ -43,7 +45,8 @@ class ConstantinaConfig:
     def update_configs(self):
         """Make config changes once the config files are staged"""
         self.settings.read(self.config + "/constantina.ini")
-        self.configure("domain", "hostname", self.hostname, self.force)
+        self.configure("server", "hostname", self.hostname, self.force)
+        self.configure("server", "user", self.user, self.force)
         self.configure("paths", "root", self.root, self.force)
         self.configure("paths", "config", self.config, self.force)
 
@@ -75,7 +78,8 @@ def read_arguments():
     parser.add_argument("-i", "--instance", nargs='?', help="config directory isolation: /etc/constantina/<instance>", default=c.default.instance)
     parser.add_argument("-n", "--hostname", nargs='?', help="hostname that Constantina will run on", default=c.default.hostname)
     parser.add_argument("-c", "--config", nargs='?', help="path to the configuration directory", default=c.default.config)
-    parser.add_argument("-r", "--root", nargs='?', help="where Constantina publichtml resources are served from", default=c.default.root)
+    parser.add_argument("-r", "--root", nargs='?', help="where Constantina html resources are served from", default=c.default.root)
+    parser.add_argument("-u", "--user", nargs='?', help="the Unix username that Constantina data is owned by", default=c.default.user)
     parser.add_argument("--force", help="force overwrite existing configurations", action='store_true', default=c.default.force)
     parser.parse_known_args(namespace=c)
     return c

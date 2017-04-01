@@ -31,7 +31,8 @@ class ConfigurePyCommand(distutils.cmd.Command):
         ('instance=', 'i', 'config directory isolation: /etc/constantina/<instance>'),
         ('config=', 'c', 'path to the configuration directory'),
         ('hostname=', 'h', 'hostname that Constantina will run on'),
-        ('root=', 'r', 'where Constantina publichtml resources are served from'),
+        ('root=', 'r', 'where Constantina html resources are served from'),
+        ('user=', 'u', 'the Unix username that Constantina data is owned by'),
     ]
 
     def initialize_options(self):
@@ -40,6 +41,7 @@ class ConfigurePyCommand(distutils.cmd.Command):
         self.config = Settings.config
         self.hostname = Settings.hostname
         self.root = Settings.root
+        self.user = Settings.user
 
     def finalize_options(self):
         """Look for unacceptable inputs"""
@@ -48,6 +50,7 @@ class ConfigurePyCommand(distutils.cmd.Command):
                 len(self.instance) < 32), 'Invalid instance name'
         assert isinstance(self.hostname, str), 'Invalid host name'
         assert isinstance(self.root, str)
+        assert isinstance(self.user, str), 'Invalid user name'
         assert isinstance(self.config, str)
 
     def run(self):
@@ -62,6 +65,9 @@ class ConfigurePyCommand(distutils.cmd.Command):
         if self.root:
             command.append('--root')
             command.append(self.root)
+        if self.user:
+            command.append('--user')
+            command.append(self.user)
         if self.config:
             command.append('--config')
             command.append(self.config)
