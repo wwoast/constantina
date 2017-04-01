@@ -1,10 +1,11 @@
 #!/usr/bin/python
 
-from getpass import getuser
+from getpass import getuser, getpass
 import sys
 import argparse
 import ConfigParser
 from socket import gethostname
+from passlib.hash import argon2
 
 
 class ConstantinaDefaults:
@@ -24,22 +25,23 @@ class ConstantinaDefaults:
 
 class ConstantinaConfig:
     """
-    Data in this object is written to a config file. Defaults are
-    defined using the argparse library.
+    Support writing the most basic types of Constantina config, such as the
+    hostname, webserver user account, and config paths. This is run through
+    the setup.py install script in addition to the configuration script itself.
     """
     def __init__(self):
         self.settings = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.default = ConstantinaDefaults()
         # WTF, why is initializing to None for subvalues breaking things here?
 
-    def configure(self, section, option, value, force=False):
+    def configure(self, section, option, value):
         """
         Is a config value set already? If force=True, overwrite it with
         a new value. Otherwise, only replace config values that are not
         currently defined.
         """
         test = self.settings.get(section, option)
-        # if test == None or force==True:
+        # if test == None or self.force==True:
         self.settings.set(section, option, value)
 
     def update_configs(self):
@@ -65,6 +67,58 @@ class ConstantinaConfig:
         pass
 
 
+class ShadowConfig:
+    """
+    Configure keys and user accounts through the command line. Pass the
+    configuration directory so we know what instance we're dealing with.
+    """
+    def __init__(self, config, force):
+        """Read in the shadow.ini config file and settings."""
+        self.settings = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.config = config
+        self.force = force
+        self.settings.read(self.config + "/shadow.ini")
+        self.argon2_setup()
+
+    def argon2_setup(self):
+        """
+        Read argon2 algorithm and backend settings from the config file
+        """
+        self.v = self.settings.get("argon2", "v")
+        self.m = self.settings.get("argon2", "m")
+        self.t = self.settings.get("argon2", "t")
+        self.p = self.settings.get("argon2", "p")
+        backend = self.settings.get("argon2", "backend")
+        argon2.set_backend(backend)
+
+    def configure(self, section, option, value):
+        """
+        Is a config value set already? If force=True, overwrite it with
+        a new value. Otherwise, only replace config values that are not
+        currently defined.
+        """
+        test = self.settings.get(section, option)
+        # if test == None or self.force==True:
+        self.settings.set(section, option, value)
+
+    def add_user(self, username, password=None):
+        """
+        Add a user to the shadow file. If no password is given, prompt for one.
+        """
+        print "Adding new Constantina user %s" % (username)
+        if password == None:
+            password = lambda: (getpass(), getpass('Retype password: '))
+        pwhash = argon2.hash(password, v=self.v, m=self.m, t=self.t, p=self.p)
+        self.configure("passwords", username, pwhash)
+
+    def remove_user(self, username):
+        """Remove an account from the shadow file"""
+        self.settings.remove_option("passwords", username)
+
+    def update_key(self, keyname):
+        """Use existing functions to do this"""
+        pass
+
 
 def read_arguments():
     """
@@ -75,9 +129,12 @@ def read_arguments():
     c = ConstantinaConfig()
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("-a", "--add_user", nargs='?', help="create a Constantina user account")
+    parser.add_argument("-d", "--delete_user", nargs='?', help="remove a Constantina user account")
+    parser.add_argument("-p", "--password", nargs='?', help="set password for a Constantina user account")
+    parser.add_argument("-c", "--config", nargs='?', help="path to the configuration directory", default=c.default.config)
     parser.add_argument("-i", "--instance", nargs='?', help="config directory isolation: /etc/constantina/<instance>", default=c.default.instance)
     parser.add_argument("-n", "--hostname", nargs='?', help="hostname that Constantina will run on", default=c.default.hostname)
-    parser.add_argument("-c", "--config", nargs='?', help="path to the configuration directory", default=c.default.config)
     parser.add_argument("-r", "--root", nargs='?', help="where Constantina html resources are served from", default=c.default.root)
     parser.add_argument("-u", "--user", nargs='?', help="the Unix username that Constantina data is owned by", default=c.default.user)
     parser.add_argument("--force", help="force overwrite existing configurations", action='store_true', default=c.default.force)
@@ -87,7 +144,5 @@ def read_arguments():
 
 if __name__ == '__main__':
     conf = read_arguments()
-    # TODO: template config directory for setup to initially install to
-    # The config file with comments and everything, for putting in the instance
-    # directories    
     conf.update_configs()
+    # TODO: won't work if config dir doesn't exist. Have something to copy templates
