@@ -93,7 +93,7 @@ class ShadowConfig:
         self.config = config
         self.force = force
         self.settings.read(self.config + "/shadow.ini")
-        self.admin_exists = (self.settings.get("passwords", "admin") == None)
+        self.admin_exists = self.settings.get("passwords", "admin", False)
         self.argon2_setup()
 
     def argon2_setup(self):
@@ -108,16 +108,6 @@ class ShadowConfig:
         backend = self.settings.get("argon2", "backend")
         argon2.set_backend(backend)
 
-    def configure(self, section, option, value):
-        """
-        Is a config value set already? If force=True, overwrite it with
-        a new value. Otherwise, only replace config values that are not
-        currently defined.
-        """
-        test = self.settings.get(section, option)
-        # if test == None or self.force==True:
-        self.settings.set(section, option, value)
-
     def add_user(self, username, password=None):
         """
         Add a user to the shadow file. If no password is given, prompt for one.
@@ -127,7 +117,7 @@ class ShadowConfig:
             prompt = "Password for %s: " % (username)
             password = getpass(prompt=prompt)
         pwhash = argon2.hash(password)
-        self.configure("passwords", username, pwhash)
+        self.settings.set("passwords", username, pwhash)
         with open(self.config + "/shadow.ini", "wb") as cfh:
             self.settings.write(cfh)
 
@@ -173,7 +163,7 @@ if __name__ == '__main__':
         accounts.add_user(conf.add_user, conf.password)
     # If we didn't make the admin user on first blush, and no admin exists,
     # create an admin account now as well.
-    if accounts.admin_exists == False:
+    if accounts.admin_exists is False:
         accounts.add_user("admin")
 
     # TODO: won't work if config dir doesn't exist. Have something to copy templates
