@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-
+"""
+Constantina installer script. The installer script by default will also run
+a configuration script intended to set up reasonable defaults for an instance
+of Constantina.
+"""
 import distutils
 import distutils.cmd
 import distutils.log
@@ -10,13 +14,12 @@ from socket import gethostname
 import subprocess
 import setuptools.command.install
 
+# Use same command line parsing for setup.py and configuration after the fact 
+from bin.constantina_configure import ConstantinaConfig, read_arguments
 
-"""
-Constantina installer script. The installer script by default will also run
-a configuration script intended to set up reasonable defaults for an instance
-of Constantina.
-"""
-ConfigureCommand = None
+Settings = ConstantinaConfig()
+Package = None
+
 
 class ConfigurePyCommand(distutils.cmd.Command):
     """Custom command for doing configuration steps"""
@@ -30,12 +33,10 @@ class ConfigurePyCommand(distutils.cmd.Command):
 
     def initialize_options(self):
         """Where default settings for each user_options value is set"""
-        self.instance = "default"
-        self.config = sys.prefix + "/etc/constantina/" + self.instance
-        if sys.prefix == "/usr":
-            self.config = "/etc/constantina/" + self.instance
-        self.hostname = gethostname()
-        self.root = "/var/www/constantina"
+        self.instance = Settings.instance
+        self.config = Settings.config
+        self.hostname = Settings.hostname
+        self.root = Settings.root
 
     def finalize_options(self):
         """Look for unacceptable inputs"""
@@ -61,27 +62,43 @@ class ConfigurePyCommand(distutils.cmd.Command):
         if self.config:
             command.append('--config')
             command.append(self.config)
-        ConfigureCommand = command
+        self.announce(
+            'Running command: %s' % str(command),
+            level=distutils.log.INFO)
+        subprocess.check_call(command)
 
 
 class InstallPyCommand(setuptools.command.install.install):
     """Custom installer process for reading values"""
 
+    def pre_configure(self):
+        """
+        Configure values for installing configuration files and others
+        """
+        Package['data_files'].append(
+            (Settings.config, ['config/constantina.ini',
+                               'config/medusa.ini',
+                               'config/zoo.ini',
+                               'config/shadow.ini']))
+
     def run(self):
-        """Run normal install, and then do post-install configuration"""
-        self.run_command('config')
+        """
+        Grab command-line arguments, run normal install, and then do 
+        post-install configuration.
+        """
+        global Settings 
+        Settings = read_arguments()
+        self.pre_configure()
         setuptools.command.install.install.run(self)
-        self.announce(
-            'Running command: %s' % str(ConfigureCommand),
-            level=distutils.log.INFO)
-        subprocess.check_call(ConfigureCommand)
+        self.run_command('config')
 
 
 if __name__ == '__main__':
     # Install the files, and then run a configure script afterwards
     # if we used the "install" command.
+    global Package
     try:
-        constantina = {
+        Package = {
             'name': "constantina",
             'version': "0.5.0-alpha",
             'description': "a dynamic-content blog platform for \"grazing\"",
@@ -102,9 +119,10 @@ Programming Language :: Python :: 2.7""".splitlines(),
             },
             'scripts': [
                 'bin/constantina_configure.py'
-            ]
+            ],
+            'data_files': []
         }
-        setup(**constantina)
+        setup(**Package)
 
     except distutils.errors.DistutilsPlatformError, ex:
         print

@@ -60,7 +60,7 @@ class ConstantinaConfig:
 
 
 
-def main():
+def read_arguments():
     """
     Take in command-line options, using preconfigured defaults if any are
     missing. Nargs=? means that if an argument is missing, use a default
@@ -74,9 +74,13 @@ def main():
     parser.add_argument("-c", "--config", nargs='?', help="path to the configuration directory", default=c.default.config)
     parser.add_argument("-r", "--root", nargs='?', help="where Constantina publichtml resources are served from", default=c.default.root)
     parser.add_argument("--force", help="force overwrite existing configurations", action='store_true', default=c.default.force)
-    parser.parse_args(namespace=c)
-    c.update_configs()
+    parser.parse_known_args(namespace=c)
+    return c
 
 
 if __name__ == '__main__':
-    main()    
+    conf = read_arguments()
+    # TODO: template config directory for setup to initially install to
+    # The config file with comments and everything, for putting in the instance
+    # directories    
+    conf.update_configs()
