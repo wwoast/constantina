@@ -16,7 +16,7 @@ import subprocess
 import setuptools.command.install
 
 # Use same command line parsing for setup.py and configuration after the fact 
-from bin.constantina_configure import ConstantinaConfig, read_arguments
+from bin.constantina_configure import ConstantinaConfig, HelpStrings, read_arguments
 
 # Globals, so all the Configure objects get configured from a consistent
 # place prior to distutils running the setup commands
@@ -28,11 +28,11 @@ class ConfigurePyCommand(distutils.cmd.Command):
     """Custom command for doing configuration steps"""
     description = 'configure Constantina defaults for a site'
     user_options = [
-        ('instance=', 'i', 'config directory isolation: /etc/constantina/<instance>'),
-        ('config=', 'c', 'path to the configuration directory'),
-        ('hostname=', 'h', 'hostname that Constantina will run on'),
-        ('root=', 'r', 'where Constantina html resources are served from'),
-        ('user=', 'u', 'the Unix username that Constantina data is owned by'),
+        ('instance=', 'i', HelpStrings['instance']),
+        ('config=', 'c', HelpStrings['config']),
+        ('hostname=', 'h', HelpStrings['hostname']),
+        ('root=', 'r', HelpStrings['root']),
+        ('user=', 'u', HelpStrings['user']),
     ]
 
     def initialize_options(self):
