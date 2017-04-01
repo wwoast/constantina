@@ -7,6 +7,7 @@ of Constantina.
 import distutils
 import distutils.cmd
 import distutils.log
+import distutils.dir_util
 from distutils.core import setup
 import os
 import sys
@@ -17,6 +18,8 @@ import setuptools.command.install
 # Use same command line parsing for setup.py and configuration after the fact 
 from bin.constantina_configure import ConstantinaConfig, read_arguments
 
+# Globals, so all the Configure objects get configured from a consistent
+# place prior to distutils running the setup commands
 Settings = ConstantinaConfig()
 Package = None
 
@@ -71,15 +74,29 @@ class ConfigurePyCommand(distutils.cmd.Command):
 class InstallPyCommand(setuptools.command.install.install):
     """Custom installer process for reading values"""
 
-    def pre_configure(self):
+    def data_files(self):
         """
-        Configure values for installing configuration files and others
+        Not in the Python package, but get installed at specific locations
+        on your disk: config files.
         """
+        # Template files for constantina_configure to work from later
         Package['data_files'].append(
-            (Settings.config, ['config/constantina.ini',
-                               'config/medusa.ini',
-                               'config/zoo.ini',
-                               'config/shadow.ini']))
+            (Settings.default.templates, 
+                ['config/constantina.ini',
+                 'config/medusa.ini',
+                 'config/zoo.ini',
+                 'config/shadow.ini']))
+        # Initial config files for your chosen instance
+        Package['data_files'].append(
+            (Settings.config, 
+                ['config/constantina.ini',
+                 'config/medusa.ini',
+                 'config/zoo.ini',
+                 'config/shadow.ini']))
+
+    def create_web_root(self):
+        """Copy the included html file into the target location"""
+        distutils.dir_util.copy_tree('html', Settings.root, update=1)
 
     def run(self):
         """
@@ -88,8 +105,9 @@ class InstallPyCommand(setuptools.command.install.install):
         """
         global Settings 
         Settings = read_arguments()
-        self.pre_configure()
+        self.data_files()
         setuptools.command.install.install.run(self)
+        self.create_web_root()
         self.run_command('config')
 
 

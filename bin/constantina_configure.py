@@ -9,13 +9,15 @@ from socket import gethostname
 class ConstantinaDefaults:
     def __init__(self):
         self.instance = "default"
-        self.config = sys.prefix + "/etc/constantina/" + self.instance
         self.force = False
         self.hostname = gethostname()
         self.root = "/var/www/constantina"
+        self.config = sys.prefix + "/etc/constantina/" + self.instance
+        self.templates = sys.prefix, "/etc/constantina/templates"
         if sys.prefix == "/usr":
             # Default prefix? Just put config in /etc
             self.config = "/etc/constantina/" + self.instance
+            self.templates = "/etc/constantina/templates"
 
 
 class ConstantinaConfig:
@@ -26,6 +28,7 @@ class ConstantinaConfig:
     def __init__(self):
         self.settings = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.default = ConstantinaDefaults()
+        # WTF, why is initializing to None for subvalues breaking things here?
 
     def configure(self, section, option, value, force=False):
         """
@@ -43,7 +46,7 @@ class ConstantinaConfig:
         self.configure("domain", "hostname", self.hostname, self.force)
         self.configure("paths", "root", self.root, self.force)
         self.configure("paths", "config", self.config, self.force)
-    
+
         with open(self.config + "/constantina.ini", "wb") as cfh:
             self.settings.write(cfh)
 
