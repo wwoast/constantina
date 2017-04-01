@@ -16,6 +16,7 @@ Constantina installer script. The installer script by default will also run
 a configuration script intended to set up reasonable defaults for an instance
 of Constantina.
 """
+ConfigureCommand = None
 
 class ConfigurePyCommand(distutils.cmd.Command):
     """Custom command for doing configuration steps"""
@@ -60,10 +61,7 @@ class ConfigurePyCommand(distutils.cmd.Command):
         if self.config:
             command.append('--config')
             command.append(self.config)
-        self.announce(
-            'Running command: %s' % str(command),
-            level=distutils.log.INFO)
-        subprocess.check_call(command)
+        ConfigureCommand = command
 
 
 class InstallPyCommand(setuptools.command.install.install):
@@ -71,8 +69,12 @@ class InstallPyCommand(setuptools.command.install.install):
 
     def run(self):
         """Run normal install, and then do post-install configuration"""
-        setuptools.command.install.install.run(self)
         self.run_command('config')
+        setuptools.command.install.install.run(self)
+        self.announce(
+            'Running command: %s' % str(ConfigureCommand),
+            level=distutils.log.INFO)
+        subprocess.check_call(ConfigureCommand)
 
 
 if __name__ == '__main__':
@@ -100,9 +102,6 @@ Programming Language :: Python :: 2.7""".splitlines(),
             },
             'scripts': [
                 'bin/constantina_configure.py'
-            ],
-            'data_files': [
-                ('/etc/constantina/default', ['config/constantina.ini'])
             ]
         }
         setup(**constantina)
