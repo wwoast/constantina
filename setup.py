@@ -22,9 +22,9 @@ class ConfigurePyCommand(distutils.cmd.Command):
     description = 'configure Constantina defaults for a site'
     user_options = [
         ('instance=', 'i', 'config directory isolation: /etc/constantina/<instance>'),
+        ('config=', 'c', 'path to the configuration directory'),
         ('hostname=', 'h', 'hostname that Constantina will run on'),
-        ('config=', 'c', 'path to the configuration directory')
-        ('root=', 'r', 'where Constantina html files are made public')
+        ('root=', 'r', 'where Constantina publichtml resources are served from'),
     ]
 
     def initialize_options(self):
