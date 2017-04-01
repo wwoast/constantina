@@ -25,7 +25,6 @@ class ConstantinaConfig:
     """
     def __init__(self):
         self.settings = ConfigParser.SafeConfigParser(allow_no_value=True)
-        self.exception_exists = Exception("value already set: %s %s %s")
         self.default = ConstantinaDefaults()
 
     def configure(self, section, option, value, force=False):
@@ -35,10 +34,8 @@ class ConstantinaConfig:
         currently defined.
         """
         test = self.settings.get(section, option)
-        if test == None or force==True:
-            self.settings.set(section, option, value)
-        else:
-            raise self.exception_exists % (section, option, test)
+        # if test == None or force==True:
+        self.settings.set(section, option, value)
 
     def update_configs(self):
         """Make config changes once the config files are staged"""
@@ -48,7 +45,7 @@ class ConstantinaConfig:
         self.configure("paths", "config", self.config, self.force)
     
         with open(self.config + "/constantina.ini", "wb") as cfh:
-            self.config.write(cfh)
+            self.settings.write(cfh)
 
     def accept_input(self, prompt, default):
         """Wrapper to raw_input that accepts a default value."""
@@ -74,10 +71,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--instance", nargs='?', help="config directory isolation: /etc/constantina/<instance>", default=c.default.instance)
     parser.add_argument("-n", "--hostname", nargs='?', help="hostname that Constantina will run on", default=c.default.hostname)
-    parser.add_argument("-c", "--config", nargs='?', help="path to the configuraiton directory", default=c.default.config)
+    parser.add_argument("-c", "--config", nargs='?', help="path to the configuration directory", default=c.default.config)
     parser.add_argument("-r", "--root", nargs='?', help="where Constantina publichtml resources are served from", default=c.default.root)
     parser.add_argument("--force", help="force overwrite existing configurations", action='store_true', default=c.default.force)
     parser.parse_args(namespace=c)
+    c.update_configs()
 
 
 if __name__ == '__main__':

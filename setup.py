@@ -30,12 +30,11 @@ class ConfigurePyCommand(distutils.cmd.Command):
     def initialize_options(self):
         """Where default settings for each user_options value is set"""
         self.instance = "default"
-        self.hostname = gethostname()
-        self.root = "/var/www/constantina"
         self.config = sys.prefix + "/etc/constantina/" + self.instance
         if sys.prefix == "/usr":
-            # Default prefix? Just put config in /etc
             self.config = "/etc/constantina/" + self.instance
+        self.hostname = gethostname()
+        self.root = "/var/www/constantina"
 
     def finalize_options(self):
         """Look for unacceptable inputs"""
@@ -50,13 +49,17 @@ class ConfigurePyCommand(distutils.cmd.Command):
         """Run a configuration script post-install"""
         command = ['./bin/constantina_configure.py']
         if self.instance:
-            command.append('--instance %s' % self.instance)
+            command.append('--instance')
+            command.append(self.instance)
         if self.hostname:
-            command.append('--hostname %s' % self.hostname)
+            command.append('--hostname')
+            command.append(self.hostname)
         if self.root:
-            command.append('--root %s' % self.root)
+            command.append('--root')
+            command.append(self.root)
         if self.config:
-            command.append('--config %s' % self.config)
+            command.append('--config')
+            command.append(self.config)
         self.announce(
             'Running command: %s' % str(command),
             level=distutils.log.INFO)
@@ -97,6 +100,9 @@ Programming Language :: Python :: 2.7""".splitlines(),
             },
             'scripts': [
                 'bin/constantina_configure.py'
+            ],
+            'data_files': [
+                ('/etc/constantina/default', ['config/constantina.ini'])
             ]
         }
         setup(**constantina)
