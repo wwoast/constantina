@@ -32,7 +32,7 @@ class ConfigurePyCommand(distutils.cmd.Command):
         ('config=', 'c', HelpStrings['config']),
         ('hostname=', 'h', HelpStrings['hostname']),
         ('webroot=', 'r', HelpStrings['webroot']),
-        ('username=', 'u', HelpStrings['username']),
+        ('user=', 'u', HelpStrings['user']),
     ]
 
     def initialize_options(self):
@@ -41,7 +41,7 @@ class ConfigurePyCommand(distutils.cmd.Command):
         self.config = Settings.default.config
         self.hostname = Settings.default.hostname
         self.webroot = Settings.default.webroot
-        self.username = Settings.default.username
+        self.user = Settings.default.user
 
     def finalize_options(self):
         """Look for unacceptable inputs"""
@@ -50,7 +50,7 @@ class ConfigurePyCommand(distutils.cmd.Command):
                 len(self.instance) < 32), 'Invalid instance name'
         assert isinstance(self.hostname, str), 'Invalid host name'
         assert isinstance(self.webroot, str)
-        assert isinstance(self.username, str), 'Invalid user name'
+        assert isinstance(self.user, str), 'Invalid user name'
         assert isinstance(self.config, str)  # Check if directory exists
 
     def run(self):
@@ -65,9 +65,9 @@ class ConfigurePyCommand(distutils.cmd.Command):
         if self.webroot:
             command.append('--webroot')
             command.append(self.webroot)
-        if self.username:
-            command.append('--username')
-            command.append(self.username)
+        if self.user:
+            command.append('--user')
+            command.append(self.user)
         if self.config:
             command.append('--config')
             command.append(self.config)
@@ -85,7 +85,7 @@ class InstallPyCommand(install):
         ('config=', 'c', HelpStrings['config']),
         ('hostname=', 'h', HelpStrings['hostname']),
         ('webroot=', 'r', HelpStrings['webroot']),
-        ('username=', 'u', HelpStrings['username']),
+        ('user=', 'u', HelpStrings['user']),
     ]
 
     def initialize_options(self):
@@ -94,7 +94,7 @@ class InstallPyCommand(install):
         self.config = Settings.default.config
         self.hostname = Settings.default.hostname
         self.webroot = Settings.default.webroot
-        self.username = Settings.default.username
+        self.user = Settings.default.user
         install.initialize_options(self)
 
     def finalize_options(self):
@@ -104,7 +104,7 @@ class InstallPyCommand(install):
                 len(self.instance) < 32), 'Invalid instance name'
         assert isinstance(self.hostname, str), 'Invalid host name'
         assert isinstance(self.webroot, str), 'Invalid webroot path'
-        assert isinstance(self.username, str), 'Invalid user name'
+        assert isinstance(self.user, str), 'Invalid user name'
         assert isinstance(self.config, str)  # Check if directory exists
         install.finalize_options(self)
 

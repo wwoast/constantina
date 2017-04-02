@@ -16,7 +16,7 @@ HelpStrings = {
        'instance': "config directory isolation: /etc/constantina/<instance>",
        'hostname': "hostname that Constantina will run on",
         'webroot': "where Constantina html resources are served from",
-       'username': "the Unix username that Constantina data is owned by",
+           'user': "the Unix username that Constantina data is owned by",
           'force': "force overwrite existing configurations"
 }
 
@@ -29,7 +29,7 @@ class ConstantinaDefaults:
         self.force = False
         self.hostname = gethostname()
         self.webroot = "/var/www/constantina"
-        self.username = getuser()   # Unix user account the server runs in
+        self.user = getuser()   # Unix user account the server runs in
         self.config = sys.prefix + "/etc/constantina"
         self.templates = sys.prefix, "/etc/constantina/templates"
         if sys.prefix == "/usr":
@@ -54,7 +54,7 @@ class ConstantinaConfig:
         self.force = self.default.force
         self.hostname = self.default.hostname
         self.webroot = self.default.webroot
-        self.username = self.default.username
+        self.user = self.default.user
         self.config = self.default.config
         self.templates = self.default.templates
 
@@ -72,7 +72,7 @@ class ConstantinaConfig:
         """Make config changes once the config files are staged"""
         self.settings.read(self.config + "/constantina.ini")
         self.configure("server", "hostname", self.hostname)
-        self.configure("server", "username", self.username)
+        self.configure("server", "user", self.user)
         self.configure("paths", "webroot", self.webroot)
         self.configure("paths", "config", self.config)
 
@@ -176,7 +176,7 @@ def read_arguments():
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
     parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'], default=conf.default.hostname)
     parser.add_argument("-r", "--webroot", nargs='?', help=HelpStrings['webroot'], default=conf.default.webroot)
-    parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
+    parser.add_argument("-u", "--user", nargs='?', help=HelpStrings['user'], default=conf.default.user)
     parser.add_argument("--force", help=HelpStrings['force'], action='store_true', default=conf.default.force)
     parser.parse_known_args(namespace=args)
 
