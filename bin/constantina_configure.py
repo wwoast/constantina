@@ -15,7 +15,7 @@ HelpStrings = {
          'config': "path to the configuration directory",
        'instance': "config directory isolation: /etc/constantina/<instance>",
        'hostname': "hostname that Constantina will run on",
-           'root': "where Constantina html resources are served from",
+        'webroot': "where Constantina html resources are served from",
            'user': "the Unix username that Constantina data is owned by",
           'force': "force overwrite existing configurations"
 }
@@ -28,7 +28,7 @@ class ConstantinaDefaults:
         self.instance = "default"
         self.force = False
         self.hostname = gethostname()
-        self.root = "/var/www/constantina"
+        self.webroot = "/var/www/constantina"
         self.user = getuser()   # Unix user account the server runs in
         self.config = sys.prefix + "/etc/constantina"
         self.templates = sys.prefix, "/etc/constantina/templates"
@@ -53,7 +53,7 @@ class ConstantinaConfig:
         self.instance = self.default.instance
         self.force = self.default.force
         self.hostname = self.default.hostname
-        self.root = self.default.root
+        self.webroot = self.default.webroot
         self.user = self.default.user
         self.config = self.default.config
         self.templates = self.default.templates
@@ -73,7 +73,7 @@ class ConstantinaConfig:
         self.settings.read(self.config + "/constantina.ini")
         self.configure("server", "hostname", self.hostname)
         self.configure("server", "user", self.user)
-        self.configure("paths", "root", self.root)
+        self.configure("paths", "webroot", self.webroot)
         self.configure("paths", "config", self.config)
 
         with open(self.config + "/constantina.ini", "wb") as cfh:
@@ -143,17 +143,16 @@ class ShadowConfig:
         self.settings.set("passwords", username, pwhash)
         with open(self.config + "/shadow.ini", "wb") as cfh:
             self.settings.write(cfh)
-
         # Update the detection for whether an admin exists, so we don't
         # get asked to add an admin account more than once
         self.admin_exists = self.settings.has_option("passwords", "admin")
-
 
     def delete_user(self, username):
         """Remove an account from the shadow file"""
         self.settings.remove_option("passwords", username)
         with open(self.config + "/shadow.ini", "wb") as cfh:
             self.settings.write(cfh)
+        # Don't recreate an admin that we just deleted (no admin update here)
 
     def update_key(self, keyname):
         """Use existing functions to do this"""
@@ -176,7 +175,7 @@ def read_arguments():
     parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=conf.default.config)
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
     parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'], default=conf.default.hostname)
-    parser.add_argument("-r", "--root", nargs='?', help=HelpStrings['root'], default=conf.default.root)
+    parser.add_argument("-r", "--webroot", nargs='?', help=HelpStrings['webroot'], default=conf.default.webroot)
     parser.add_argument("-u", "--user", nargs='?', help=HelpStrings['user'], default=conf.default.user)
     parser.add_argument("--force", help=HelpStrings['force'], action='store_true', default=conf.default.force)
     parser.parse_known_args(namespace=args)

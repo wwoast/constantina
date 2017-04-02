@@ -13,7 +13,7 @@ import os
 import sys
 from socket import gethostname
 import subprocess
-import setuptools.command.install
+from setuptools.command.install import install
 
 # Use same command line parsing for setup.py and configuration after the fact 
 from bin.constantina_configure import ConstantinaConfig, HelpStrings, read_arguments
@@ -31,17 +31,16 @@ class ConfigurePyCommand(distutils.cmd.Command):
         ('instance=', 'i', HelpStrings['instance']),
         ('config=', 'c', HelpStrings['config']),
         ('hostname=', 'h', HelpStrings['hostname']),
-        ('root=', 'r', HelpStrings['root']),
+        ('webroot=', 'r', HelpStrings['webroot']),
         ('user=', 'u', HelpStrings['user']),
     ]
 
     def initialize_options(self):
         """Where default settings for each user_options value is set"""
-        global Settings
         self.instance = Settings.default.instance
         self.config = Settings.default.config
         self.hostname = Settings.default.hostname
-        self.root = Settings.default.root
+        self.webroot = Settings.default.webroot
         self.user = Settings.default.user
 
     def finalize_options(self):
@@ -50,9 +49,9 @@ class ConfigurePyCommand(distutils.cmd.Command):
                 len(self.instance) > 0 and
                 len(self.instance) < 32), 'Invalid instance name'
         assert isinstance(self.hostname, str), 'Invalid host name'
-        assert isinstance(self.root, str)
+        assert isinstance(self.webroot, str)
         assert isinstance(self.user, str), 'Invalid user name'
-        assert isinstance(self.config, str)
+        assert isinstance(self.config, str)  # Check if directory exists
 
     def run(self):
         """Run a configuration script post-install"""
@@ -63,9 +62,9 @@ class ConfigurePyCommand(distutils.cmd.Command):
         if self.hostname:
             command.append('--hostname')
             command.append(self.hostname)
-        if self.root:
-            command.append('--root')
-            command.append(self.root)
+        if self.webroot:
+            command.append('--webroot')
+            command.append(self.webroot)
         if self.user:
             command.append('--user')
             command.append(self.user)
@@ -78,8 +77,36 @@ class ConfigurePyCommand(distutils.cmd.Command):
         subprocess.check_call(command)
 
 
-class InstallPyCommand(setuptools.command.install.install):
+class InstallPyCommand(install):
     """Custom installer process for reading values"""
+    description = 'install and configure Constantina at a site'
+    install.user_options += [
+        ('instance=', 'i', HelpStrings['instance']),
+        ('config=', 'c', HelpStrings['config']),
+        ('hostname=', 'h', HelpStrings['hostname']),
+        ('webroot=', 'r', HelpStrings['webroot']),
+        ('user=', 'u', HelpStrings['user']),
+    ]
+
+    def initialize_options(self):
+        """Where default settings for each user_options value is set"""
+        self.instance = Settings.default.instance
+        self.config = Settings.default.config
+        self.hostname = Settings.default.hostname
+        self.webroot = Settings.default.webroot
+        self.user = Settings.default.user
+        install.initialize_options(self)
+
+    def finalize_options(self):
+        """Look for unacceptable inputs"""
+        assert (isinstance(self.instance, str) and
+                len(self.instance) > 0 and
+                len(self.instance) < 32), 'Invalid instance name'
+        assert isinstance(self.hostname, str), 'Invalid host name'
+        assert isinstance(self.webroot, str), 'Invalid webroot path'
+        assert isinstance(self.user, str), 'Invalid user name'
+        assert isinstance(self.config, str)  # Check if directory exists
+        install.finalize_options(self)
 
     def data_files(self):
         """
@@ -88,7 +115,7 @@ class InstallPyCommand(setuptools.command.install.install):
         """
         # Template files for constantina_configure to work from later
         Package['data_files'].append(
-            (Settings.default.templates,
+            (Settings.templates,
                 ['config/constantina.ini',
                  'config/medusa.ini',
                  'config/zoo.ini',
@@ -101,21 +128,22 @@ class InstallPyCommand(setuptools.command.install.install):
                  'config/zoo.ini',
                  'config/shadow.ini']))
 
-    def create_web_root(self):
+    def create_webroot(self):
         """Copy the included html file into the target location"""
-        distutils.dir_util.copy_tree('html', Settings.root, update=1)
+        distutils.dir_util.copy_tree('html', Settings.webroot, update=1)
 
     def run(self):
         """
-        Grab command-line arguments, run normal install, and then do 
+        Grab command-line arguments, run normal install, and then do
         post-install configuration.
         """
         global Settings
         Settings = read_arguments()
+        print Settings.config
         self.data_files()
-        setuptools.command.install.install.run(self)
-        self.create_web_root()
-        self.run_command('config')
+        install.run(self)
+        self.create_webroot()
+        self.run_command('configure')
 
 
 if __name__ == '__main__':
@@ -139,7 +167,7 @@ Programming Language :: Python :: 2.7""".splitlines(),
                 'constantina.zoo',
             ],
             'cmdclass': {
-                'config': ConfigurePyCommand,
+                'configure': ConfigurePyCommand,
                 'install': InstallPyCommand
             },
             'scripts': [
