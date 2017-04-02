@@ -167,7 +167,8 @@ Programming Language :: Python :: 2.7""".splitlines(),
                 'install': InstallPyCommand
             },
             'scripts': [
-                'bin/constantina_configure.py'
+                'bin/constantina_configure.py',
+                'bin/constantina_index.py'
             ],
             'install_requires': [
                 'jwcrypto',

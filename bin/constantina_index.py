@@ -12,7 +12,7 @@ from constantina.medusa.search import MedusaSearch
 CONFIG = ConfigParser.SafeConfigParser()
 CONFIG.read('constantina.ini')
 
-ROOT_DIR = CONFIG.get("paths", "root")
+ROOT_DIR = CONFIG.get("paths", "webroot")
 
 chdir(ROOT_DIR)
 
