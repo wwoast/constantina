@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from getpass import getuser, getpass
+import os
 import sys
 import argparse
 import ConfigParser
@@ -90,6 +91,11 @@ class ConstantinaConfig:
         """Add instance to the end of the config directory"""
         if self.config == self.default.config:
             self.config = self.config + "/" + self.instance
+        instance_config = self.config + "/constantina.ini"
+        if not os.path.isfile(instance_config):
+            raise Exception("File not found: \"%s\". Instance \"%s\" not installed?" 
+                % (instance_config, self.instance))
+            sys.exit(-1)
 
     def import_parsed(self, namespace):
         """

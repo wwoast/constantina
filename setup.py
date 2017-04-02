@@ -9,13 +9,11 @@ import distutils.cmd
 import distutils.log
 import distutils.dir_util
 from distutils.core import setup
-import os
 import sys
-from socket import gethostname
 import subprocess
 from setuptools.command.install import install
 
-# Use same command line parsing for setup.py and configuration after the fact 
+# Use same command line parsing for setup.py and configuration after the fact
 from bin.constantina_configure import ConstantinaConfig, HelpStrings, read_arguments
 
 # Globals, so all the Configure objects get configured from a consistent
@@ -37,11 +35,11 @@ class ConfigurePyCommand(distutils.cmd.Command):
 
     def initialize_options(self):
         """Where default settings for each user_options value is set"""
-        self.instance = Settings.default.instance
-        self.config = Settings.default.config
-        self.hostname = Settings.default.hostname
-        self.webroot = Settings.default.webroot
-        self.username = Settings.default.username
+        self.instance = Settings.instance
+        self.config = Settings.config
+        self.hostname = Settings.hostname
+        self.webroot = Settings.webroot
+        self.username = Settings.username
 
     def finalize_options(self):
         """Look for unacceptable inputs"""
@@ -49,7 +47,7 @@ class ConfigurePyCommand(distutils.cmd.Command):
                 len(self.instance) > 0 and
                 len(self.instance) < 32), 'Invalid instance name'
         assert isinstance(self.hostname, str), 'Invalid host name'
-        assert isinstance(self.webroot, str)
+        assert isinstance(self.webroot, str), 'Invalid root directory'
         assert isinstance(self.username, str), 'Invalid user name'
         assert isinstance(self.config, str)  # Check if directory exists
 
@@ -139,7 +137,6 @@ class InstallPyCommand(install):
         """
         global Settings
         Settings = read_arguments()
-        print Settings.config
         self.data_files()
         install.run(self)
         self.create_webroot()
