@@ -116,7 +116,7 @@ class ShadowConfig:
         self.config = config
         self.force = force
         self.settings.read(self.config + "/shadow.ini")
-        self.admin_exists = self.settings.get("passwords", "admin", False)
+        self.admin_exists = self.settings.has_option("passwords", "admin")
         self.argon2_setup()
 
     def argon2_setup(self):
@@ -161,23 +161,23 @@ def read_arguments():
     missing. Nargs=? means that if an argument is missing, use a default
     value instead.
     """
-    c = ConstantinaConfig()
-    d = argparse.Namespace
+    conf = ConstantinaConfig()
+    args = argparse.Namespace
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--add_user", nargs='?', help=HelpStrings['add_user'])
     parser.add_argument("-d", "--delete_user", nargs='?', help=HelpStrings['delete_user'])
     parser.add_argument("-p", "--password", nargs='?', help=HelpStrings['password'])
-    parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=c.default.config)
-    parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=c.default.instance)
-    parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'], default=c.default.hostname)
-    parser.add_argument("-r", "--root", nargs='?', help=HelpStrings['root'], default=c.default.root)
-    parser.add_argument("-u", "--user", nargs='?', help=HelpStrings['user'], default=c.default.user)
-    parser.add_argument("--force", help=HelpStrings['force'], action='store_true', default=c.default.force)
-    parser.parse_known_args(namespace=d)
+    parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=conf.default.config)
+    parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
+    parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'], default=conf.default.hostname)
+    parser.add_argument("-r", "--root", nargs='?', help=HelpStrings['root'], default=conf.default.root)
+    parser.add_argument("-u", "--user", nargs='?', help=HelpStrings['user'], default=conf.default.user)
+    parser.add_argument("--force", help=HelpStrings['force'], action='store_true', default=conf.default.force)
+    parser.parse_known_args(namespace=args)
 
-    c.import_parsed(d)
-    return c
+    conf.import_parsed(args)
+    return conf
 
 
 if __name__ == '__main__':
@@ -193,6 +193,7 @@ if __name__ == '__main__':
         accounts.delete_user(conf.delete_user)
     # If we didn't make the admin user on first blush, and no admin exists,
     # create an admin account now as well.
+    print accounts.admin_exists
     if accounts.admin_exists is False:
         accounts.add_user("admin")
 
