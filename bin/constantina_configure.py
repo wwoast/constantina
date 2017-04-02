@@ -10,15 +10,16 @@ from passlib.hash import argon2
 
 
 HelpStrings = {
-       'add_user': "create a Constantina user account",
+    'add_user': "create a Constantina user account",
     'delete_user': "remove a Constantina user account",
-       'password': "set password for a Constantina user account",
-         'config': "path to the configuration directory",
-       'instance': "config directory isolation: /etc/constantina/<instance>",
-       'hostname': "hostname that Constantina will run on",
-        'webroot': "where Constantina html resources are served from",
-       'username': "the Unix username that Constantina data is owned by",
-          'force': "force overwrite existing configurations"
+    'password': "set password for a Constantina user account",
+    'revoke_logins': "delete stored session keys, forcing users to re-login",
+    'config': "path to the configuration directory",
+    'instance': "config directory isolation: /etc/constantina/<instance>",
+    'hostname': "hostname that Constantina will run on",
+    'webroot': "where Constantina html resources are served from",
+    'username': "the Unix username that Constantina data is owned by",
+    'force': "force overwrite existing configurations"
 }
 
 class ConstantinaDefaults:
@@ -26,6 +27,7 @@ class ConstantinaDefaults:
         self.add_user = None
         self.delete_user = None
         self.password = None
+        self.revoke_logins = False
         self.instance = "default"
         self.force = False
         self.hostname = gethostname()
@@ -51,6 +53,7 @@ class ConstantinaConfig:
         self.add_user = self.default.add_user
         self.delete_user = self.default.delete_user
         self.password = self.default.password
+        self.revoke_logins = self.default.revoke_logins
         self.instance = self.default.instance
         self.force = self.default.force
         self.hostname = self.default.hostname
@@ -91,7 +94,7 @@ class ConstantinaConfig:
         """Add instance to the end of the config directory"""
         if self.config == self.default.config:
             self.config = self.config + "/" + self.instance
-        instance_config = self.config + "/constantina.ini"
+        #instance_config = self.config + "/constantina.ini"
         #TODO: Determine if install or configure mode
         #if not os.path.isfile(instance_config):
         #    raise Exception("File not found: \"%s\". Instance \"%s\" not installed?" 
@@ -101,7 +104,7 @@ class ConstantinaConfig:
     def import_parsed(self, namespace):
         """
         Take the output of parse_known_args and set them in this class.
-        Works for configs from argparse, and from the defaults set
+        Update the config directory to represent the instance being used.
         """
         for item in namespace.__dict__.iteritems():
             setattr(self, item[0], item[1])
@@ -161,9 +164,21 @@ class ShadowConfig:
             self.settings.write(cfh)
         # Don't recreate an admin that we just deleted (no admin update here)
 
-    def update_key(self, keyname):
-        """Use existing functions to do this"""
-        pass
+    def __delete_key(self, keyname):
+        """Delete an arbitrary key from the shadow configuration"""
+        for item in self.settings.items(keyname):
+            self.settings.remove_option(item[0])
+
+    def delete_keys(self):
+        """
+        Delete all sets of keys. This will guarantee that all usres will need
+        to log back in with their current credentials.
+        """
+        self.delete_key("encrypt_last")
+        self.delete_key("sign_last")
+        self.delete_key("encrypt_current")
+        self.delete_key("sign_current")
+
 
 
 def read_arguments():
@@ -179,6 +194,7 @@ def read_arguments():
     parser.add_argument("-a", "--add_user", nargs='?', help=HelpStrings['add_user'])
     parser.add_argument("-d", "--delete_user", nargs='?', help=HelpStrings['delete_user'])
     parser.add_argument("-p", "--password", nargs='?', help=HelpStrings['password'])
+    parser.add_argument("-k", "--revoke_logins", action='store_true', help=HelpStrings['revoke_logins'])
     parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=conf.default.config)
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
     parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'], default=conf.default.hostname)
@@ -202,6 +218,8 @@ if __name__ == '__main__':
         accounts.add_user(conf.add_user, conf.password)
     if conf.delete_user != None:
         accounts.delete_user(conf.delete_user)
+    if conf.revoke_logins is True:
+        accounts.delete_keys()
     # If we didn't make the admin user on first blush, and no admin exists,
     # create an admin account now as well.
     if accounts.admin_exists is False:
