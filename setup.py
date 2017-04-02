@@ -9,7 +9,7 @@ import distutils.log
 import distutils.dir_util
 import sys
 import subprocess
-from setuptools import setup, find_packages, Command
+from setuptools import setup, Command
 from setuptools.command.install import install
 
 # Use same command line parsing for setup.py and configuration after the fact
@@ -168,6 +168,16 @@ Programming Language :: Python :: 2.7""".splitlines(),
             },
             'scripts': [
                 'bin/constantina_configure.py'
+            ],
+            'install_requires': [
+                'jwcrypto',
+                'lxml',
+                'magic',
+                'passlib',
+                'pillow',
+                'pymad',
+                'urllib',
+                'whoosh'
             ],
             'data_files': []
         }
