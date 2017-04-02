@@ -27,8 +27,8 @@ class ConstantinaDefaults:
         self.add_user = None
         self.delete_user = None
         self.password = None
-        self.revoke_logins = False
         self.instance = "default"
+        self.revoke_logins = False
         self.force = False
         self.hostname = gethostname()
         self.webroot = "/var/www/constantina"
@@ -83,13 +83,6 @@ class ConstantinaConfig:
         with open(self.config + "/constantina.ini", "wb") as cfh:
             self.settings.write(cfh)
 
-    def accept_input(self, prompt, default):
-        """Wrapper to raw_input that accepts a default value."""
-        value = raw_input(prompt + " <" + default + ">: ")
-        if value == '':
-            value = default
-        return value
-
     def update_instance_directory(self):
         """Add instance to the end of the config directory"""
         if self.config == self.default.config:
@@ -109,10 +102,6 @@ class ConstantinaConfig:
         for item in namespace.__dict__.iteritems():
             setattr(self, item[0], item[1])
         self.update_instance_directory()
-
-    def read_inputs(self, prompt):
-        """Any values that still need to be set should be processed here."""
-        pass
 
 
 class ShadowConfig:
@@ -167,17 +156,17 @@ class ShadowConfig:
     def __delete_key(self, keyname):
         """Delete an arbitrary key from the shadow configuration"""
         for item in self.settings.items(keyname):
-            self.settings.remove_option(item[0])
+            self.settings.remove_option(item[0], item[1])
 
     def delete_keys(self):
         """
         Delete all sets of keys. This will guarantee that all usres will need
         to log back in with their current credentials.
         """
-        self.delete_key("encrypt_last")
-        self.delete_key("sign_last")
-        self.delete_key("encrypt_current")
-        self.delete_key("sign_current")
+        self.__delete_key("encrypt_last")
+        self.__delete_key("sign_last")
+        self.__delete_key("encrypt_current")
+        self.__delete_key("sign_current")
 
 
 
@@ -194,13 +183,13 @@ def read_arguments():
     parser.add_argument("-a", "--add_user", nargs='?', help=HelpStrings['add_user'])
     parser.add_argument("-d", "--delete_user", nargs='?', help=HelpStrings['delete_user'])
     parser.add_argument("-p", "--password", nargs='?', help=HelpStrings['password'])
-    parser.add_argument("-k", "--revoke_logins", action='store_true', help=HelpStrings['revoke_logins'])
     parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=conf.default.config)
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
     parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'], default=conf.default.hostname)
     parser.add_argument("-r", "--webroot", nargs='?', help=HelpStrings['webroot'], default=conf.default.webroot)
     parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
-    parser.add_argument("--force", help=HelpStrings['force'], action='store_true', default=conf.default.force)
+    parser.add_argument("-k", "--revoke_logins", help=HelpStrings['revoke_logins'], action='store_true')
+    parser.add_argument("-f", "--force", help=HelpStrings['force'], action='store_true')
     parser.parse_known_args(namespace=args)
 
     conf.import_parsed(args)
