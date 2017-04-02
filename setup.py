@@ -37,11 +37,12 @@ class ConfigurePyCommand(distutils.cmd.Command):
 
     def initialize_options(self):
         """Where default settings for each user_options value is set"""
-        self.instance = Settings.instance
-        self.config = Settings.config
-        self.hostname = Settings.hostname
-        self.root = Settings.root
-        self.user = Settings.user
+        global Settings
+        self.instance = Settings.default.instance
+        self.config = Settings.default.config
+        self.hostname = Settings.default.hostname
+        self.root = Settings.default.root
+        self.user = Settings.default.user
 
     def finalize_options(self):
         """Look for unacceptable inputs"""
@@ -87,14 +88,14 @@ class InstallPyCommand(setuptools.command.install.install):
         """
         # Template files for constantina_configure to work from later
         Package['data_files'].append(
-            (Settings.default.templates, 
+            (Settings.default.templates,
                 ['config/constantina.ini',
                  'config/medusa.ini',
                  'config/zoo.ini',
                  'config/shadow.ini']))
         # Initial config files for your chosen instance
         Package['data_files'].append(
-            (Settings.config, 
+            (Settings.config,
                 ['config/constantina.ini',
                  'config/medusa.ini',
                  'config/zoo.ini',
@@ -109,7 +110,7 @@ class InstallPyCommand(setuptools.command.install.install):
         Grab command-line arguments, run normal install, and then do 
         post-install configuration.
         """
-        global Settings 
+        global Settings
         Settings = read_arguments()
         self.data_files()
         setuptools.command.install.install.run(self)

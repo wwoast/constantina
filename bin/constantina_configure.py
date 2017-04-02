@@ -30,11 +30,11 @@ class ConstantinaDefaults:
         self.hostname = gethostname()
         self.root = "/var/www/constantina"
         self.user = getuser()   # Unix user account the server runs in
-        self.config = sys.prefix + "/etc/constantina/" + self.instance
+        self.config = sys.prefix + "/etc/constantina"
         self.templates = sys.prefix, "/etc/constantina/templates"
         if sys.prefix == "/usr":
             # Default prefix? Just put config in /etc
-            self.config = "/etc/constantina/" + self.instance
+            self.config = "/etc/constantina"
             self.templates = "/etc/constantina/templates"
 
 
@@ -47,7 +47,16 @@ class ConstantinaConfig:
     def __init__(self):
         self.settings = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.default = ConstantinaDefaults()
-        # WTF, why is initializing to None for subvalues breaking things here?
+        self.add_user = self.default.add_user
+        self.delete_user = self.default.delete_user
+        self.password = self.default.password
+        self.instance = self.default.instance
+        self.force = self.default.force
+        self.hostname = self.default.hostname
+        self.root = self.default.root
+        self.user = self.default.user
+        self.config = self.default.config
+        self.templates = self.default.templates
 
     def configure(self, section, option, value):
         """
@@ -76,6 +85,20 @@ class ConstantinaConfig:
         if value == '':
             value = default
         return value
+
+    def update_instance_directory(self):
+        """Add instance to the end of the config directory"""
+        if self.config == self.default.config:
+            self.config = self.config + "/" + self.instance
+
+    def import_parsed(self, namespace):
+        """
+        Take the output of parse_known_args and set them in this class.
+        Works for configs from argparse, and from the defaults set
+        """
+        for item in namespace.__dict__.iteritems():
+            setattr(self, item[0], item[1])
+        self.update_instance_directory()
 
     def read_inputs(self, prompt):
         """Any values that still need to be set should be processed here."""
@@ -139,6 +162,7 @@ def read_arguments():
     value instead.
     """
     c = ConstantinaConfig()
+    d = argparse.Namespace
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--add_user", nargs='?', help=HelpStrings['add_user'])
@@ -150,7 +174,9 @@ def read_arguments():
     parser.add_argument("-r", "--root", nargs='?', help=HelpStrings['root'], default=c.default.root)
     parser.add_argument("-u", "--user", nargs='?', help=HelpStrings['user'], default=c.default.user)
     parser.add_argument("--force", help=HelpStrings['force'], action='store_true', default=c.default.force)
-    parser.parse_known_args(namespace=c)
+    parser.parse_known_args(namespace=d)
+
+    c.import_parsed(d)
     return c
 
 
