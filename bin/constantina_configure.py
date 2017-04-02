@@ -68,8 +68,8 @@ class ConstantinaConfig:
         a new value. Otherwise, only replace config values that are not
         currently defined.
         """
-        test = self.settings.get(section, option)
-        # if test == None or self.force==True:
+        #test = self.settings.get(section, option)
+        #if test == None or self.force==True:
         self.settings.set(section, option, value)
 
     def update_configs(self):
@@ -167,7 +167,6 @@ class ShadowConfig:
         self.__delete_key("sign_last")
         self.__delete_key("encrypt_current")
         self.__delete_key("sign_current")
-
 
 
 def read_arguments():

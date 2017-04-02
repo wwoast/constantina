@@ -5,12 +5,11 @@ a configuration script intended to set up reasonable defaults for an instance
 of Constantina.
 """
 import distutils
-import distutils.cmd
 import distutils.log
 import distutils.dir_util
-from distutils.core import setup
 import sys
 import subprocess
+from setuptools import setup, find_packages, Command
 from setuptools.command.install import install
 
 # Use same command line parsing for setup.py and configuration after the fact
@@ -22,13 +21,13 @@ Settings = ConstantinaConfig()
 Package = None
 
 
-class ConfigurePyCommand(distutils.cmd.Command):
+class ConfigurePyCommand(Command):
     """Custom command for doing configuration steps"""
     description = 'configure Constantina defaults for a site'
     user_options = [
         ('instance=', 'i', HelpStrings['instance']),
         ('config=', 'c', HelpStrings['config']),
-        ('hostname=', 'h', HelpStrings['hostname']),
+        ('hostname=', 'n', HelpStrings['hostname']),
         ('webroot=', 'r', HelpStrings['webroot']),
         ('username=', 'u', HelpStrings['username']),
     ]
@@ -81,7 +80,7 @@ class InstallPyCommand(install):
     install.user_options += [
         ('instance=', 'i', HelpStrings['instance']),
         ('config=', 'c', HelpStrings['config']),
-        ('hostname=', 'h', HelpStrings['hostname']),
+        ('hostname=', 'n', HelpStrings['hostname']),
         ('webroot=', 'r', HelpStrings['webroot']),
         ('username=', 'u', HelpStrings['username']),
     ]
