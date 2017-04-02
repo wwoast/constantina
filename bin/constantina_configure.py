@@ -121,9 +121,11 @@ class ShadowConfig:
         with open(self.config + "/shadow.ini", "wb") as cfh:
             self.settings.write(cfh)
 
-    def remove_user(self, username):
+    def delete_user(self, username):
         """Remove an account from the shadow file"""
         self.settings.remove_option("passwords", username)
+        with open(self.config + "/shadow.ini", "wb") as cfh:
+            self.settings.write(cfh)
 
     def update_key(self, keyname):
         """Use existing functions to do this"""
@@ -161,6 +163,8 @@ if __name__ == '__main__':
     accounts = ShadowConfig(conf.config, conf.force)
     if conf.add_user != None:
         accounts.add_user(conf.add_user, conf.password)
+    if conf.delete_user != None:
+        accounts.delete_user(conf.delete_user)
     # If we didn't make the admin user on first blush, and no admin exists,
     # create an admin account now as well.
     if accounts.admin_exists is False:
