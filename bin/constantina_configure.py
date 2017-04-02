@@ -92,10 +92,11 @@ class ConstantinaConfig:
         if self.config == self.default.config:
             self.config = self.config + "/" + self.instance
         instance_config = self.config + "/constantina.ini"
-        if not os.path.isfile(instance_config):
-            raise Exception("File not found: \"%s\". Instance \"%s\" not installed?" 
-                % (instance_config, self.instance))
-            sys.exit(-1)
+        #TODO: Determine if install or configure mode
+        #if not os.path.isfile(instance_config):
+        #    raise Exception("File not found: \"%s\". Instance \"%s\" not installed?" 
+        #        % (instance_config, self.instance))
+        #    sys.exit(-1)
 
     def import_parsed(self, namespace):
         """
