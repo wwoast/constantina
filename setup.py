@@ -170,14 +170,15 @@ Programming Language :: Python :: 2.7""".splitlines(),
                 'bin/constantina_configure.py',
                 'bin/constantina_index.py'
             ],
+            'setup_requires': [
+                'passlib'
+            ],
             'install_requires': [
                 'jwcrypto',
                 'lxml',
                 'magic',
-                'passlib',
                 'pillow',
                 'pymad',
-                'urllib',
                 'whoosh'
             ],
             'data_files': []

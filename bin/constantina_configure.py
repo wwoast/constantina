@@ -195,12 +195,7 @@ def read_arguments():
     return conf
 
 
-if __name__ == '__main__':
-    # Read the command-line settings into the conf object
-    conf = read_arguments()
-    # Write the command-line settings to constantina.ini
-    conf.update_configs()
-    # If a username or password was provided, add an account to shadow.ini
+def user_management():
     accounts = ShadowConfig(conf.config, conf.force)
     if conf.add_user != None:
         accounts.add_user(conf.add_user, conf.password)
@@ -213,4 +208,14 @@ if __name__ == '__main__':
     if accounts.admin_exists is False:
         accounts.add_user("admin")
 
-    # TODO: won't work if config dir doesn't exist. Have something to copy templates
+
+if __name__ == '__main__':
+    # Read the command-line settings into the conf object
+    conf = read_arguments()
+    # Write the command-line settings to constantina.ini
+    conf.update_configs()
+    # If a username or password was provided, add an account to shadow.ini
+    if (conf.add_user != None or
+        conf.delete_user != None or
+        conf.revoke_logins is True):
+           user_management()
