@@ -1,6 +1,6 @@
 from math import floor
 from random import random, randint, seed, shuffle
-from mad import MadFile
+from mutagen.mp3 import MP3
 import lxml.html
 from PIL import Image
 from datetime import datetime
@@ -195,7 +195,8 @@ class MedusaSong:
     def __init__(self, filename):
         self.songfile = filename
         self.songtitle = filename.split("/")[-1].replace(".mp3", "")
-        time = MadFile(filename).total_time() / 1000
+        audio = MP3(filename)
+        time = audio.info.length
         minutes = time / 60
         seconds = time % 60
         self.songlength = str(minutes) + ":" + str(seconds)

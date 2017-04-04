@@ -179,9 +179,9 @@ Programming Language :: Python :: 2.7""".splitlines(),
                 'argon2pure',
                 'jwcrypto',
                 'lxml',
+                'mutagen',
                 'python-magic',
                 'Pillow',
-                'pymad',
                 'whoosh'
             ],
             'data_files': []
