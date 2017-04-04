@@ -5,7 +5,6 @@ lxml==3.7.1
 mutagen==1.37
 passlib==1.7.1
 Pillow==4.0.0
-pymad==0.8
 python-magic==0.4.12
 simplejson==3.10.0
 urllib3==1.19.1

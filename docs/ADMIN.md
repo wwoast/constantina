@@ -12,7 +12,9 @@ You can grab these either from your distro or Python package manager, with the
 exception of `python-magic` where Debian's distro version has a totally different
 API than the version in `pip`.
 
- * `pymad` for MP3 parsing. Unfortunately, this requires some C compiling.
+ * `jwcrypto` for managing JWT and JWE session token formats
+ * `mutagen` for MP3 parsing.
+ * `passlib` and `argon2` for password management.
  * `pillow` for image operations. Successor to the older `PIL`
  * `python-magic` for file type checks
  * `lxml` for occasions where you need to parse HTML files
