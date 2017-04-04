@@ -175,10 +175,12 @@ Programming Language :: Python :: 2.7""".splitlines(),
                 'passlib'
             ],
             'install_requires': [
+                'argon2',
+                'argon2pure',
                 'jwcrypto',
                 'lxml',
-                'magic',
-                'pillow',
+                'python-magic',
+                'Pillow',
                 'pymad',
                 'whoosh'
             ],
