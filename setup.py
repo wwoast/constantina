@@ -135,7 +135,6 @@ class InstallPyCommand(install):
         post-install configuration.
         """
         global Settings
-        self.run_command('develop')
         Settings = read_arguments()
         self.data_files()
         install.run(self)
