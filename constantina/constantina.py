@@ -540,17 +540,15 @@ def application(env, start_response, instance="default"):
 
     syslog.syslog(instance)
 
-    auth = authentication()
-    if os.environ.get('REQUEST_METHOD') == 'POST':
-        if auth.account.valid is True:
-            return contents_page(start_response, state)
-        else:
-            return authentication_page(start_response, state)
-
     if (auth_mode == "blog") or (auth_mode == "combined"):
         return contents_page(start_response, state)
     else:
-        return authentication_page(start_response, state)
+        auth = authentication()
+        if os.environ.get('REQUEST_METHOD') == 'POST':
+            if auth.account.valid is True:
+                return contents_page(start_response, state)
+            else:
+                return authentication_page(start_response, state)
 
 
 
