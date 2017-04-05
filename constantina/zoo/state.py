@@ -1,13 +1,7 @@
-from math import floor
-from random import random, randint, seed, shuffle
-from datetime import datetime
-import os
-import magic
-from urllib import unquote_plus
 import syslog
 import ConfigParser
 
-from constantina.shared import BaseFiles, BaseCardType, opendir
+from constantina.shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, opendir
 
 syslog.openlog(ident='constantina.zoo.cards')
 
