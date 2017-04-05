@@ -149,7 +149,7 @@ if __name__ == '__main__':
     try:
         Package = {
             'name': "constantina",
-            'version': "0.5.0-alpha",
+            'version': "0.5.0-beta",
             'description': "a dynamic-content blog platform for \"grazing\"",
             'author': "Justin Cassidy",
             'author_email': 'boil.afraid@gmail.com',
