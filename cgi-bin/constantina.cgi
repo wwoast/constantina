@@ -6,6 +6,6 @@ import os
 import sys
 
 from wsgiref.handlers import CGIHandler
-from constantina import application
+from constantina.constantina import application
 
 CGIHandler().run(application)
