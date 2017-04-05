@@ -2,25 +2,33 @@
 ### A dynamic-content blog platform
 ##### Justin Cassidy, February 2017
 
-##Summary
+## Summary
 [Constantina](https://github.com/wwoast/constantina) is a static site generator designed for *grazing*. It is licensed under the [GNU Affero General Public License](https://github.com/wwoast/constantina/blobs/master/LICENSE.md).
 
-##Installing Constantina
+## Installing Constantina
 
 ### List of Python dependencies
 You can grab these either from your distro or Python package manager, with the
 exception of `python-magic` where Debian's distro version has a totally different
 API than the version in `pip`.
 
- * `jwcrypto` for managing JWT and JWE session token formats
- * `mutagen` for MP3 parsing.
- * `passlib` and `argon2` for password management.
- * `pillow` for image operations. Successor to the older `PIL`
- * `python-magic` for file type checks
- * `lxml` for occasions where you need to parse HTML files
- * `configparser` for implementing the configuration files
- * `whoosh` for reverse-index word searching
- * `wsgiref` if you need to use Apache and `mod_cgi`
+There are a handful of Linux packages needed (Debian/Ubuntu) to support the ones
+installed by Python:
+
+ * `apt-get install libjpeg-dev libffi-dev libssl-dev`
+
+From there, install the Python dependencies manually or from `pip`:
+
+ * `pip install -r requirements.txt`
+  * `argon2`, `argon2_cffi`, and `argon2pure` for password hashing
+  * `jwcrypto` for managing JWT and JWE session token formats
+  * `lxml` for occasions where you need to parse HTML files
+  * `mutagen` for MP3 length parsing
+  * `passlib` as a wrapper for password hashing
+  * `pillow` for image operations. Successor to the older `PIL`
+  * `python-magic` for file type checks
+  * `whoosh` for reverse-index word searching
+  * `wsgiref` if you need to use Apache and `mod_cgi`
 
 ### uwsgi+nginx on a private server
 The best performing way to install Constantina is with a dedicated
@@ -78,7 +86,7 @@ SetEnv INSTANCE default
 ```
 
 
-##Configuration Settings
+## Configuration Settings
 `/etc/constantina/<INSTANCE>/constantina.ini` stores all operational configuration for Constantina.
 
  * `[paths].root` is the root of your public HTML directory where files are hosted
@@ -107,13 +115,13 @@ SetEnv INSTANCE default
   * New blog text-card types should get a new `_permalink` special state
 
 
-##How Cards Work
+## How Cards Work
 Cards are the basis of Constantina. News cards are shown in reverse-time
 order, while images, quotes, and ordering of cards are all randomized on
 the server.
 
 
-###Card Naming Standards
+### Card Naming Standards
 | Card Type | Path                  | File Naming Standard     | File Formats   |
 |-----------|-----------------------|--------------------------|----------------|
 | news      | medusa/news/          | unix-time (`date +%s`)   | Limited HTML   |
@@ -128,7 +136,7 @@ corresponds to will be the stated publishing date of that card. `vim $(date +%s)
 will create a file with the current unix timestamp as the filename.
 
 
-###Text Card Format: Limited HTML
+### Text Card Format: Limited HTML
 **Limited HTML** format is a HTML format with two lines at the beginning, one 
 for the post title, and the other for searchable keywords. The rest is basic
 paragraph tags with light use of nested images where necessary. Keeping the
@@ -142,13 +150,13 @@ Education, Demonstration
 <p>The Limited HTML format is generally restricted to display logic that easily displays on both large screens and single-column portrait mobile displays. While Constantina itself does not restrict your HTML content, you should stick to simple layout designs, using just basic anchors, paragraphs, images, and subheadings.</p>
 ```
 
-###Image Card Format: PNG/JPG Images
+### Image Card Format: PNG/JPG Images
 Picture cards interleaved into the page are relatively large size, so you
 should be open to using high-quality JPG or PNG images, so they appear sharp
 on both Retina (Hi-DPI) and normal PC displays.
 
 
-###Song Card Format: MP3 folders and M3U Playlists
+### Song Card Format: MP3 folders and M3U Playlists
 Song cards will package all the songs in a playlist into a single block. The
 playlist should point at songs in a subfolder of `cards/songs`, and `.m3u`
 files are just a simple list of those song files (including the containing
@@ -162,7 +170,7 @@ Evergreen Jazz/Blue Mormon.mp3
 ```
 
 
-##Card Layout Rules
+## Card Layout Rules
 Card types are listed below, as well as their default path below the `ROOT_DIR`,
 whether card placement on the page is random or not, and whether the order
 of cards in the page is randomly determined or not. Not all card types are
@@ -186,7 +194,7 @@ adjustable as well.
   * `+`	 : Only returned when using the search bar
 
 
-##Creating Themes
+## Creating Themes
 Constantina themes consist of themes subfolder, and at least a `content.html`
 page and a `style.css` stylesheet. The `content.html` file has a single
 comment that gets replaced with all the card content generated by Constantina.
