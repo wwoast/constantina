@@ -228,7 +228,11 @@ def user_management():
         accounts.add_user("admin")
 
 
-def chown_installed_files
+def chown_installed_files(conf):
+    pass
+#    for dirs in [conf.webroot, conf.cgi_bin, conf.config]:
+#        uid = conf.username
+#        gid = conf.groupname
 
 
 if __name__ == '__main__':

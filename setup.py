@@ -31,6 +31,7 @@ class ConfigurePyCommand(Command):
         ('hostname=', 'n', HelpStrings['hostname']),
         ('webroot=', 'r', HelpStrings['webroot']),
         ('username=', 'u', HelpStrings['username']),
+        ('groupname=', 'g', HelpStrings['groupname']),
     ]
 
     def initialize_options(self):
@@ -41,6 +42,7 @@ class ConfigurePyCommand(Command):
         self.hostname = Settings.hostname
         self.webroot = Settings.webroot
         self.username = Settings.username
+        self.groupname = Settings.groupname
 
     def finalize_options(self):
         """Look for unacceptable inputs"""
@@ -50,6 +52,7 @@ class ConfigurePyCommand(Command):
         assert isinstance(self.hostname, str), 'Invalid host name'
         assert isinstance(self.webroot, str), 'Invalid root directory'
         assert isinstance(self.username, str), 'Invalid user name'
+        assert isinstance(self.groupname, str), 'Invalid group name'
         assert isinstance(self.config, str)  # TODO: Check if directory exists 
         assert isinstance(self.cgi_bin, str)  # TODO: Check if directory exists 
 
@@ -68,6 +71,9 @@ class ConfigurePyCommand(Command):
         if self.username:
             command.append('--username')
             command.append(self.username)
+        if self.groupname:
+            command.append('--groupname')
+            command.append(self.groupname)
         if self.cgi_bin:
             command.append('--cgi-bin')
             command.append(self.cgi_bin)
@@ -90,6 +96,7 @@ class InstallPyCommand(install):
         ('hostname=', 'n', HelpStrings['hostname']),
         ('webroot=', 'r', HelpStrings['webroot']),
         ('username=', 'u', HelpStrings['username']),
+        ('groupname=', 'g', HelpStrings['groupname']),
     ]
 
     def initialize_options(self):
@@ -100,6 +107,7 @@ class InstallPyCommand(install):
         self.hostname = Settings.default.hostname
         self.webroot = Settings.default.webroot
         self.username = Settings.default.username
+        self.groupname = Settings.default.groupname
         install.initialize_options(self)
 
     def finalize_options(self):
@@ -110,6 +118,7 @@ class InstallPyCommand(install):
         assert isinstance(self.hostname, str), 'Invalid host name'
         assert isinstance(self.webroot, str), 'Invalid webroot path'
         assert isinstance(self.username, str), 'Invalid user name'
+        assert isinstance(self.groupname, str), 'Invalid user name'
         assert isinstance(self.config, str)  # TODO: Check if directory exists 
         assert isinstance(self.cgi_bin, str)  # TODO: Check if directory exists 
         install.finalize_options(self)
