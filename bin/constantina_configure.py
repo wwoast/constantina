@@ -7,6 +7,8 @@ import argparse
 import ConfigParser
 from socket import gethostname
 from passlib.hash import argon2
+from pwd import getpwnam
+from grp import getgrnam
 
 
 HelpStrings = {
@@ -79,7 +81,7 @@ class ConstantinaConfig:
         #TODO: test and implement force settings
         #test = self.settings.get(section, option)
         #if test == None or self.force==True:
-        if value != None:
+        if value is not None:
             self.settings.set(section, option, value)
 
     def update_configs(self):
@@ -229,10 +231,10 @@ def user_management():
 
 
 def chown_installed_files(conf):
-    pass
-#    for dirs in [conf.webroot, conf.cgi_bin, conf.config]:
-#        uid = conf.username
-#        gid = conf.groupname
+    uid = pwd.getpwnam(conf.username)[2]
+    gid = grp.getgrnam(conf.groupname)[2]
+    for dirs in [conf.webroot, conf.cgi_bin, conf.config]:
+       pass
 
 
 if __name__ == '__main__':

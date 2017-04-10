@@ -7,8 +7,10 @@ of Constantina.
 import distutils
 import distutils.log
 import distutils.dir_util
+import os
 import sys
 from pwd import getpwnam
+from grp import getgrnam
 import subprocess
 from setuptools import setup, Command
 from setuptools.command.install import install
@@ -51,11 +53,11 @@ class ConfigurePyCommand(Command):
                 len(self.instance) > 0 and
                 len(self.instance) < 32), 'Invalid instance name'
         assert isinstance(self.hostname, str), 'Invalid host name'
-        assert isinstance(self.webroot, str), 'Invalid root directory'
-        assert getpwnam(self.username), 'Invalid user name'
-        assert isinstance(self.groupname, str), 'Invalid group name'
-        assert isinstance(self.config, str)  # TODO: Check if directory exists 
-        assert isinstance(self.cgi_bin, str)  # TODO: Check if directory exists 
+        assert os.access(self.webroot, os.W_OK), 'Cannot write to webroot directory'
+        assert getpwnam(self.username), 'User name not found'
+        assert getgrnam(self.groupname), 'Group name not found'
+        assert os.access(self.config, os.W_OK), 'Cannot write to config directory'
+        assert os.access(self.cgi_bin, os.W_OK), 'Cannot write to cgi-bin directory'
 
     def run(self):
         """Run a configuration script post-install"""
@@ -117,11 +119,11 @@ class InstallPyCommand(install):
                 len(self.instance) > 0 and
                 len(self.instance) < 32), 'Invalid instance name'
         assert isinstance(self.hostname, str), 'Invalid host name'
-        assert isinstance(self.webroot, str), 'Invalid webroot path'
-        assert getpwnam(self.username), 'Invalid user name'
-        assert isinstance(self.groupname, str), 'Invalid user name'
-        assert isinstance(self.config, str)  # TODO: Check if directory exists 
-        assert isinstance(self.cgi_bin, str)  # TODO: Check if directory exists 
+        assert os.access(self.webroot, os.W_OK), 'Cannot write to webroot directory'
+        assert getpwnam(self.username), 'User name not found'
+        assert getgrnam(self.groupname), 'Group name not found'
+        assert os.access(self.config, os.W_OK), 'Cannot write to config directory'
+        assert os.access(self.cgi_bin, os.W_OK), 'Cannot write to cgi-bin directory'
         install.finalize_options(self)
 
     def data_files(self):
