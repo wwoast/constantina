@@ -23,7 +23,6 @@ HelpStrings = {
     'webroot': "where Constantina html resources are served from",
     'username': "the Unix username that Constantina data is owned by",
     'groupname': "the Unix groupname that Constantina data is owned by",
-    'force': "force overwrite existing configurations"
 }
 
 class ConstantinaDefaults:
@@ -33,7 +32,6 @@ class ConstantinaDefaults:
         self.password = None
         self.instance = "default"
         self.revoke_logins = False
-        self.force = False
         self.hostname = gethostname()
         self.username = getuser()   # Unix user account the server runs in
         self.groupname = getuser()   # Unix group account the server runs in
@@ -63,7 +61,6 @@ class ConstantinaConfig:
         self.password = self.default.password
         self.revoke_logins = self.default.revoke_logins
         self.instance = self.default.instance
-        self.force = self.default.force
         self.hostname = self.default.hostname
         self.webroot = self.default.webroot
         self.username = self.default.username
@@ -74,13 +71,9 @@ class ConstantinaConfig:
 
     def configure(self, section, option, value):
         """
-        Is a config value set already? If force=True, overwrite it with
-        a new value. Otherwise, only replace config values that are not
-        currently defined.
+        Don't overwrite config values with None.
+        TBD if this is the right thing
         """
-        #TODO: test and implement force settings
-        #test = self.settings.get(section, option)
-        #if test == None or self.force==True:
         if value is not None:
             self.settings.set(section, option, value)
 
@@ -143,11 +136,10 @@ class ShadowConfig:
     Configure keys and user accounts through the command line. Pass the
     configuration directory so we know what instance we're dealing with.
     """
-    def __init__(self, config, force=True):
+    def __init__(self, config):
         """Read in the shadow.ini config file and settings."""
         self.settings = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config = config
-        self.force = force
         self.settings.read(self.config + "/shadow.ini")
         self.admin_exists = self.settings.has_option("passwords", "admin")
         self.argon2_setup()
@@ -224,7 +216,6 @@ def read_arguments():
     parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
     parser.add_argument("-g", "--groupname", nargs='?', help=HelpStrings['groupname'], default=conf.default.groupname)
     parser.add_argument("-k", "--revoke-logins", help=HelpStrings['revoke_logins'], action='store_true')
-    parser.add_argument("-f", "--force", help=HelpStrings['force'], action='store_true')
     parser.parse_known_args(namespace=args)
 
     conf.import_parsed(args)
@@ -232,7 +223,7 @@ def read_arguments():
 
 
 def user_management():
-    accounts = ShadowConfig(conf.config, conf.force)
+    accounts = ShadowConfig(conf.config)
     if conf.add_user != None:
         accounts.add_user(conf.add_user, conf.password)
     if conf.delete_user != None:
@@ -254,7 +245,7 @@ if __name__ == '__main__':
     # TODO: only run in install mode?
     conf.chown_installed_files()
     # If a username or password was provided, add an account to shadow.ini
-    if (conf.add_user != None or
-        conf.delete_user != None or
+    if (conf.add_user is not None or
+        conf.delete_user is not None or
         conf.revoke_logins is True):
            user_management()
