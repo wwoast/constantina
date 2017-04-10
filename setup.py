@@ -86,7 +86,7 @@ class InstallPyCommand(install):
     install.user_options += [
         ('instance=', 'i', HelpStrings['instance']),
         ('config=', None, HelpStrings['config']),
-        ('cgi-bin=', 'b', HelpStrings['cgi-bin']),
+        ('cgi-bin=', 'b', HelpStrings['cgi_bin']),
         ('hostname=', 'n', HelpStrings['hostname']),
         ('webroot=', 'r', HelpStrings['webroot']),
         ('username=', 'u', HelpStrings['username']),
@@ -96,6 +96,7 @@ class InstallPyCommand(install):
         """Where default settings for each user_options value is set"""
         self.instance = Settings.default.instance
         self.config = Settings.default.config
+        self.cgi_bin = Settings.cgi_bin
         self.hostname = Settings.default.hostname
         self.webroot = Settings.default.webroot
         self.username = Settings.default.username
@@ -131,6 +132,7 @@ class InstallPyCommand(install):
             (Settings.config,
                 ['config/constantina.ini',
                  'config/medusa.ini',
+                 'config/uwsgi.ini',
                  'config/zoo.ini',
                  'config/shadow.ini']))
         # The CGI script, installed only if an argument is passed
