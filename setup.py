@@ -8,6 +8,7 @@ import distutils
 import distutils.log
 import distutils.dir_util
 import sys
+from pwd import getpwnam
 import subprocess
 from setuptools import setup, Command
 from setuptools.command.install import install
@@ -51,7 +52,7 @@ class ConfigurePyCommand(Command):
                 len(self.instance) < 32), 'Invalid instance name'
         assert isinstance(self.hostname, str), 'Invalid host name'
         assert isinstance(self.webroot, str), 'Invalid root directory'
-        assert isinstance(self.username, str), 'Invalid user name'
+        assert getpwnam(self.username), 'Invalid user name'
         assert isinstance(self.groupname, str), 'Invalid group name'
         assert isinstance(self.config, str)  # TODO: Check if directory exists 
         assert isinstance(self.cgi_bin, str)  # TODO: Check if directory exists 
@@ -117,7 +118,7 @@ class InstallPyCommand(install):
                 len(self.instance) < 32), 'Invalid instance name'
         assert isinstance(self.hostname, str), 'Invalid host name'
         assert isinstance(self.webroot, str), 'Invalid webroot path'
-        assert isinstance(self.username, str), 'Invalid user name'
+        assert getpwnam(self.username), 'Invalid user name'
         assert isinstance(self.groupname, str), 'Invalid user name'
         assert isinstance(self.config, str)  # TODO: Check if directory exists 
         assert isinstance(self.cgi_bin, str)  # TODO: Check if directory exists 
@@ -144,11 +145,10 @@ class InstallPyCommand(install):
                  'config/uwsgi.ini',
                  'config/zoo.ini',
                  'config/shadow.ini']))
-        # The CGI script, installed only if an argument is passed
-        if Settings.cgi_bin is not None:
-            Package['data_files'].append(
-                (Settings.cgi_bin,
-                    ['cgi-bin/constantina.cgi']))
+        # The CGI script
+        Package['data_files'].append(
+            (Settings.cgi_bin,
+                ['cgi-bin/constantina.cgi']))
 
     def create_webroot(self):
         """Copy the included html file into the target location"""
