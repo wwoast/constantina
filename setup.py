@@ -52,12 +52,12 @@ class ConfigurePyCommand(Command):
         assert (isinstance(self.instance, str) and
                 len(self.instance) > 0 and
                 len(self.instance) < 32), 'Invalid instance name'
-        assert isinstance(self.hostname, str), 'Invalid host name'
-        assert os.access(self.webroot, os.W_OK), 'Cannot write to webroot directory'
         assert getpwnam(self.username), 'User name not found'
         assert getgrnam(self.groupname), 'Group name not found'
-        assert os.access(self.config, os.W_OK), 'Cannot write to config directory'
-        assert os.access(self.cgi_bin, os.W_OK), 'Cannot write to cgi-bin directory'
+        assert isinstance(self.hostname, str), 'Invalid hostname'
+        assert isinstance(self.webroot, str), 'Invalid webroot directory'
+        assert isinstance(self.config, str), 'Invalid config directory'
+        assert isinstance(self.cgi_bin, str), 'Invalid cgi-bin directory'
 
     def run(self):
         """Run a configuration script post-install"""
@@ -118,12 +118,12 @@ class InstallPyCommand(install):
         assert (isinstance(self.instance, str) and
                 len(self.instance) > 0 and
                 len(self.instance) < 32), 'Invalid instance name'
-        assert isinstance(self.hostname, str), 'Invalid host name'
-        assert os.access(self.webroot, os.W_OK), 'Cannot write to webroot directory'
         assert getpwnam(self.username), 'User name not found'
         assert getgrnam(self.groupname), 'Group name not found'
-        assert os.access(self.config, os.W_OK), 'Cannot write to config directory'
-        assert os.access(self.cgi_bin, os.W_OK), 'Cannot write to cgi-bin directory'
+        assert isinstance(self.hostname, str), 'Invalid hostname'
+        assert isinstance(self.webroot, str), 'Invalid webroot directory'
+        assert isinstance(self.config, str), 'Invalid config directory'
+        assert isinstance(self.cgi_bin, str), 'Invalid cgi-bin directory'
         install.finalize_options(self)
 
     def data_files(self):
