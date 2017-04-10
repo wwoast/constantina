@@ -116,13 +116,14 @@ class InstallPyCommand(install):
     def data_files(self):
         """
         Not in the Python package, but get installed at specific locations
-        on your disk: config files.
+        on your disk: config files, cgi-script, etc.
         """
         # Template files for constantina_configure to work from later
         Package['data_files'].append(
             (Settings.templates,
                 ['config/constantina.ini',
                  'config/medusa.ini',
+                 'config/uwsgi.ini',
                  'config/zoo.ini',
                  'config/shadow.ini']))
         # Initial config files for your chosen instance
@@ -132,6 +133,11 @@ class InstallPyCommand(install):
                  'config/medusa.ini',
                  'config/zoo.ini',
                  'config/shadow.ini']))
+        # The CGI script, installed only if an argument is passed
+        if Settings.cgi_bin is not None:
+            Package['data_files'].append(
+                (Settings.cgi_bin,
+                    ['cgi-bin/constantina.cgi']))
 
     def create_webroot(self):
         """Copy the included html file into the target location"""

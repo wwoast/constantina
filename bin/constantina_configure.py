@@ -72,9 +72,11 @@ class ConstantinaConfig:
         a new value. Otherwise, only replace config values that are not
         currently defined.
         """
+        #TODO: test and implement force settings
         #test = self.settings.get(section, option)
         #if test == None or self.force==True:
-        self.settings.set(section, option, value)
+        if value != None:
+            self.settings.set(section, option, value)
 
     def update_configs(self):
         """Make config changes once the config files are staged"""
@@ -91,6 +93,8 @@ class ConstantinaConfig:
     def update_instance_directory(self, directory):
         """Add instance to the end of the chosen directory"""
         to_update = getattr(self, directory)
+        if to_update == None:
+            return
         default = getattr(self.default, directory)
         if to_update == default:
             setattr(self, directory, to_update + "/" + self.instance)
@@ -182,7 +186,8 @@ def read_arguments():
     """
     Take in command-line options, using preconfigured defaults if any are
     missing. Nargs=? means that if an argument is missing, use a default
-    value instead.
+    value instead. If that default value is None, it means the argument will
+    not take effect unless it is actually specified.
     """
     conf = ConstantinaConfig()
     args = argparse.Namespace
@@ -192,7 +197,7 @@ def read_arguments():
     parser.add_argument("-d", "--delete-user", nargs='?', help=HelpStrings['delete_user'])
     parser.add_argument("-p", "--password", nargs='?', help=HelpStrings['password'])
     parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=conf.default.config)
-    parser.add_argument("-b", "--cgi-bin", nargs='?', help=HelpStrings['cgi_bin'], default=conf.default.cgi_bin)
+    parser.add_argument("-b", "--cgi-bin", nargs='?', help=HelpStrings['cgi_bin'], default=None)
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
     parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'], default=conf.default.hostname)
     parser.add_argument("-r", "--webroot", nargs='?', help=HelpStrings['webroot'], default=conf.default.webroot)
