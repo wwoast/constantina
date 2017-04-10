@@ -20,6 +20,7 @@ HelpStrings = {
     'hostname': "hostname that Constantina will run on",
     'webroot': "where Constantina html resources are served from",
     'username': "the Unix username that Constantina data is owned by",
+    'groupname': "the Unix groupname that Constantina data is owned by",
     'force': "force overwrite existing configurations"
 }
 
@@ -32,13 +33,15 @@ class ConstantinaDefaults:
         self.revoke_logins = False
         self.force = False
         self.hostname = gethostname()
-        self.webroot = "/var/www/constantina"
         self.username = getuser()   # Unix user account the server runs in
+        self.groupname = getuser()   # Unix group account the server runs in
+        self.webroot = sys.prefix + "/var/www/constantina"
         self.config = sys.prefix + "/etc/constantina"
         self.cgi_bin = sys.prefix + "/var/cgi-bin/constantina"
         self.templates = sys.prefix, "/etc/constantina/templates"
         if sys.prefix == "/usr":
-            # Default prefix? Just put config in /etc
+            # Default prefix? Unprefix the target directories
+            self.webroot = "/var/www/constantina"
             self.config = "/etc/constantina"
             self.cgi_bin = "/var/cgi-bin/constantina"
             self.templates = "/etc/constantina/templates"
@@ -62,6 +65,7 @@ class ConstantinaConfig:
         self.hostname = self.default.hostname
         self.webroot = self.default.webroot
         self.username = self.default.username
+        self.groupname = self.default.groupname
         self.config = self.default.config
         self.cgi_bin = self.default.cgi_bin
         self.templates = self.default.templates
@@ -83,6 +87,7 @@ class ConstantinaConfig:
         self.settings.read(self.config + "/constantina.ini")
         self.configure("server", "hostname", self.hostname)
         self.configure("server", "username", self.username)
+        self.configure("server", "groupname", self.username)
         self.configure("paths", "webroot", self.webroot)
         self.configure("paths", "config", self.config)
         self.configure("paths", "cgi_bin", self.cgi_bin)
@@ -113,6 +118,7 @@ class ConstantinaConfig:
             setattr(self, item[0], item[1])
         self.update_instance_directory("config")
         self.update_instance_directory("cgi_bin")
+        self.update_instance_directory("webroot")
 
 
 class ShadowConfig:
@@ -199,6 +205,7 @@ def read_arguments():
     parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'], default=conf.default.hostname)
     parser.add_argument("-r", "--webroot", nargs='?', help=HelpStrings['webroot'], default=conf.default.webroot)
     parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
+    parser.add_argument("-g", "--groupname", nargs='?', help=HelpStrings['groupname'], default=conf.default.groupname)
     parser.add_argument("-k", "--revoke-logins", help=HelpStrings['revoke_logins'], action='store_true')
     parser.add_argument("-f", "--force", help=HelpStrings['force'], action='store_true')
     parser.parse_known_args(namespace=args)
@@ -221,11 +228,15 @@ def user_management():
         accounts.add_user("admin")
 
 
+def chown_installed_files
+
+
 if __name__ == '__main__':
     # Read the command-line settings into the conf object
     conf = read_arguments()
     # Write the command-line settings to constantina.ini
     conf.update_configs()
+    # Change the ownership of any files that were installed
     # If a username or password was provided, add an account to shadow.ini
     if (conf.add_user != None or
         conf.delete_user != None or
