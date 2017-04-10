@@ -26,7 +26,7 @@ class ConfigurePyCommand(Command):
     description = 'configure Constantina defaults for a site'
     user_options = [
         ('instance=', 'i', HelpStrings['instance']),
-        ('config=', '-c', HelpStrings['config']),
+        ('config=', 'c', HelpStrings['config']),
         ('hostname=', 'n', HelpStrings['hostname']),
         ('webroot=', 'r', HelpStrings['webroot']),
         ('username=', 'u', HelpStrings['username']),
