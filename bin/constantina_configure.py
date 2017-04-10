@@ -122,6 +122,21 @@ class ConstantinaConfig:
         self.update_instance_directory("cgi_bin")
         self.update_instance_directory("webroot")
 
+    def chown_installed_files(self):
+        """
+        Recurse through the root/config/cgi directories and make sure that
+        files in there are owned by the configured user and group.
+        """
+        uid = getpwnam(self.username)[2]
+        gid = getgrnam(self.groupname)[2]
+        for path in [self.webroot, self.config, self.cgi_bin]:
+            for root, dirs, files in os.walk(path, topdown=False):
+                for entry in files:
+                    os.chown(os.path.join(root, entry), uid, gid)
+                for entry in dirs:
+                    os.chown(os.path.join(root, entry), uid, gid)
+            os.chown(path, uid, gid)
+
 
 class ShadowConfig:
     """
@@ -230,19 +245,14 @@ def user_management():
         accounts.add_user("admin")
 
 
-def chown_installed_files(conf):
-    uid = pwd.getpwnam(conf.username)[2]
-    gid = grp.getgrnam(conf.groupname)[2]
-    for dirs in [conf.webroot, conf.cgi_bin, conf.config]:
-       pass
-
-
 if __name__ == '__main__':
     # Read the command-line settings into the conf object
     conf = read_arguments()
     # Write the command-line settings to constantina.ini
     conf.update_configs()
     # Change the ownership of any files that were installed
+    # TODO: only run in install mode?
+    conf.chown_installed_files()
     # If a username or password was provided, add an account to shadow.ini
     if (conf.add_user != None or
         conf.delete_user != None or
