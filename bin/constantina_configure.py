@@ -15,6 +15,7 @@ HelpStrings = {
     'password': "set password for a Constantina user account",
     'revoke_logins': "delete stored session keys, forcing users to re-login",
     'config': "path to the configuration directory",
+    'cgi_bin': "path to the directory containing CGI scripts",
     'instance': "config directory isolation: /etc/constantina/<instance>",
     'hostname': "hostname that Constantina will run on",
     'webroot': "where Constantina html resources are served from",
@@ -34,10 +35,12 @@ class ConstantinaDefaults:
         self.webroot = "/var/www/constantina"
         self.username = getuser()   # Unix user account the server runs in
         self.config = sys.prefix + "/etc/constantina"
+        self.cgi_bin = sys.prefix + "/var/cgi-bin/constantina"
         self.templates = sys.prefix, "/etc/constantina/templates"
         if sys.prefix == "/usr":
             # Default prefix? Just put config in /etc
             self.config = "/etc/constantina"
+            self.cgi_bin = "/var/cgi-bin/constantina"
             self.templates = "/etc/constantina/templates"
 
 
@@ -60,6 +63,7 @@ class ConstantinaConfig:
         self.webroot = self.default.webroot
         self.username = self.default.username
         self.config = self.default.config
+        self.cgi_bin = self.default.cgi_bin
         self.templates = self.default.templates
 
     def configure(self, section, option, value):
@@ -79,14 +83,18 @@ class ConstantinaConfig:
         self.configure("server", "username", self.username)
         self.configure("paths", "webroot", self.webroot)
         self.configure("paths", "config", self.config)
+        self.configure("paths", "cgi_bin", self.cgi_bin)
 
         with open(self.config + "/constantina.ini", "wb") as cfh:
             self.settings.write(cfh)
 
-    def update_instance_directory(self):
-        """Add instance to the end of the config directory"""
-        if self.config == self.default.config:
-            self.config = self.config + "/" + self.instance
+    def update_instance_directory(self, directory):
+        """Add instance to the end of the chosen directory"""
+        to_update = getattr(self, directory)
+        default = getattr(self.default, directory)
+        if to_update == default:
+            setattr(self, directory, to_update + "/" + self.instance)
+
         #instance_config = self.config + "/constantina.ini"
         #TODO: Determine if install or configure mode
         #if not os.path.isfile(instance_config):
@@ -101,7 +109,8 @@ class ConstantinaConfig:
         """
         for item in namespace.__dict__.iteritems():
             setattr(self, item[0], item[1])
-        self.update_instance_directory()
+        self.update_instance_directory("config")
+        self.update_instance_directory("cgi_bin")
 
 
 class ShadowConfig:
@@ -179,15 +188,16 @@ def read_arguments():
     args = argparse.Namespace
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--add_user", nargs='?', help=HelpStrings['add_user'])
-    parser.add_argument("-d", "--delete_user", nargs='?', help=HelpStrings['delete_user'])
+    parser.add_argument("-a", "--add-user", nargs='?', help=HelpStrings['add_user'])
+    parser.add_argument("-d", "--delete-user", nargs='?', help=HelpStrings['delete_user'])
     parser.add_argument("-p", "--password", nargs='?', help=HelpStrings['password'])
     parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=conf.default.config)
+    parser.add_argument("-b", "--cgi-bin", nargs='?', help=HelpStrings['cgi_bin'], default=conf.default.cgi_bin)
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
     parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'], default=conf.default.hostname)
     parser.add_argument("-r", "--webroot", nargs='?', help=HelpStrings['webroot'], default=conf.default.webroot)
     parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
-    parser.add_argument("-k", "--revoke_logins", help=HelpStrings['revoke_logins'], action='store_true')
+    parser.add_argument("-k", "--revoke-logins", help=HelpStrings['revoke_logins'], action='store_true')
     parser.add_argument("-f", "--force", help=HelpStrings['force'], action='store_true')
     parser.parse_known_args(namespace=args)
 

@@ -27,6 +27,7 @@ class ConfigurePyCommand(Command):
     user_options = [
         ('instance=', 'i', HelpStrings['instance']),
         ('config=', 'c', HelpStrings['config']),
+        ('cgi-bin=', 'b', HelpStrings['cgi_bin']),
         ('hostname=', 'n', HelpStrings['hostname']),
         ('webroot=', 'r', HelpStrings['webroot']),
         ('username=', 'u', HelpStrings['username']),
@@ -36,6 +37,7 @@ class ConfigurePyCommand(Command):
         """Where default settings for each user_options value is set"""
         self.instance = Settings.instance
         self.config = Settings.config
+        self.cgi_bin = Settings.cgi_bin
         self.hostname = Settings.hostname
         self.webroot = Settings.webroot
         self.username = Settings.username
@@ -48,7 +50,8 @@ class ConfigurePyCommand(Command):
         assert isinstance(self.hostname, str), 'Invalid host name'
         assert isinstance(self.webroot, str), 'Invalid root directory'
         assert isinstance(self.username, str), 'Invalid user name'
-        assert isinstance(self.config, str)  # Check if directory exists
+        assert isinstance(self.config, str)  # TODO: Check if directory exists 
+        assert isinstance(self.cgi_bin, str)  # TODO: Check if directory exists 
 
     def run(self):
         """Run a configuration script post-install"""
@@ -65,6 +68,9 @@ class ConfigurePyCommand(Command):
         if self.username:
             command.append('--username')
             command.append(self.username)
+        if self.cgi_bin:
+            command.append('--cgi-bin')
+            command.append(self.cgi_bin)
         if self.config:
             command.append('--config')
             command.append(self.config)
@@ -80,6 +86,7 @@ class InstallPyCommand(install):
     install.user_options += [
         ('instance=', 'i', HelpStrings['instance']),
         ('config=', None, HelpStrings['config']),
+        ('cgi-bin=', 'b', HelpStrings['cgi-bin']),
         ('hostname=', 'n', HelpStrings['hostname']),
         ('webroot=', 'r', HelpStrings['webroot']),
         ('username=', 'u', HelpStrings['username']),
@@ -102,7 +109,8 @@ class InstallPyCommand(install):
         assert isinstance(self.hostname, str), 'Invalid host name'
         assert isinstance(self.webroot, str), 'Invalid webroot path'
         assert isinstance(self.username, str), 'Invalid user name'
-        assert isinstance(self.config, str)  # Check if directory exists
+        assert isinstance(self.config, str)  # TODO: Check if directory exists 
+        assert isinstance(self.cgi_bin, str)  # TODO: Check if directory exists 
         install.finalize_options(self)
 
     def data_files(self):
