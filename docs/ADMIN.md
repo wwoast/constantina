@@ -46,6 +46,8 @@ web server like `nginx` sitting in front and serving static assets.
 ```
 server {
         # Port, config, SSL, and other details here
+        listen  localhost:8080;
+        root  /var/www/constantina/default;
 
         # Just proxy the exact location on your webserver that you
         # want Constantina to load within. All other locations are 
