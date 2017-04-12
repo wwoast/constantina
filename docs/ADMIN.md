@@ -40,7 +40,8 @@ Install the Python dependencies manually or from `pip`:
 ### uwsgi+nginx on a private server
 The best performing way to install Constantina is with a dedicated
 application server such as `gunicorn` or `uwsgi`, with a more general
-web server like `nginx` sitting in front and serving static assets.
+web server like `nginx` sitting in front and serving static assets out
+of its root directory.
 
 `/etc/nginx/sites-available/constantina.conf`:
 ```
@@ -62,12 +63,13 @@ server {
 `uwsgi.constantina.ini`:
 ```
 [uwsgi]
-http-socket  = :9090
+http-socket  = localhost:9090
 plugin       = python
-wsgi-file    = /path/to/constantina.py
+module       = constantina.constantina
 processes    = 3
-procname     = constantina
+procname     = constantina-default
 env          = INSTANCE=default
+chdir        = /var/www/constantina/default
 max-requests = 5
 master
 close-on-exec
@@ -75,7 +77,7 @@ close-on-exec
 
 At the command line, you can test Constantina by running:
 ```
-uwsgi --ini uwsgi.constantina.ini --daemonize=/path/to/constantina.log
+uwsgi --ini /etc/constantina/default/uwsgi.ini --daemonize=/path/to/constantina.log
 ```
 
 ### Apache + mod_cgi on Shared Hosting
@@ -98,7 +100,7 @@ SetEnv INSTANCE default
 ## Configuration Settings
 `/etc/constantina/<INSTANCE>/constantina.ini` stores all operational configuration for Constantina.
 
- * `[paths].root` is the root of your public HTML directory where files are hosted
+ * `[paths].webroot` is the root of your public HTML directory where files are hosted
  * `[authentication]` is not used yet, and should just be set to `blog`.
  * `[themes]` defines where Constantina's themes are located
   * Any themes you add must be listed by number, aside from the `default` entry

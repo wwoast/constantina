@@ -55,6 +55,7 @@ class ConstantinaConfig:
     """
     def __init__(self):
         self.settings = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.uwsgi = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.default = ConstantinaDefaults()
         self.add_user = self.default.add_user
         self.delete_user = self.default.delete_user
@@ -86,9 +87,16 @@ class ConstantinaConfig:
         self.configure("paths", "webroot", self.webroot)
         self.configure("paths", "config", self.config)
         self.configure("paths", "cgi_bin", self.cgi_bin)
-
         with open(self.config + "/constantina.ini", "wb") as cfh:
             self.settings.write(cfh)
+
+        # Set UWSGI config file settings for this instance too
+        self.uwsgi.read(self.config + "/uwsgi.ini")
+        self.uwsgi.set("uwsgi", "chdir", self.webroot)
+        self.uwsgi.set("uwsgi", "env", "INSTANCE=" + self.instance)
+        self.uwsgi.set("uwsgi", "procname", "constantina-" + self.instance)
+        with open(self.config + "/uwsgi.ini", "wb") as ufh:
+            self.uwsgi.write(ufh)
 
     def update_instance_directory(self, directory):
         """Add instance to the end of the chosen directory"""
@@ -100,7 +108,7 @@ class ConstantinaConfig:
         #instance_config = self.config + "/constantina.ini"
         #TODO: Determine if install or configure mode
         #if not os.path.isfile(instance_config):
-        #    raise Exception("File not found: \"%s\". Instance \"%s\" not installed?" 
+        #    raise Exception("File not found: \"%s\". Instance \"%s\" not installed?"
         #        % (instance_config, self.instance))
         #    sys.exit(-1)
 
