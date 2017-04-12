@@ -7,17 +7,24 @@
 
 ## Installing Constantina
 
-### List of Python dependencies
-You can grab these either from your distro or Python package manager, with the
-exception of `python-magic` where Debian's distro version has a totally different
-API than the version in `pip`.
+### List of Linux dependencies
 
 There are a handful of Linux packages needed (Debian/Ubuntu) to support the ones
 installed by Python:
 
  * `apt-get install libjpeg-dev libffi-dev libssl-dev`
 
-From there, install the Python dependencies manually or from `pip`:
+ For use with uwsgi application servers, also install:
+
+ * `apt-get install uwsgi uwsgi-plugin-python`
+
+
+### List of Python dependencies
+You can grab these either from your distro or Python package manager, with the
+exception of `python-magic` where Debian's distro version has a totally different
+API than the version in `pip`.
+
+Install the Python dependencies manually or from `pip`:
 
  * `pip install -r requirements.txt`
   * `argon2`, `argon2_cffi`, and `argon2pure` for password hashing
