@@ -4,10 +4,9 @@ Constantina installer script. The installer script by default will also run
 a configuration script intended to set up reasonable defaults for an instance
 of Constantina.
 """
+import os
 import distutils
 import distutils.log
-import distutils.dir_util
-import os
 import sys
 from pwd import getpwnam
 from grp import getgrnam
@@ -152,9 +151,15 @@ class InstallPyCommand(install):
             (Settings.cgi_bin,
                 ['cgi-bin/constantina.cgi']))
 
-    def create_webroot(self):
-        """Copy the included html file into the target location"""
-        distutils.dir_util.copy_tree('html', Settings.webroot, update=1)
+        # The HTML webroot folder. Add these recursively to data_files
+        # so they can be both part of the install and the sdist.
+        for (path, directories, files) in os.walk("html"):
+            subdir = '/'.join(path.split("/")[1:])
+            Package['data_files'].append(
+                (Settings.webroot + '/' + subdir, 
+                    [os.path.join(path, filename) for filename in files]))
+
+        print Package['data_files'][-10:]
 
     def run(self):
         """
@@ -165,7 +170,6 @@ class InstallPyCommand(install):
         Settings = read_arguments()
         self.data_files()
         install.run(self)
-        self.create_webroot()
         self.run_command('configure')
 
 
