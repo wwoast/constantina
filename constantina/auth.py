@@ -329,11 +329,9 @@ def authentication_page(start_response, state):
     return html
 
 
-def authentication():
+def set_authentication():
     """
-    If a cookie is present, validate the JWE inside the cookie.
-    If a POST comes in, check the given username and password before
-    handing out a new cookie with a JWE value.
+    Received a POST trying to set a username and password.
     """
     read_size = int(os.environ.get('CONTENT_LENGTH'))
     max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
@@ -349,7 +347,25 @@ def authentication():
 
     auth = ConstantinaAuth("password", username=post["username"], password=post["password"])
     auth.set_token()
-    if auth.jwe is not None:
-        return True
+    return auth
+
+
+def show_authentication():
+    """
+    TODO: Received a GET with a cookie.
+    """
+    auth = ConstantinaAuth("password", username="invalid", password="invalid")
+    return auth
+
+
+def authentication():
+    """
+    If a cookie is present, validate the JWE inside the cookie.
+    If a POST comes in, check the given username and password before
+    handing out a new cookie with a JWE value.
+    """
+    if os.environ.get('REQUEST_METHOD') == 'POST':
+        auth = set_authentication()
     else:
-        return None
+        auth = show_authentication()
+    return auth
