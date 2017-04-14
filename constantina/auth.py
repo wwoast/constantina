@@ -20,7 +20,7 @@ class ConstantinaAuth:
     """
     def __init__(self, mode, **kwargs):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
-        self.config.read('shadow.ini')
+        self.config.read(GlobalConfig.get('paths', 'config') + "/shadow.ini")
         self.account = ConstantinaAccount()
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")

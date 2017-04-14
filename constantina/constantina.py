@@ -6,7 +6,7 @@ import syslog
 
 from shared import GlobalConfig, BaseFiles, opendir
 from state import ConstantinaState
-from auth import ConstantinaAuth, authentication, authentication_page
+from auth import authentication, authentication_page
 from medusa.cards import *
 from medusa.search import MedusaSearch
 # from zoo.state import ZooState
@@ -22,7 +22,6 @@ CardClass = {
 }
 
 syslog.openlog(ident='constantina')
-# TODO: get rid of this somehow!
 
 
 class ConstantinaPage:
@@ -138,7 +137,7 @@ class ConstantinaPage:
         # For older cards, just track their metadata
         for application in self.applications:
             app_state = getattr(self.state, application)
-            for ctype in app_state.ctypes: 
+            for ctype in app_state.ctypes:
                 card_count = getattr(app_state, ctype).count
                 # No topic cards unless they're search results, and no card types
                 # that have no historical values in the last page
@@ -228,7 +227,7 @@ class ConstantinaPage:
         """
         for application in self.applications:
             app_state = getattr(self.state, application)
-        
+
             permalink_fields = [sv for sv in app_state.specials
                                 if sv.find("permalink") != -1]
             for spcfield in permalink_fields:

@@ -179,7 +179,7 @@ class BaseState:
         self.config.read(self.config_path)
         # syslog.syslog(self.config.get('paths', 'news'))
         # syslog.syslog(self.config.get('card_counts', 'news'))
-        
+
 
     def __set_state_defaults(self):
         """
