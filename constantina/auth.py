@@ -301,9 +301,15 @@ class ConstantinaAccount:
 
 
     def __check_password(self):
-        """Given username and password, check that the login succeeded."""
-        pwd_hash = self.config.get("users", self.username)
-        return argon2.verify(self.password, pwd_hash)
+        """
+        Given username and password, check that the login succeeded.
+        If the username doesn't exist, just return False.
+        """
+        try:
+            pwd_hash = self.config.get("passwords", self.username)
+            return argon2.verify(self.password, pwd_hash)
+        except:
+            return False
 
 
     def set_password(self):
