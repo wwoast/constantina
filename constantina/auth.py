@@ -352,13 +352,11 @@ def set_authentication(env):
         read_size = max_size
 
     post = {}
-    with stdin as rfh:
-        inbuf = rfh.read(read_size)
-        syslog.syslog(inbuf)
-        for vals in inbuf.split('&'):
-            syslog.syslog(vals)
-            [key, value] = vals.split('=')
-            post[key] = value
+    inbuf = env['wsgi.input'].read(read_size)
+    for vals in inbuf.split('&'):
+        syslog.syslog(vals)
+        [key, value] = vals.split('=')
+        post[key] = value
 
     auth = ConstantinaAuth("password", username=post["username"], password=post["password"])
     auth.set_token()
