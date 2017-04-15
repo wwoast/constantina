@@ -342,11 +342,11 @@ def authentication_page(start_response, state):
     return html
 
 
-def set_authentication():
+def set_authentication(env):
     """
     Received a POST trying to set a username and password.
     """
-    read_size = int(os.environ.get('CONTENT_LENGTH'))
+    read_size = int(env.get('CONTENT_LENGTH'))
     max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
     if read_size >= max_size:
         read_size = max_size
@@ -363,7 +363,7 @@ def set_authentication():
     return auth
 
 
-def show_authentication():
+def show_authentication(env):
     """
     TODO: Received a GET with a cookie.
     """
@@ -371,15 +371,14 @@ def show_authentication():
     return auth
 
 
-def authentication():
+def authentication(env):
     """
     If a cookie is present, validate the JWE inside the cookie.
     If a POST comes in, check the given username and password before
     handing out a new cookie with a JWE value.
     """
-    syslog.syslog(str(os.environ.get('REQUEST_METHOD')))
-    if os.environ.get('REQUEST_METHOD') == 'POST':
-        auth = set_authentication()
+    if env.get('REQUEST_METHOD') == 'POST':
+        auth = set_authentication(env)
     else:
-        auth = show_authentication()
+        auth = show_authentication(env)
     return auth

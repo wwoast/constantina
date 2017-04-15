@@ -68,7 +68,6 @@ plugin       = python
 module       = constantina.constantina
 processes    = 3
 procname     = constantina-default
-env          = INSTANCE=default
 chdir        = /var/www/constantina/default
 max-requests = 5
 master
