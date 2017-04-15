@@ -1,12 +1,12 @@
+import ConfigParser
+import os
 from math import floor
 from random import randint, seed
-import os
-import ConfigParser
 import syslog
 
+from auth import authentication, authentication_page
 from shared import GlobalConfig, BaseFiles, opendir
 from state import ConstantinaState
-from auth import authentication, authentication_page
 from medusa.cards import *
 from medusa.search import MedusaSearch
 # from zoo.state import ZooState
@@ -456,7 +456,7 @@ def create_page(page):
     return output
 
 
-def contents_page(start_response, state):
+def contents_page(start_response, state, headers):
     """
     Three types of states:
     1) Normal page creation (randomized elements)
@@ -466,7 +466,9 @@ def contents_page(start_response, state):
     """
     # TODO: add cookies as part of the start_response headers
     substitute = '<!-- Contents go here -->'
-    headers = [('Content-Type', 'text/html')]
+
+    # Read in headers from authentication if they exist
+    headers.append(('Content-Type', 'text/html'))
 
     # Fresh new HTML, no previous state provided
     if state.fresh_mode() is True:
@@ -537,14 +539,12 @@ def application(env, start_response, instance="default"):
     state = ConstantinaState(in_state)   # Create state object
     auth_mode = GlobalConfig.get("authentication", "mode")
 
-    syslog.syslog(instance)
-
+    auth = authentication()
     if (auth_mode == "blog") or (auth_mode == "combined"):
-        return contents_page(start_response, state)
+        return contents_page(start_response, state, auth.headers)
     else:
-        auth = authentication()
         if auth.account.valid is True:
-            return contents_page(start_response, state)
+            return contents_page(start_response, state, auth.headers)
         else:
             return authentication_page(start_response, state)
 

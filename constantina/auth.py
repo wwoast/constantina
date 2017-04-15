@@ -24,17 +24,18 @@ class ConstantinaAuth:
         self.account = ConstantinaAccount()
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")
-        self.regen_jwk = []
-        self.jwk = {}       # One of N keys for signing/encryption
-        self.jwk_iat = {}   # Expiry dates for the JWKs
-        self.jwe = None     # The encrypted token
-        self.jwt = None     # The internal signed token
-        self.serial = None  # Token serialized and read/written into cookies
-        self.aud = None     # JWT audience (i.e. hostname)
-        self.exp = None     # JWT expiration time
-        self.iat = None     # JWT issued-at time
-        self.nbf = None     # JWT not-before time
-        self.sub = None     # JWT subject (subject_id/username)
+        self.headers = None  # Auth headers we add later
+        self.regen_jwk = []  # List of JWKs to regenerate, if needed
+        self.jwk = {}        # One of N keys for signing/encryption
+        self.jwk_iat = {}    # Expiry dates for the JWKs
+        self.jwe = None      # The encrypted token
+        self.jwt = None      # The internal signed token
+        self.serial = None   # Token serialized and read/written into cookies
+        self.aud = None      # JWT audience (i.e. hostname)
+        self.exp = None      # JWT expiration time
+        self.iat = None      # JWT issued-at time
+        self.nbf = None      # JWT not-before time
+        self.sub = None      # JWT subject (subject_id/username)
 
         if mode == "password":
             # Check username and password, and if the login was valid, the
@@ -235,7 +236,13 @@ class ConstantinaAuth:
         if self.account.valid is True:
             self.__create_jwe()
             self.serial = self.jwe.serialize()
-
+            cookie_values = [
+                "s=" + self.serial,
+                "Secure",
+                "HttpOnly",
+                "Site-Specific=strict"
+            ]
+            self.headers += ("Set-Cookie", ' '.join(cookie_values))
 
 
 class ConstantinaAccount:
@@ -372,6 +379,7 @@ def authentication():
     """
     if os.environ.get('REQUEST_METHOD') == 'POST':
         auth = set_authentication()
+        syslog.syslog("random string")
     else:
         auth = show_authentication()
     return auth
