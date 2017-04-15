@@ -354,7 +354,9 @@ def set_authentication(env):
     post = {}
     with stdin as rfh:
         inbuf = rfh.read(read_size)
+        syslog.syslog(inbuf)
         for vals in inbuf.split('&'):
+            syslog.syslog(vals)
             [key, value] = vals.split('=')
             post[key] = value
 
@@ -379,6 +381,7 @@ def authentication(env):
     """
     if env.get('REQUEST_METHOD') == 'POST':
         auth = set_authentication(env)
+        return auth
     else:
         auth = show_authentication(env)
-    return auth
+        return auth
