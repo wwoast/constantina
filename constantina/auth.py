@@ -377,9 +377,9 @@ def authentication():
     If a POST comes in, check the given username and password before
     handing out a new cookie with a JWE value.
     """
+    syslog.syslog(str(os.environ.get('REQUEST_METHOD')))
     if os.environ.get('REQUEST_METHOD') == 'POST':
         auth = set_authentication()
-        syslog.syslog("random string")
     else:
         auth = show_authentication()
     return auth

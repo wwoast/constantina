@@ -538,7 +538,7 @@ def application(env, start_response, instance="default"):
 
     state = ConstantinaState(in_state)   # Create state object
     auth_mode = GlobalConfig.get("authentication", "mode")
-
+    syslog.syslog("CONSTANTINA:" + str(dict(os.environ.items())))
     auth = authentication()
     if (auth_mode == "blog") or (auth_mode == "combined"):
         return contents_page(start_response, state, auth.headers)
