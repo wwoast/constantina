@@ -79,9 +79,11 @@ class ConstantinaAuth:
         key_size = self.config.getint("defaults", "key_size")
         self.jwk[name] = jwk.JWK(generate=key_format, size=key_size)
         # Whatever key properties exist, set them in the config
-        data = json.loads(self.jwk[name].export())
-        for hash_key in data.keys:
-            self.config.set(self.jwk[name], hash_key, data[hash_key])
+        data = self.jwk[name].__dict__
+        for hash_key in data['_key'].keys():
+            self.config.set(self.jwk[name], hash_key, data['_key'][hash_key])
+        for hash_key in data['_params'].keys():
+            self.config.set(self.jwk[name], hash_key, data['_params'][hash_key])
         # When did we create this key? When the class was instant'ed
         self.jwk_iat[name] = self.time
         self.config.set(name, "date", self.jwk_iat[name])
@@ -90,20 +92,23 @@ class ConstantinaAuth:
     def __read_key(self, name):
         """
         Read the desired key from the configuration file, and load it as
-        a JWK for purpose of signing or encryption. Parameters here that are
-        not part of the JWK structure are stored in metadata{} instead.
+        a JWK for purpose of signing or encryption. This tries to load the
+        exact parameters from the config file into their equivalent places
+        in the JWK object. Namely, the k value goes in _key, and all the
+        other ones of interest go in _params.
         Persist the JWK key itself by "name" into the self.jwk{} dict
         """
-        jwk_data = {}
-        metadata = {}
-        exclude = ["date"]
+        jwk_data = {
+            '_key': {},
+            '_params': {},
+        }
         for hash_key, value in self.config.items(name):
-            jwk_data[hash_key] = value
-        for field in exclude:
-            metadata[field] = jwk_data[field]
-            del jwk_data[field]
-        self.jwk[name] = json.dumps(jwk_data)   # Equivalent to the jwk.JWK call
-        self.jwk_iat[name] = metadata["date"]
+            if hash_key == 'k':
+                jwk_data['_key'][hash_key] = value
+            else:
+                jwk_data['_params'][hash_key] = value
+        self.jwk[name] = jwk_data   # Equivalent to the jwk.JWK call
+        self.jwk_iat[name] = self.config.get(name, "date")
 
 
     def __create_jwt(self):
