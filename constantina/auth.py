@@ -120,7 +120,7 @@ class ConstantinaAuth:
         subject_id = self.config.get("defaults", "subject_id")
         signing_key = self.__read_key("sign_current")
         self.iat = int(jwt.time.time())
-        self.aud = GlobalConfig.get("domain", "hostname")
+        self.aud = GlobalConfig.get("server", "hostname")
         self.sub = subject_id + "/" + self.account.username
         self.nbf = self.iat - 60
         self.exp = self.iat + self.lifetime
@@ -290,7 +290,7 @@ class ConstantinaAccount:
         consider it valid.
         """
         (test_id, self.username) = self.subject.split("/")
-        return test_id == GlobalConfig.get("domain", "hostname")
+        return test_id == GlobalConfig.get("server", "hostname")
 
 
     def __validate_user(self):
@@ -353,10 +353,12 @@ def set_authentication(env):
 
     post = {}
     inbuf = env['wsgi.input'].read(read_size)
+    # TODO: equals-sign in form will break this!
     for vals in inbuf.split('&'):
         syslog.syslog(vals)
         [key, value] = vals.split('=')
         post[key] = value
+        syslog.syslog(value)
 
     auth = ConstantinaAuth("password", username=post["username"], password=post["password"])
     auth.set_token()
