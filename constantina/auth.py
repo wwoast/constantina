@@ -24,6 +24,7 @@ class ConstantinaAuth:
         self.account = ConstantinaAccount()
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")
+        self.time = int(jwt.time.time())    # Don't leak multiple timestamps
         self.headers = None  # Auth headers we add later
         self.regen_jwk = []  # List of JWKs to regenerate, if needed
         self.jwk = {}        # One of N keys for signing/encryption
@@ -52,25 +53,19 @@ class ConstantinaAuth:
             pass
 
 
-    def __read_shadow_settings(self):
-        """
-        Read in settings from the shadow.ini config file so we can track what
-        the token expiry settings we care about might be.
-        """
-        self.lifetime = self.config.getint("key_settings", "lifetime")
-        self.sunset = self.config.getint("key_settings", "sunset")
-        self.time = int(jwt.time.time())
-
-        for keyname in ["encrypt_last", "encrypt_current", "sign_last", "sign_current"]:
-            keydate = self.config.getint(keyname, "date")
-            if self.time > (keydate + self.sunset):
-                self.regen_jwk.append(keyname)
-
-
     def __regen_all_jwk(self):
         """
-        Regenerate any expired JWK shared secret keys in the config file.
+        Regenerate any expired JWK shared secret keys in the config file. If a key
+        doesn't exist, create it.
         """
+        for keyname in ["encrypt_last", "encrypt_current", "sign_last", "sign_current"]:
+            if isinstance(self.config.get(keyname, "date"), int) is False:
+                 self.regen_jwk.append(keyname)
+            else:
+                keydate = self.config.getint(keyname, "date")
+                if self.time > (keydate + self.sunset):
+                    self.regen_jwk.append(keyname)
+
         for keyname in self.regen_jwk:
             self.__write_key(keyname)
 
@@ -87,8 +82,8 @@ class ConstantinaAuth:
         data = json.loads(self.jwk[name].export())
         for hash_key in data.keys:
             self.config.set(self.jwk[name], hash_key, data[hash_key])
-        # When did we create this key? Record this detail
-        self.jwk_iat[name] = int(jwt.time.time())
+        # When did we create this key? When the class was instant'ed
+        self.jwk_iat[name] = self.time
         self.config.set(name, "date", self.jwk_iat[name])
 
 
@@ -119,7 +114,7 @@ class ConstantinaAuth:
         signing_algorithm = self.config.get("defaults", "signing_algorithm")
         subject_id = self.config.get("defaults", "subject_id")
         signing_key = self.__read_key("sign_current")
-        self.iat = int(jwt.time.time())
+        self.iat = self.time    # Don't leak how long operations take
         self.aud = GlobalConfig.get("server", "hostname")
         self.sub = subject_id + "/" + self.account.username
         self.nbf = self.iat - 60
@@ -231,8 +226,12 @@ class ConstantinaAuth:
 
     def set_token(self):
         """
-        If authentication succeeds, set a token for this user
+        If authentication succeeds, set a token for this user. Regardless if
+        the attempt succeeds or fails, use this as an opportunity to update any
+        signing or encryption keys that might be used in the generation of
+        actual JWE tokens.
         """
+        self.__regen_all_jwk()
         if self.account.valid is True:
             self.__create_jwe()
             self.serial = self.jwe.serialize()
@@ -240,7 +239,8 @@ class ConstantinaAuth:
                 "s=" + self.serial,
                 "Secure",
                 "HttpOnly",
-                "Site-Specific=strict"
+                "Max-Age=" + self.lifetime,
+                "Same-Site=strict"
             ]
             self.headers += ("Set-Cookie", ' '.join(cookie_values))
 
