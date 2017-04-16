@@ -81,7 +81,7 @@ class ConstantinaAuth:
         """
         key_format = self.config.get("defaults", "key_format")
         key_size = self.config.getint("defaults", "key_size")
-        self.jwk[name] = jwk.JWK(generate=key_format, size=key_size)
+        self.jwk[name] = jwk.JWK.generate(kty=key_format, size=key_size)
         # Whatever key properties exist, set them in the config
         data = self.jwk[name].__dict__
         for hash_key in data['_key'].keys():
@@ -111,9 +111,8 @@ class ConstantinaAuth:
         for section in exclude:
             del(jwk_data[section])
         self.jwk[name] = jwk.JWK(**jwk_data)
-        syslog.syslog(str(self.jwk[name].__dict__))
         self.jwk_iat[name] = self.config.get(name, "date")
-
+        return self.jwk[name]   # Read into the object, but also return it
 
     def __create_jwt(self):
         """
@@ -129,7 +128,7 @@ class ConstantinaAuth:
         self.nbf = self.iat - 60
         self.exp = self.iat + self.lifetime
         jti = uuid4().int
-        claims = {
+        jwt_claims = {
             "sub": self.sub,
             "nbf": self.nbf,
             "iat": self.iat,
@@ -137,13 +136,12 @@ class ConstantinaAuth:
             "aud": self.aud,
             "exp": self.exp
         }
-        header = {
+        jwt_header = {
             "alg": signing_algorithm
         }
-        self.jwt = jwt.JWT(header=header, claims=claims)
-        syslog.syslog(str(self.jwt.__dict__))
+        self.jwt = jwt.JWT(header=jwt_header, claims=jwt_claims)
         self.jwt.make_signed_token(signing_key)
-
+        return self.jwt
 
     def __read_jwt_claims(self):
         """
@@ -156,13 +154,12 @@ class ConstantinaAuth:
         self.nbf = self.jwt.claims["nbf"]
         self.exp = self.jwt.claims["exp"]
 
-
     def __create_jwe(self):
         """
         Create a JWE token whose "claims" set (payload) is a signed JWT.
         """
         self.jwt = self.__create_jwt()
-        encryption_key = self.__read_key("encryption_current")
+        encryption_key = self.__read_key("encrypt_current")
         encryption_parameters = {
             "alg": self.config.get("defaults", "encryption_algorithm"),
             "enc": self.config.get("defaults", "encryption_mode")
@@ -170,7 +167,6 @@ class ConstantinaAuth:
         payload = self.jwt.serialize()
         self.jwe = jwt.JWT(header=encryption_parameters, claims=payload)
         self.jwe.make_encrypted_token(encryption_key)
-
 
     def __decrypt_jwe(self, serial, keyname):
         """
@@ -182,7 +178,6 @@ class ConstantinaAuth:
         except:
             return False
 
-
     def __check_jwe(self, serial):
         """
         Given a serialized blob, parse it as a JWE token. If it fails, return
@@ -193,7 +188,6 @@ class ConstantinaAuth:
             if self.__decrypt_jwe(serial, keyname) is True:
                 return True
         return False
-
 
     def __validate_jwt(self, serial, keyname):
         """
@@ -207,7 +201,6 @@ class ConstantinaAuth:
         except:
             return False
 
-
     def __check_jwt(self, serial):
         """
         Given a serialized blob, parse it as a JWT token. If it fails, return
@@ -217,7 +210,6 @@ class ConstantinaAuth:
             if self.__validate_jwt(serial, keyname) is True:
                 return True
         return False
-
 
     def check_token(self, token):
         """
@@ -232,7 +224,6 @@ class ConstantinaAuth:
                 self.__read_jwt_claims()
                 return True
         return False
-
 
     def set_token(self):
         """
