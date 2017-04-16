@@ -63,6 +63,12 @@ class ConstantinaState(BaseState):
             self.max_items += self.medusa.max_items
             self.filtered += self.medusa.filtered
 
+        if self.config.get("authentication", "mode") == "forum":
+            # TODO: Testing -- No zoo code written yet
+            self.medusa = MedusaState(self.in_state)
+            self.max_items += self.medusa.max_items
+            self.filtered += self.medusa.filtered
+
         if self.config.get("authentication", "mode") == "zoo":
             self.zoo = ZooState(self.in_state)
             self.max_items += self.zoo.max_items

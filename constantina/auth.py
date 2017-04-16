@@ -356,10 +356,8 @@ def set_authentication(env):
     inbuf = env['wsgi.input'].read(read_size)
     # TODO: equals-sign in form will break this!
     for vals in inbuf.split('&'):
-        syslog.syslog(vals)
         [key, value] = vals.split('=')
         post[key] = value
-        syslog.syslog(value)
 
     auth = ConstantinaAuth("password", username=post["username"], password=post["password"])
     auth.set_token()
