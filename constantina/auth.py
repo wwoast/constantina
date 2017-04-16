@@ -65,9 +65,13 @@ class ConstantinaAuth:
                 keydate = self.config.getint(keyname, "date")
                 if self.time > (keydate + self.sunset):
                     self.regen_jwk.append(keyname)
-
+        # Make any keys necessary
         for keyname in self.regen_jwk:
             self.__write_key(keyname)
+        # Write the settings to the shadow file once keys are generated
+        if self.regen_jwk != []:
+            with open(GlobalConfig.get('paths', 'config') + "/shadow.ini", "wb") as sfh:
+                self.config.write(sfh)
 
 
     def __write_key(self, name):
@@ -81,12 +85,12 @@ class ConstantinaAuth:
         # Whatever key properties exist, set them in the config
         data = self.jwk[name].__dict__
         for hash_key in data['_key'].keys():
-            self.config.set(self.jwk[name], hash_key, data['_key'][hash_key])
+            self.config.set(name, hash_key, data['_key'][hash_key])
         for hash_key in data['_params'].keys():
-            self.config.set(self.jwk[name], hash_key, data['_params'][hash_key])
+            self.config.set(name, hash_key, data['_params'][hash_key])
         # When did we create this key? When the class was instant'ed
         self.jwk_iat[name] = self.time
-        self.config.set(name, "date", self.jwk_iat[name])
+        self.config.set(name, "date", str(self.jwk_iat[name]))
 
 
     def __read_key(self, name):
