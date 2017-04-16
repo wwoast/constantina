@@ -243,7 +243,8 @@ class ConstantinaAuth:
                 "Max-Age=" + str(self.lifetime),
                 "Same-Site=strict"
             ]
-            self.headers.append(("Set-Cookie", ' '.join(cookie_values).encode('utf-8')))
+            # Cookies must be Python byte-string types -- encode "fixes" this
+            self.headers.append(("Set-Cookie", '; '.join(cookie_values).encode('utf-8')))
 
 
 class ConstantinaAccount:

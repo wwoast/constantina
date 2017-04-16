@@ -469,7 +469,7 @@ def contents_page(start_response, state, headers):
 
     # Read in headers from authentication if they exist
     headers.append(('Content-Type', 'text/html'))
-    syslog.syslog(str(headers))
+    # syslog.syslog(str(headers))
 
     # Fresh new HTML, no previous state provided
     if state.fresh_mode() is True:
