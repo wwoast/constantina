@@ -25,7 +25,7 @@ class ConstantinaAuth:
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")
         self.time = int(jwt.time.time())    # Don't leak multiple timestamps
-        self.headers = None  # Auth headers we add later
+        self.headers = []    # Auth headers we add later
         self.regen_jwk = []  # List of JWKs to regenerate, if needed
         self.jwk = {}        # One of N keys for signing/encryption
         self.jwk_iat = {}    # Expiry dates for the JWKs
@@ -240,7 +240,7 @@ class ConstantinaAuth:
                 "s=" + self.serial,
                 "Secure",
                 "HttpOnly",
-                "Max-Age=" + self.lifetime,
+                "Max-Age=" + str(self.lifetime),
                 "Same-Site=strict"
             ]
             self.headers += ("Set-Cookie", ' '.join(cookie_values))
