@@ -100,18 +100,18 @@ class ConstantinaAuth:
         exact parameters from the config file into their equivalent places
         in the JWK object. Namely, the k value goes in _key, and all the
         other ones of interest go in _params.
+        Any objects that don't go into the JWK object get removed,
+        including the date value we track separately.
         Persist the JWK key itself by "name" into the self.jwk{} dict
         """
-        jwk_data = {
-            '_key': {},
-            '_params': {},
-        }
-        for hash_key, value in self.config.items(name):
-            if hash_key == 'k':
-                jwk_data['_key'][hash_key] = value
-            else:
-                jwk_data['_params'][hash_key] = value
-        self.jwk[name] = jwk_data   # Equivalent to the jwk.JWK call
+        jwk_data = {}
+        exclude = ["date"]
+        for section, value in self.config.items(name):
+            jwk_data[section] = value
+        for section in exclude:
+            del(jwk_data[section])
+        self.jwk[name] = jwk.JWK(**jwk_data)
+        syslog.syslog(str(self.jwk[name].__dict__))
         self.jwk_iat[name] = self.config.get(name, "date")
 
 
@@ -141,6 +141,7 @@ class ConstantinaAuth:
             "alg": signing_algorithm
         }
         self.jwt = jwt.JWT(header=header, claims=claims)
+        syslog.syslog(str(self.jwt.__dict__))
         self.jwt.make_signed_token(signing_key)
 
 
