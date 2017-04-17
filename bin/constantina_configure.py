@@ -70,33 +70,34 @@ class ConstantinaConfig:
         self.cgi_bin = self.default.cgi_bin
         self.templates = self.default.templates
 
-    def configure(self, section, option, value):
+    def configure(self, config, section, option, value):
         """
         Don't overwrite config values with None.
         TBD if this is the right thing
         """
         if value is not None:
-            self.settings.set(section, option, value)
+            config.set(section, option, value)
 
     def update_configs(self):
         """Make config changes once the config files are staged"""
         self.settings.read(self.config + "/constantina.ini")
-        self.configure("server", "hostname", self.hostname)
-        self.configure("server", "username", self.username)
-        self.configure("server", "groupname", self.username)
-        self.configure("paths", "webroot", self.webroot)
-        self.configure("paths", "config", self.config)
-        self.configure("paths", "cgi_bin", self.cgi_bin)
+        self.configure(self.settings, "server", "hostname", self.hostname)
+        self.configure(self.settings, "server", "username", self.username)
+        self.configure(self.settings, "server", "groupname", self.username)
+        self.configure(self.settings, "paths", "webroot", self.webroot)
+        self.configure(self.settings, "paths", "config", self.config)
+        self.configure(self.settings, "paths", "cgi_bin", self.cgi_bin)
         with open(self.config + "/constantina.ini", "wb") as cfh:
             self.settings.write(cfh)
 
         # Set UWSGI config file settings for this instance too
         self.uwsgi.read(self.config + "/uwsgi.ini")
-        self.uwsgi.set("uwsgi", "chdir", self.webroot)
-        self.uwsgi.set("uwsgi", "env", "INSTANCE=" + self.instance)
-        self.uwsgi.set("uwsgi", "procname", "constantina-" + self.instance)
+        self.configure(self.uwsgi, "uwsgi", "chdir", self.webroot)
+        self.configure(self.uwsgi, "uwsgi", "env", "INSTANCE=" + self.instance)
+        self.configure(self.uwsgi, "uwsgi", "procname", "constantina-" + self.instance)
         # TODO: port configured on the bound interface
-        self.uwsgi.set("uwsgi", "socket", self.hostname + ":9090")
+        if self.hostname is not None:
+            self.configure(self.uwsgi, "uwsgi", "socket", self.hostname + ":9090")
         with open(self.config + "/uwsgi.ini", "wb") as ufh:
             self.uwsgi.write(ufh)
 
@@ -221,7 +222,7 @@ def read_arguments():
     parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=conf.default.config)
     parser.add_argument("-b", "--cgi-bin", nargs='?', help=HelpStrings['cgi_bin'], default=conf.default.cgi_bin)
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
-    parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'], default=conf.default.hostname)
+    parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'])
     parser.add_argument("-r", "--webroot", nargs='?', help=HelpStrings['webroot'], default=conf.default.webroot)
     parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
     parser.add_argument("-g", "--groupname", nargs='?', help=HelpStrings['groupname'], default=conf.default.groupname)
