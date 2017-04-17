@@ -95,7 +95,7 @@ class InstallPyCommand(install):
         ('instance=', 'i', HelpStrings['instance']),
         ('config=', None, HelpStrings['config']),
         ('cgi-bin=', 'b', HelpStrings['cgi_bin']),
-        ('hostname=', 'n', HelpStrings['hostname']),
+        ('hostname=', None, HelpStrings['hostname']),
         ('webroot=', 'r', HelpStrings['webroot']),
         ('username=', 'u', HelpStrings['username']),
         ('groupname=', 'g', HelpStrings['groupname']),
