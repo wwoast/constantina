@@ -233,11 +233,12 @@ class ConstantinaAuth:
         actual JWE tokens.
         """
         self.__regen_all_jwk()
+        domain = GlobalConfig.get("server", "hostname")
         if self.account.valid is True:
             self.__create_jwe()
             self.serial = self.jwe.serialize()
             cookie_values = [
-                "s=" + self.serial,
+                "__Host-" + domain + "=" + self.serial,
                 "Secure",
                 "HttpOnly",
                 "Max-Age=" + str(self.lifetime),
