@@ -95,6 +95,8 @@ class ConstantinaConfig:
         self.uwsgi.set("uwsgi", "chdir", self.webroot)
         self.uwsgi.set("uwsgi", "env", "INSTANCE=" + self.instance)
         self.uwsgi.set("uwsgi", "procname", "constantina-" + self.instance)
+        # TODO: port configured on the bound interface
+        self.uwsgi.set("uwsgi", "socket", self.hostname + ":9090")
         with open(self.config + "/uwsgi.ini", "wb") as ufh:
             self.uwsgi.write(ufh)
 
