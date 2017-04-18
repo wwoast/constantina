@@ -205,9 +205,11 @@ class ShadowConfig:
 
 def install_arguments():
     """
-    Take in command-line options, using preconfigured defaults if any are
-    missing. Nargs=? means that if an argument is missing, use a default
-    value instead.
+    When installing Constantina, aggressively replace values where-ever possible with 
+    default values, when not-specified on the commandline.
+    
+    Take in CLI options, using preconfigured defaults if any are missing. 
+    Nargs=? means that if an argument is missing, use a default value instead.
     """
     conf = ConstantinaConfig()
     args = argparse.Namespace
@@ -232,9 +234,11 @@ def install_arguments():
 
 def configure_arguments():
     """
-    Take in command-line options, using preconfigured defaults if any are
-    missing. Nargs=? means that if an argument is missing, use a default
-    value instead.
+    Take in command-line options, using preconfigured defaults only if necessary
+    for variables that are needed to run the script. If a value doesn't exist on
+    the commandline, but is in the configuration, keep that value. 
+
+    Nargs=? means that if an argument is missing, use a default value instead.
     """
     conf = ConstantinaConfig()
     args = argparse.Namespace
