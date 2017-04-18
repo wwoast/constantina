@@ -5,7 +5,6 @@ import os
 import sys
 import argparse
 import ConfigParser
-from socket import gethostname
 from passlib.hash import argon2
 from pwd import getpwnam
 from grp import getgrnam
@@ -32,11 +31,11 @@ class ConstantinaDefaults:
         self.password = None
         self.instance = "default"
         self.revoke_logins = False
-        self.hostname = gethostname()
+        self.hostname = "localhost"
         self.username = getuser()   # Unix user account the server runs in
         self.groupname = getuser()   # Unix group account the server runs in
-        self.webroot = sys.prefix + "/var/www/constantina"
         self.config = sys.prefix + "/etc/constantina"
+        self.webroot = sys.prefix + "/var/www/constantina"
         self.cgi_bin = sys.prefix + "/var/cgi-bin/constantina"
         self.templates = sys.prefix, "/etc/constantina/templates"
         if sys.prefix == "/usr":
@@ -70,10 +69,13 @@ class ConstantinaConfig:
         self.cgi_bin = self.default.cgi_bin
         self.templates = self.default.templates
 
+
     def configure(self, config, section, option, value):
         """
         Don't overwrite config values with None.
-        TBD if this is the right thing
+        TODO: if value to be set is just a default value, and there's already
+        a value in place, do not replace the existing value unless it was
+        specifically given at the command line!
         """
         if value is not None:
             config.set(section, option, value)
@@ -105,15 +107,8 @@ class ConstantinaConfig:
         """Add instance to the end of the chosen directory"""
         to_update = getattr(self, directory)
         default = getattr(self.default, directory)
-        if to_update == default:
+        if to_update == default and default is not None:
             setattr(self, directory, to_update + "/" + self.instance)
-
-        #instance_config = self.config + "/constantina.ini"
-        #TODO: Determine if install or configure mode
-        #if not os.path.isfile(instance_config):
-        #    raise Exception("File not found: \"%s\". Instance \"%s\" not installed?"
-        #        % (instance_config, self.instance))
-        #    sys.exit(-1)
 
     def import_parsed(self, namespace):
         """
@@ -134,6 +129,8 @@ class ConstantinaConfig:
         uid = getpwnam(self.username)[2]
         gid = getgrnam(self.groupname)[2]
         for path in [self.webroot, self.config, self.cgi_bin]:
+            if path is None:
+                continue
             for root, dirs, files in os.walk(path, topdown=False):
                 for entry in files:
                     os.chown(os.path.join(root, entry), uid, gid)
@@ -206,11 +203,11 @@ class ShadowConfig:
         self.__delete_key("sign_current")
 
 
-def read_arguments():
+def install_arguments():
     """
     Take in command-line options, using preconfigured defaults if any are
     missing. Nargs=? means that if an argument is missing, use a default
-    value instead. 
+    value instead.
     """
     conf = ConstantinaConfig()
     args = argparse.Namespace
@@ -222,8 +219,35 @@ def read_arguments():
     parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=conf.default.config)
     parser.add_argument("-b", "--cgi-bin", nargs='?', help=HelpStrings['cgi_bin'], default=conf.default.cgi_bin)
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
-    parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'])
+    parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'], default=conf.default.hostname)
     parser.add_argument("-r", "--webroot", nargs='?', help=HelpStrings['webroot'], default=conf.default.webroot)
+    parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
+    parser.add_argument("-g", "--groupname", nargs='?', help=HelpStrings['groupname'], default=conf.default.groupname)
+    parser.add_argument("-k", "--revoke-logins", help=HelpStrings['revoke_logins'], action='store_true')
+    parser.parse_known_args(namespace=args)
+
+    conf.import_parsed(args)
+    return conf
+
+
+def configure_arguments():
+    """
+    Take in command-line options, using preconfigured defaults if any are
+    missing. Nargs=? means that if an argument is missing, use a default
+    value instead.
+    """
+    conf = ConstantinaConfig()
+    args = argparse.Namespace
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-a", "--add-user", nargs='?', help=HelpStrings['add_user'])
+    parser.add_argument("-d", "--delete-user", nargs='?', help=HelpStrings['delete_user'])
+    parser.add_argument("-p", "--password", nargs='?', help=HelpStrings['password'])
+    parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=conf.default.config)
+    parser.add_argument("-b", "--cgi-bin", nargs='?', help=HelpStrings['cgi_bin'])
+    parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
+    parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'])
+    parser.add_argument("-r", "--webroot", nargs='?', help=HelpStrings['webroot'])
     parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
     parser.add_argument("-g", "--groupname", nargs='?', help=HelpStrings['groupname'], default=conf.default.groupname)
     parser.add_argument("-k", "--revoke-logins", help=HelpStrings['revoke_logins'], action='store_true')
@@ -249,7 +273,7 @@ def user_management():
 
 if __name__ == '__main__':
     # Read the command-line settings into the conf object
-    conf = read_arguments()
+    conf = configure_arguments()
     # Write the command-line settings to constantina.ini
     conf.update_configs()
     # Change the ownership of any files that were installed

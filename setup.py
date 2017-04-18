@@ -15,7 +15,7 @@ from setuptools import setup, Command
 from setuptools.command.install import install
 
 # Use same command line parsing for setup.py and configuration after the fact
-from bin.constantina_configure import ConstantinaConfig, HelpStrings, read_arguments
+from bin.constantina_configure import ConstantinaConfig, HelpStrings, install_arguments
 
 # Globals, so all the Configure objects get configured from a consistent
 # place prior to distutils running the setup commands
@@ -113,7 +113,11 @@ class InstallPyCommand(install):
         install.initialize_options(self)
 
     def finalize_options(self):
-        """Look for unacceptable inputs"""
+        """
+        Look for unacceptable inputs, and where they exist, default
+        to reasonable standard values. Assume that no configuration
+        exists prior to your running this command.
+        """
         assert (isinstance(self.instance, str) and
                 len(self.instance) > 0 and
                 len(self.instance) < 32), 'Invalid instance name'
@@ -167,7 +171,7 @@ class InstallPyCommand(install):
         post-install configuration.
         """
         global Settings
-        Settings = read_arguments()
+        Settings = install_arguments()
         self.data_files()
         install.run(self)
         self.run_command('configure')
