@@ -46,7 +46,10 @@ class ConstantinaAuth:
             self.set_token()
         elif mode == "cookie":
             # Check if the token is valid, and if it was, the token and account
-            # objects will be properly set.
+            # objects will be properly set. To start, read in any keys we need
+            # to validate proper signing.
+            for keyname in ["encrypt_last", "encrypt_current", "sign_last", "sign_current"]:
+                self.__read_key(keyname)
             if self.check_token(**kwargs) is True:
                 self.account.login_cookie(self.sub)
         else:
@@ -166,26 +169,32 @@ class ConstantinaAuth:
         self.jwe = jwt.JWT(header=encryption_parameters, claims=payload)
         self.jwe.make_encrypted_token(encryption_key)
 
-    def __decrypt_jwe(self, serial, keyname):
+    def __decrypt_jwe(self, token, keyname):
         """
         Try decrpyting a JWE with a key. If successful, return true.
         """
         try:
-            self.jwe = jwt.JWT(key=self.jwk[keyname], jwt=serial)
+            self.jwe = jwt.JWT(key=self.jwk[keyname], jwt=token)
             return True
         except:
             return False
 
-    def __check_jwe(self, serial):
+    def __check_jwe(self, token):
         """
         Given a serialized blob, parse it as a JWE token. If it fails, return
         false. If it succeeds, return true, and set self.jwe to be the
         serialized JWT inside the JWE.
         """
         for keyname in ["encrypt_current", "encrypt_last"]:
-            if self.__decrypt_jwe(serial, keyname) is True:
+            if self.__decrypt_jwe(token, keyname) is True:
                 return True
         return False
+
+    def __raw_cookie_to_token(self, raw_cookie):
+        """Split out just the JWE part of the cookie"""
+        name_and_cookie = raw_cookie.split(';')[0]
+        token = name_and_cookie.split('=')[1]
+        return token
 
     def __validate_jwt(self, serial, keyname):
         """
@@ -194,6 +203,8 @@ class ConstantinaAuth:
         """
         try:
             # TODO: How to check date prior to signing?
+            syslog.syslog("serial: " + str(serial))
+            syslog.syslog("key: " + str(self.jwk[keyname]))
             self.jwt = jwt.JWT(key=self.jwk[keyname], jwt=serial)
             return True
         except:
@@ -209,12 +220,6 @@ class ConstantinaAuth:
                 return True
         return False
 
-    def __raw_cookie_to_token(self, raw_cookie):
-        """Split out just the JWE part of the cookie"""
-        name_and_cookie = raw_cookie.split(';')[0]
-        token = name_and_cookie.split('=')[1]
-        return token
-
     def check_token(self, cookie):
         """
         Process a JWE token. In Constantina these come from the users' cookie.
@@ -224,8 +229,10 @@ class ConstantinaAuth:
         """
         token = self.__raw_cookie_to_token(cookie)
         if self.__check_jwe(token) is True:
+            syslog.syslog("jwe passed")
             if self.__check_jwt(self.jwe.claims) is True:
                 self.serial = self.jwe.serialize()
+                syslog.syslog("serial: " + self.serial)
                 self.__read_jwt_claims()
                 return True
         return False
@@ -368,11 +375,11 @@ def show_authentication(env):
     """
     if 'HTTP_COOKIE' in env:
         raw_cookie = env['HTTP_COOKIE']
-        syslog.syslog(str(raw_cookie))
         auth = ConstantinaAuth("cookie", cookie=raw_cookie)
         return auth
     else:
         auth = ConstantinaAuth("fail")
+        return auth
 
 
 def authentication(env):
