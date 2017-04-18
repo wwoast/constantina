@@ -22,6 +22,7 @@ class ConstantinaAuth:
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read(GlobalConfig.get('paths', 'config') + "/shadow.ini")
         self.account = ConstantinaAccount()
+        self.cookie_name = "__Secure-" + GlobalConfig.get('server', 'hostname')
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")
         self.time = int(jwt.time.time())    # Don't leak multiple timestamps
@@ -52,7 +53,6 @@ class ConstantinaAuth:
             # No token or valid account
             pass
 
-
     def __regen_all_jwk(self):
         """
         Regenerate any expired JWK shared secret keys in the config file. If a key
@@ -73,7 +73,6 @@ class ConstantinaAuth:
             with open(GlobalConfig.get('paths', 'config') + "/shadow.ini", "wb") as sfh:
                 self.config.write(sfh)
 
-
     def __write_key(self, name):
         """
         Given a keyname, generate the key and write it to the config file.
@@ -91,7 +90,6 @@ class ConstantinaAuth:
         # When did we create this key? When the class was instant'ed
         self.jwk_iat[name] = self.time
         self.config.set(name, "date", str(self.jwk_iat[name]))
-
 
     def __read_key(self, name):
         """
@@ -145,7 +143,7 @@ class ConstantinaAuth:
 
     def __read_jwt_claims(self):
         """
-        Once a JWE and JWT have been checked, read in all of their
+        Once a JWE and JWT have been validated, read in all of their
         claims data into the auth object.
         """
         self.iat = self.jwt.claims["iat"]
@@ -211,13 +209,20 @@ class ConstantinaAuth:
                 return True
         return False
 
-    def check_token(self, token):
+    def __raw_cookie_to_token(self, raw_cookie):
+        """Split out just the JWE part of the cookie"""
+        name_and_cookie = raw_cookie.split(';')[0]
+        token = name_and_cookie.split('=')[1]
+        return token
+
+    def check_token(self, cookie):
         """
         Process a JWE token. In Constantina these come from the users' cookie.
         If all the validation works, self.jwt becomes a valid JWT, read in the
         JWT's claims, and return True.
         If any part of this fails, do not set a cookie and return False.
         """
+        token = self.__raw_cookie_to_token(cookie)
         if self.__check_jwe(token) is True:
             if self.__check_jwt(self.jwe.claims) is True:
                 self.serial = self.jwe.serialize()
@@ -233,12 +238,11 @@ class ConstantinaAuth:
         actual JWE tokens.
         """
         self.__regen_all_jwk()
-        domain = GlobalConfig.get("server", "hostname")
         if self.account.valid is True:
             self.__create_jwe()
             self.serial = self.jwe.serialize()
             cookie_values = [
-                "__Secure-" + domain + "=" + self.serial,
+                self.cookie_name + "=" + self.serial,
                 "Secure",
                 "HttpOnly",
                 "Max-Age=" + str(self.lifetime),
@@ -261,7 +265,6 @@ class ConstantinaAccount:
         self.password = None
         self.subject = None
 
-
     def login_password(self, username, password):
         """
         Given a username and password, check against entries in the shadow file
@@ -275,7 +278,6 @@ class ConstantinaAccount:
                       self.__check_password())
         return self.valid
 
-
     def login_cookie(self, sub):
         """
         Obtained values from an encrypted JWE cookie. Set these and be done.
@@ -284,7 +286,6 @@ class ConstantinaAccount:
         self.valid = (self.__validate_user() and
                       self.__validate_subject_id())
         return self.valid
-
 
     def __validate_subject_id(self):
         """
@@ -295,11 +296,9 @@ class ConstantinaAccount:
         (test_id, self.username) = self.subject.split("/")
         return test_id == GlobalConfig.get("server", "hostname")
 
-
     def __validate_user(self):
         """Valid new usernames are less than 24 characters"""
         return len(self.username) < self.config.getint('defaults', 'user_length')
-
 
     def __validate_password(self):
         """
@@ -308,7 +307,6 @@ class ConstantinaAccount:
         things, so force 2FA or certificates for security.
         """
         return len(self.password) < self.config.getint('defaults', 'password_length')
-
 
     def __check_password(self):
         """
@@ -321,7 +319,6 @@ class ConstantinaAccount:
         except:
             return False
 
-
     def set_password(self):
         """Given username and password, set a shadow entry"""
         if self.valid is True:
@@ -330,7 +327,6 @@ class ConstantinaAccount:
             return True
         else:
             return False
-
 
 
 def authentication_page(start_response, state):
@@ -370,8 +366,13 @@ def show_authentication(env):
     """
     TODO: Received a GET with a cookie.
     """
-    auth = ConstantinaAuth("password", username="invalid", password="invalid")
-    return auth
+    if 'HTTP_COOKIE' in env:
+        raw_cookie = env['HTTP_COOKIE']
+        syslog.syslog(str(raw_cookie))
+        auth = ConstantinaAuth("cookie", cookie=raw_cookie)
+        return auth
+    else:
+        auth = ConstantinaAuth("fail")
 
 
 def authentication(env):
