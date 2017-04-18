@@ -238,7 +238,7 @@ class ConstantinaAuth:
             self.__create_jwe()
             self.serial = self.jwe.serialize()
             cookie_values = [
-                "__Host-" + domain + "=" + self.serial,
+                "__Secure-" + domain + "=" + self.serial,
                 "Secure",
                 "HttpOnly",
                 "Max-Age=" + str(self.lifetime),

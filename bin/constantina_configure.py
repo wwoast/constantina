@@ -5,6 +5,7 @@ import os
 import sys
 import argparse
 import ConfigParser
+from socket import getfqdn
 from passlib.hash import argon2
 from pwd import getpwnam
 from grp import getgrnam
@@ -31,7 +32,7 @@ class ConstantinaDefaults:
         self.password = None
         self.instance = "default"
         self.revoke_logins = False
-        self.hostname = "localhost"
+        self.hostname = getfqdn()
         self.username = getuser()   # Unix user account the server runs in
         self.groupname = getuser()   # Unix group account the server runs in
         self.config = sys.prefix + "/etc/constantina"
@@ -205,10 +206,10 @@ class ShadowConfig:
 
 def install_arguments():
     """
-    When installing Constantina, aggressively replace values where-ever possible with 
+    When installing Constantina, aggressively replace values where-ever possible with
     default values, when not-specified on the commandline.
-    
-    Take in CLI options, using preconfigured defaults if any are missing. 
+
+    Take in CLI options, using preconfigured defaults if any are missing.
     Nargs=? means that if an argument is missing, use a default value instead.
     """
     conf = ConstantinaConfig()
@@ -236,7 +237,7 @@ def configure_arguments():
     """
     Take in command-line options, using preconfigured defaults only if necessary
     for variables that are needed to run the script. If a value doesn't exist on
-    the commandline, but is in the configuration, keep that value. 
+    the commandline, but is in the configuration, keep that value.
 
     Nargs=? means that if an argument is missing, use a default value instead.
     """
