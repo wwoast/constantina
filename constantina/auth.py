@@ -137,7 +137,7 @@ class ConstantinaAuth:
             "sub": self.sub,
             "nbf": self.nbf,
             "iat": self.iat,
-            "jti": jti,
+            "jti": str(jti),
             "aud": self.aud,
             "exp": self.exp
         }
@@ -153,11 +153,12 @@ class ConstantinaAuth:
         Once a JWE and JWT have been validated, read in all of their
         claims data into the auth object.
         """
-        self.iat = self.jwt.claims["iat"]
-        self.aud = self.jwt.claims["aud"]
-        self.sub = self.jwt.claims["sub"]
-        self.nbf = self.jwt.claims["nbf"]
-        self.exp = self.jwt.claims["exp"]
+        claims = json.loads(self.jwt.claims)
+        self.iat = int(claims["iat"])
+        self.aud = claims["aud"]
+        self.sub = claims["sub"]
+        self.nbf = int(claims["nbf"])
+        self.exp = int(claims["exp"])
 
     def __create_jwe(self):
         """
@@ -210,9 +211,9 @@ class ConstantinaAuth:
             syslog.syslog("serial: " + str(serial))
             syslog.syslog("key: " + str(self.jwk[keyname]))
             self.jwt = jwt.JWT(key=self.jwk[keyname], jwt=serial)
-            syslog.syslog(str(self.jwt))
             return True
-        except:
+        except Exception as err:
+            syslog.syslog("JWT validation error: " + err.message)
             return False
 
     def __check_jwt(self, serial):
@@ -223,6 +224,8 @@ class ConstantinaAuth:
         for keyname in ["sign_current", "sign_last"]:
             if self.__validate_jwt(serial, keyname) is True:
                 return True
+            else:
+                pass
         return False
 
     def check_token(self, cookie):
