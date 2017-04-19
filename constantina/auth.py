@@ -294,6 +294,7 @@ class ConstantinaAccount:
         Obtained values from an encrypted JWE cookie. Set these and be done.
         """
         self.subject = sub
+        self.username = self.subject.split("/")[1]
         self.valid = (self.__validate_user() and
                       self.__validate_subject_id())
         return self.valid
@@ -305,7 +306,7 @@ class ConstantinaAccount:
         consider it valid.
         """
         (test_id, self.username) = self.subject.split("/")
-        return test_id == GlobalConfig.get("server", "hostname")
+        return test_id == self.config.get("defaults", "subject_id")
 
     def __validate_user(self):
         """Valid new usernames are less than 24 characters"""
