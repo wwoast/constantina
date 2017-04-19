@@ -66,7 +66,7 @@ class ConstantinaAuth:
         doesn't exist, create it.
         """
         for keyname in ["encrypt_last", "encrypt_current", "sign_last", "sign_current"]:
-            if isinstance(self.config.get(keyname, "date"), int) is False:
+            if isinstance(self.config.getint(keyname, "date"), int) is False:
                  self.regen_jwk.append(keyname)
             else:
                 keydate = self.config.getint(keyname, "date")
@@ -210,9 +210,9 @@ class ConstantinaAuth:
             syslog.syslog("serial: " + str(serial))
             syslog.syslog("key: " + str(self.jwk[keyname]))
             self.jwt = jwt.JWT(key=self.jwk[keyname], jwt=serial)
+            syslog.syslog(str(self.jwt))
             return True
-        except Exception as err:
-            syslog.syslog(err)
+        except:
             return False
 
     def __check_jwt(self, serial):
