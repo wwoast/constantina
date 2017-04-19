@@ -39,6 +39,10 @@ class ConstantinaAuth:
         self.nbf = None      # JWT not-before time
         self.sub = None      # JWT subject (subject_id/username)
 
+        # Check if JWKs need to be regenerated before accepting any cookies
+        # or signing any new tokens
+        self.__regen_all_jwk()
+
         if mode == "password":
             # Check username and password, and if the login was valid, the
             # set_token logic will go through
@@ -207,7 +211,8 @@ class ConstantinaAuth:
             syslog.syslog("key: " + str(self.jwk[keyname]))
             self.jwt = jwt.JWT(key=self.jwk[keyname], jwt=serial)
             return True
-        except:
+        except Exception as err:
+            syslog.syslog(err)
             return False
 
     def __check_jwt(self, serial):
@@ -239,12 +244,8 @@ class ConstantinaAuth:
 
     def set_token(self):
         """
-        If authentication succeeds, set a token for this user. Regardless if
-        the attempt succeeds or fails, use this as an opportunity to update any
-        signing or encryption keys that might be used in the generation of
-        actual JWE tokens.
+        If authentication succeeds, set a token for this user.
         """
-        self.__regen_all_jwk()
         if self.account.valid is True:
             self.__create_jwe()
             self.serial = self.jwe.serialize()
