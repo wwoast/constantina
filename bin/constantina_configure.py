@@ -3,6 +3,7 @@
 from getpass import getuser, getpass
 import os
 import sys
+from random import randint
 import argparse
 import ConfigParser
 from socket import getfqdn
@@ -70,7 +71,6 @@ class ConstantinaConfig:
         self.cgi_bin = self.default.cgi_bin
         self.templates = self.default.templates
 
-
     def configure(self, config, section, option, value):
         """
         Don't overwrite config values with None.
@@ -81,6 +81,21 @@ class ConstantinaConfig:
         if value is not None:
             config.set(section, option, value)
 
+    def opaque_instance(self):
+        """
+        Create an opaque instance ID, so that cookies for multiple Constantina
+        instances on the same domain name, don't squash each other. It's a random
+        number, converted to a BASE62 minus similar characters list.
+        """
+        random_id = randint(0, 2**32-1)
+        base = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
+        length = len(base)
+        opaque = ''
+        while random_id != 0:
+            opaque = base[random_id % length] + opaque
+            random_id /= length
+        return opaque
+
     def update_configs(self):
         """Make config changes once the config files are staged"""
         self.settings.read(self.config + "/constantina.ini")
@@ -90,6 +105,7 @@ class ConstantinaConfig:
         self.configure(self.settings, "paths", "webroot", self.webroot)
         self.configure(self.settings, "paths", "config", self.config)
         self.configure(self.settings, "paths", "cgi_bin", self.cgi_bin)
+        self.configure(self.settings, "server", "instance_id", self.opaque_instance())
         with open(self.config + "/constantina.ini", "wb") as cfh:
             self.settings.write(cfh)
 

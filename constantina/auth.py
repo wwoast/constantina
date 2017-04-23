@@ -22,7 +22,9 @@ class ConstantinaAuth:
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read(GlobalConfig.get('paths', 'config') + "/shadow.ini")
         self.account = ConstantinaAccount()
-        self.cookie_name = "__Secure-" + GlobalConfig.get('server', 'hostname')
+        self.cookie_name = ("__Secure-" + 
+                            GlobalConfig.get('server', 'hostname') + "-" + 
+                            GlobalConfig.get('server', 'instance_id'))
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")
         self.time = int(jwt.time.time())    # Don't leak multiple timestamps
@@ -66,7 +68,7 @@ class ConstantinaAuth:
         doesn't exist, create it.
         """
         for keyname in ["encrypt_last", "encrypt_current", "sign_last", "sign_current"]:
-            if isinstance(self.config.getint(keyname, "date"), int) is False:
+            if self.config.get(keyname, "date") == '':
                  self.regen_jwk.append(keyname)
             else:
                 keydate = self.config.getint(keyname, "date")
@@ -122,14 +124,15 @@ class ConstantinaAuth:
     def __create_jwt(self):
         """
         Create a signed JWT with the key_current, and define any of the
-        signed claims that are of interest
+        signed claims that are of interest.
         """
         signing_algorithm = self.config.get("defaults", "signing_algorithm")
         subject_id = self.config.get("defaults", "subject_id")
+        instance_id = GlobalConfig.get("server", "instance_id")
         signing_key = self.__read_key("sign_current")
         self.iat = self.time    # Don't leak how long operations take
         self.aud = GlobalConfig.get("server", "hostname")
-        self.sub = subject_id + "/" + self.account.username
+        self.sub = subject_id + "-"  + instance_id + "/" + self.account.username
         self.nbf = self.iat - 60
         self.exp = self.iat + self.lifetime
         jti = uuid4().int
@@ -196,7 +199,10 @@ class ConstantinaAuth:
         return False
 
     def __raw_cookie_to_token(self, raw_cookie):
-        """Split out just the JWE part of the cookie"""
+        """
+        Split out just the JWE part of the cookie. 
+        TODO: support multiple cookies
+        """
         name_and_cookie = raw_cookie.split(';')[0]
         token = name_and_cookie.split('=')[1]
         return token
@@ -301,12 +307,16 @@ class ConstantinaAccount:
 
     def __validate_subject_id(self):
         """
-        The subject_id comes from a token's subject in the form "subject_id/username".
-        If the incoming subject_id matches the domain value in GlobalConfig, then we
-        consider it valid.
+        The subject_id comes from a token's subject in the form:
+            subject_id-instance_id/username
+        If the incoming subject_id matches the domain value in both shadow
+        and GlobalConfigs, then we consider it valid.
         """
+        instance_id = GlobalConfig.get("server", "instance_id")
+        subject_id = self.config.get("defaults", "subject_id")
+        subject = subject_id + "-" + instance_id
         (test_id, self.username) = self.subject.split("/")
-        return test_id == self.config.get("defaults", "subject_id")
+        return test_id == subject
 
     def __validate_user(self):
         """Valid new usernames are less than 24 characters"""
