@@ -198,14 +198,18 @@ class ConstantinaAuth:
                 return True
         return False
 
-    def __raw_cookie_to_token(self, raw_cookie):
+    def __raw_cookie_to_token(self, raw_cookies):
         """
-        Split out just the JWE part of the cookie. 
-        TODO: support multiple cookies
+        Split out just the JWE part of the cookie. Since we split
         """
-        name_and_cookie = raw_cookie.split(';')[0]
-        token = name_and_cookie.split('=')[1]
-        return token
+        syslog.syslog(str(raw_cookies))
+        for raw_data in raw_cookies.split(';'):
+            raw_cookie = raw_data.lstrip()
+            cookie_name = raw_cookie.split('=')[0]
+            token = raw_cookie.split('=')[1]
+            if cookie_name == self.cookie_name:
+                return token
+        return None
 
     def __validate_jwt(self, serial, keyname):
         """
@@ -242,6 +246,8 @@ class ConstantinaAuth:
         If any part of this fails, do not set a cookie and return False.
         """
         token = self.__raw_cookie_to_token(cookie)
+        if token is None:
+            return False
         if self.__check_jwe(token) is True:
             syslog.syslog("jwe passed")
             if self.__check_jwt(self.jwe.claims) is True:
