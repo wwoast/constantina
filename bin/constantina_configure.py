@@ -21,6 +21,7 @@ HelpStrings = {
     'cgi_bin': "path to the directory containing CGI scripts",
     'instance': "config directory isolation: /etc/constantina/<instance>",
     'hostname': "hostname that Constantina will run on",
+    'port': "localhost-bound port that Constantina runs on (and Apache/Nginx proxies to)",
     'webroot': "where Constantina html resources are served from",
     'username': "the Unix username that Constantina data is owned by",
     'groupname': "the Unix groupname that Constantina data is owned by",
@@ -34,6 +35,7 @@ class ConstantinaDefaults:
         self.instance = "default"
         self.revoke_logins = False
         self.hostname = getfqdn()
+        self.port = str(randint(44000, 44500))   # Random local listener port
         self.username = getuser()   # Unix user account the server runs in
         self.groupname = getuser()   # Unix group account the server runs in
         self.config = sys.prefix + "/etc/constantina"
@@ -64,6 +66,7 @@ class ConstantinaConfig:
         self.revoke_logins = self.default.revoke_logins
         self.instance = self.default.instance
         self.hostname = self.default.hostname
+        self.port = self.default.port
         self.webroot = self.default.webroot
         self.username = self.default.username
         self.groupname = self.default.groupname
@@ -100,6 +103,7 @@ class ConstantinaConfig:
         """Make config changes once the config files are staged"""
         self.settings.read(self.config + "/constantina.ini")
         self.configure(self.settings, "server", "hostname", self.hostname)
+        self.configure(self.settings, "server", "port", self.port)
         self.configure(self.settings, "server", "username", self.username)
         self.configure(self.settings, "server", "groupname", self.username)
         self.configure(self.settings, "paths", "webroot", self.webroot)
@@ -114,9 +118,8 @@ class ConstantinaConfig:
         self.configure(self.uwsgi, "uwsgi", "chdir", self.webroot)
         self.configure(self.uwsgi, "uwsgi", "env", "INSTANCE=" + self.instance)
         self.configure(self.uwsgi, "uwsgi", "procname", "constantina-" + self.instance)
-        # TODO: port configured on the bound interface
         if self.hostname is not None:
-            self.configure(self.uwsgi, "uwsgi", "socket", self.hostname + ":9090")
+            self.configure(self.uwsgi, "uwsgi", "socket", self.hostname + ":" + str(self.port))
         with open(self.config + "/uwsgi.ini", "wb") as ufh:
             self.uwsgi.write(ufh)
 
@@ -239,6 +242,7 @@ def install_arguments():
     parser.add_argument("-b", "--cgi-bin", nargs='?', help=HelpStrings['cgi_bin'], default=conf.default.cgi_bin)
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
     parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'], default=conf.default.hostname)
+    parser.add_argument("-P", "--port", nargs='?', help=HelpStrings['port'], default=conf.default.port)
     parser.add_argument("-r", "--webroot", nargs='?', help=HelpStrings['webroot'], default=conf.default.webroot)
     parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
     parser.add_argument("-g", "--groupname", nargs='?', help=HelpStrings['groupname'], default=conf.default.groupname)
@@ -268,6 +272,7 @@ def configure_arguments():
     parser.add_argument("-b", "--cgi-bin", nargs='?', help=HelpStrings['cgi_bin'])
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
     parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'])
+    parser.add_argument("-P", "--port", nargs='?', help=HelpStrings['port'])
     parser.add_argument("-r", "--webroot", nargs='?', help=HelpStrings['webroot'])
     parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
     parser.add_argument("-g", "--groupname", nargs='?', help=HelpStrings['groupname'], default=conf.default.groupname)

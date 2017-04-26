@@ -31,6 +31,7 @@ class ConfigurePyCommand(Command):
         ('config=', 'c', HelpStrings['config']),
         ('cgi-bin=', 'b', HelpStrings['cgi_bin']),
         ('hostname=', 'n', HelpStrings['hostname']),
+        ('port=', 'P', HelpStrings['port']),
         ('webroot=', 'r', HelpStrings['webroot']),
         ('username=', 'u', HelpStrings['username']),
         ('groupname=', 'g', HelpStrings['groupname']),
@@ -42,6 +43,7 @@ class ConfigurePyCommand(Command):
         self.config = Settings.config
         self.cgi_bin = Settings.cgi_bin
         self.hostname = Settings.hostname
+        self.port = Settings.port
         self.webroot = Settings.webroot
         self.username = Settings.username
         self.groupname = Settings.groupname
@@ -54,6 +56,7 @@ class ConfigurePyCommand(Command):
         assert getpwnam(self.username), 'User name not found'
         assert getgrnam(self.groupname), 'Group name not found'
         assert isinstance(self.hostname, str), 'Invalid hostname'
+        assert (int(self.port) < 65536) and (int(self.port) > 1024), 'Invalid or privileged port given'
         assert isinstance(self.webroot, str), 'Invalid webroot directory'
         assert isinstance(self.config, str), 'Invalid config directory'
         assert isinstance(self.cgi_bin, str), 'Invalid cgi-bin directory'
@@ -67,6 +70,9 @@ class ConfigurePyCommand(Command):
         if self.hostname:
             command.append('--hostname')
             command.append(self.hostname)
+        if self.port:
+            command.append('--port')
+            command.append(self.port)
         if self.webroot:
             command.append('--webroot')
             command.append(self.webroot)
@@ -96,6 +102,7 @@ class InstallPyCommand(install):
         ('config=', None, HelpStrings['config']),
         ('cgi-bin=', 'b', HelpStrings['cgi_bin']),
         ('hostname=', None, HelpStrings['hostname']),
+        ('port=', 'P', HelpStrings['port']),
         ('webroot=', 'r', HelpStrings['webroot']),
         ('username=', 'u', HelpStrings['username']),
         ('groupname=', 'g', HelpStrings['groupname']),
@@ -107,6 +114,7 @@ class InstallPyCommand(install):
         self.config = Settings.default.config
         self.cgi_bin = Settings.cgi_bin
         self.hostname = Settings.default.hostname
+        self.port = Settings.default.port
         self.webroot = Settings.default.webroot
         self.username = Settings.default.username
         self.groupname = Settings.default.groupname
@@ -124,6 +132,7 @@ class InstallPyCommand(install):
         assert getpwnam(self.username), 'User name not found'
         assert getgrnam(self.groupname), 'Group name not found'
         assert isinstance(self.hostname, str), 'Invalid hostname'
+        assert (int(self.port) < 65536) and (int(self.port) > 1024), 'Invalid or privileged port given'
         assert isinstance(self.webroot, str), 'Invalid webroot directory'
         assert isinstance(self.config, str), 'Invalid config directory'
         assert isinstance(self.cgi_bin, str), 'Invalid cgi-bin directory'
