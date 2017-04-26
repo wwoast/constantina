@@ -15,14 +15,13 @@ class ZooState(BaseState):
         - Search terms (which may include forum searches, i.e. @username)
         - in_state (which may leave items unprocessed)
     This works exactly like the MedusaState object, but all state values here
-    specifically refer to forum cards and cardtypes. 
+    specifically refer to forum cards and cardtypes.
 
     When exported, zoo state should concatenate with MedusaState's export_state
     output, so that both blog and forum state is represented.
     """
-    def __init__(self):
+    def __init__(self, in_state=None):
         BaseState.__init__(self, in_state, 'zoo.ini')
-
 
 
     def __import_zoo_search_state(self):
