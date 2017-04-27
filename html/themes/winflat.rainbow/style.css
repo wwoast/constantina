@@ -45,6 +45,55 @@ div.header {
    padding: 0px 0px 20px 0px;
 }   
 
+
+input.login {
+   display: block;
+   position: relative;
+   border: none;
+   margin: 0 0 0 0;
+   padding: 0 0 0 0;
+   height: 30px;
+   color: black;
+   background-color: #cccccc;
+   z-index: 3;
+   font-size: 16pt;
+}
+
+input.login#username {
+   margin-left: 8px;
+   margin-right: 8px;
+   padding-left: 10px;
+   border: 0px solid;
+   width: 90%;
+}
+
+input.login#password {
+   margin-top: 13px;
+   margin-bottom: 10px;
+   margin-left: 8px;
+   margin-right: 8px;
+   padding-left: 10px;
+   border: 0px solid;
+   width: 90%;
+}
+
+button#loginSubmit {
+   height: 90%;
+   width: 90%;
+   margin-right: 8px;
+   background-color: #cccccc;
+   color: black;
+   border: 0px solid;
+   font-size: 14pt;
+}
+
+form {
+   display: inline;
+   width: 90%;
+   margin: auto 0 auto 0;
+   padding: 0 0 0 0;
+}
+
 /* Shadow the logos to pop against the background. */
 div.search, div.searchHalo, div.logo, div.logoHalo, div.searchInput, div.header form {
    display: inline;
@@ -112,6 +161,15 @@ img.logo {
    max-width: 100%;
 }
 
+div.loginLogo {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    background-image: -webkit-radial-gradient(bottom, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.0) 65%);
+    background-image: -moz-radial-gradient(bottom, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.0) 65%);
+    background-image: radial-gradient(bottom, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.0) 65%);
+}
+
 div.logoHalo {
    z-index: -3;
 }
@@ -152,6 +210,13 @@ div.card.topics {
 div.card.features { 
    background-color: rgba(30, 164, 20, 0.78);
    padding: 10px 20px 10px 20px;
+}
+
+div.card.login {
+   padding-top: 10px;
+   font-size: 1.3em;
+   margin-bottom: 0px;
+   padding-bottom: 2px;
 }
 
 div.card p, div.card a, div.card h2, div.card h5 {
@@ -453,7 +518,7 @@ ul.quiet {
       background-image: radial-gradient(top left, rgba(0,0,0,1.0) 0%, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.0) 70%);
    }
 
-   div.header, div.container, div.card.heading, div.card.quotes, div.card.news, div.card.features, div.card.store, div.card.image, div.card.song, div.card.topics { 
+   div.header, div.container, div.card.heading, div.card.quotes, div.card.news, div.card.features, div.card.store, div.card.image, div.card.song, div.card.topics, div.card.login { 
       position: relative;
       max-width: 100%;
       width: 100%;
