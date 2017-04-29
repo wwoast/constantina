@@ -87,6 +87,8 @@ class ConstantinaAuth:
         Given a keyname, generate the key and write it to the config file.
         Persist the JWK key itself by "name" into the self.jwk{} dict
         """
+        # TODO: mode for creating a sunset key that's already 1 day old for
+        # initial key generation!
         key_format = self.config.get("defaults", "key_format")
         key_size = self.config.getint("defaults", "key_size")
         self.jwk[name] = jwk.JWK.generate(kty=key_format, size=key_size)

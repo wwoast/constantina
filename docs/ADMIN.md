@@ -37,6 +37,61 @@ Install the Python dependencies manually or from `pip`:
   * `whoosh` for reverse-index word searching
   * `wsgiref` if you need to use Apache and `mod_cgi`
 
+
+### Installing Constantina
+`python setup.py install -h` describes the options for installing Constantina.
+The setup script attempts to install all files necessary for running the 
+application, aside from the webserver configuration.
+
+A typical install includes the webserver's username and group that it hosts
+files for, the hostname the site will be accessed through, and a port number
+that the application will listen on:
+
+```
+`python ./setup.py install -u www-data -g www-data \
+   --hostname codaworry.com --port 9090
+```
+
+Although Constantina tries to choose useful defaults when running the install
+script, it's a good idea to include at least the values above, so that you
+are installing on your system in a consistent way. Since Constantina doesn't
+manage webserver configuration, it's important that subsequent installations
+use the same port and hostname, to be consistent with an existing Nginx or
+Apache configuration.
+
+Once you've installed Constantina, you'll need to choose how the application
+will run on your webserver. But first, a couple of relevant details:
+
+
+#### Instances
+Constantina uses an idea of *instances*, in case you want to run a staging
+copy of the application on the same server as the production copy. This is
+a good way to test configuration changes prior to making them on your live
+site. Every static resource and configuration for an instance is separated
+from the others.
+
+If no instance is specified when running `python ./setup.py install`, the
+instance name is called `default`. You'll see that reflected in the paths
+to the installed file locations.
+
+Here's an example of installing Constantina twice, under two different
+locations and ports, using the *instances* feature:
+
+```
+python ./setup.py install -i default -u www-data -g www-data \
+   --hostname codaworry.com --port 9090
+python ./setup.py install -i staging -u www-data -g www-data \
+   --hostname codaworry.com --port 9091
+```
+
+#### File Locations
+Post-installation, files are installed in the following locations:
+ * static HTML: `/var/www/constantina/default`
+ * config files: `/etc/constantina/default`
+ * Python files: (your system or local Python directories)
+ * CGI scripts: `/var/cgi-bin/constantina/default`
+
+
 ### uwsgi+nginx on a private server
 The best performing way to install Constantina is with a dedicated
 application server such as `gunicorn` or `uwsgi`, with a more general
@@ -225,3 +280,49 @@ typically problems with scrolling tiled wallpapers. If you scroll the page
 prior to the content fully loading, it will leave a "hole" in the
 wallpaper the length of your first scroll event. iOS 10 seems to have
 reduced the odds of "holes" occuring in your scrolling, but it's not perfect.
+
+
+## Authentication
+Constantina Authentication is currently in testing/WIP, and is documented
+for both testing and for input from peers.
+
+
+### Enabling Authentication and Configuring Accounts 
+Constantina supports username and password-based authentication in version 
+0.5.0, but there are no enrollment flows through the web interface yet.
+However, a Python CLI script called `constantina_configure.py` lets you 
+configure Constantina users.
+
+To create a user and be interactively prompted for a new password:
+`constantina_configure.py -a <login_name>`
+
+To create a user and set an initial password in one step:
+`constantina_configure.py -a <login_name> -p <initial_password>`
+
+Enabling authentication in Constantina is a matter of setting `authentication`
+to `forum` in your instance's `constantina.ini`.
+
+
+### How Authentication and Sessions Work
+If Authentication is enabled, relevant settings for users and session cookies
+will appear in your instance's `/etc/constantina/<instance>/shadow.ini` file.
+
+On the backend, Constantina uses *Argon2* password hashing for modern and 
+tunable security of sensitive password hashes. All aspects of the Argon 
+hashing algorithm are configurable in the `shadow.ini` file, including:
+
+ `v`: The version of the *Argon2* hash format (*19 is fine*)
+ `m`: The memory cost of checking a hash, in kilobytes
+ `t`: The time cost of checking a hash, in hash-iterations
+ `p`: The parallelization parameter (set based on your CPU/thread count)
+
+The cookies themselves are JWE tokens, a format for encrypted JSON data. Inside
+the JWE is a signed JWT that indicates a user, instance, and validity period.
+The `shadow.ini` file, after a user first loads Constantina in a browser, contains
+two encryption keys and two signing keys using the HMAC-SHA256 algorithm. One key
+is labelled "current" and the other is labelled "last".
+
+Each signing and encryption key has a two-day validity period by default, and is 
+sunsetted after one day. Sunsetting is where existing older tokens are still valid,
+but the key is no longer used for encrypting or signing new tokens. The validity
+and sunsetting timeframes are configurable in the `key_settings` section of `shadow.ini`.
