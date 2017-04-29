@@ -78,10 +78,10 @@ Here's an example of installing Constantina twice, under two different
 locations and ports, using the *instances* feature:
 
 ```
-python ./setup.py install -i default -u www-data -g www-data \
-   --hostname codaworry.com --port 9090
-python ./setup.py install -i staging -u www-data -g www-data \
-   --hostname codaworry.com --port 9091
+python ./setup.py install -i default --port 9090 \
+   --hostname codaworry.com -u www-data -g www-data
+python ./setup.py install -i staging --port 9091 \
+   --hostname codaworry.com -u www-data -g www-data \
 ```
 
 #### File Locations
@@ -316,7 +316,7 @@ hashing algorithm are configurable in the `shadow.ini` file, including:
  `t`: The time cost of checking a hash, in hash-iterations
  `p`: The parallelization parameter (set based on your CPU/thread count)
 
-The cookies themselves are JWE tokens, a format for encrypted JSON data. Inside
+Session cookies are JWE tokens, a format for encrypted JSON data. Inside
 the JWE is a signed JWT that indicates a user, instance, and validity period.
 The `shadow.ini` file, after a user first loads Constantina in a browser, contains
 two encryption keys and two signing keys using the HMAC-SHA256 algorithm. One key
@@ -326,3 +326,8 @@ Each signing and encryption key has a two-day validity period by default, and is
 sunsetted after one day. Sunsetting is where existing older tokens are still valid,
 but the key is no longer used for encrypting or signing new tokens. The validity
 and sunsetting timeframes are configurable in the `key_settings` section of `shadow.ini`.
+
+Each instance of Constantina has an opaque ID that it addes to its JWE tokens. A
+given instance will only validate the cookie that contains the correct opaque ID.
+The opaque instance ID is stored in `constantina.ini` along with the other `hostname`
+and `port` information.
