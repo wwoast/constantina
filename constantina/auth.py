@@ -22,8 +22,8 @@ class ConstantinaAuth:
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read(GlobalConfig.get('paths', 'config') + "/shadow.ini")
         self.account = ConstantinaAccount()
-        self.cookie_name = ("__Secure-" + 
-                            GlobalConfig.get('server', 'hostname') + "-" + 
+        self.cookie_name = ("__Secure-" +
+                            GlobalConfig.get('server', 'hostname') + "-" +
                             GlobalConfig.get('server', 'instance_id'))
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")
@@ -69,26 +69,45 @@ class ConstantinaAuth:
         """
         for keyname in ["encrypt_last", "encrypt_current", "sign_last", "sign_current"]:
             if self.config.get(keyname, "date") == '':
-                 self.regen_jwk.append(keyname)
+                self.regen_jwk.append(keyname)
             else:
                 keydate = self.config.getint(keyname, "date")
-                if self.time > (keydate + self.sunset):
+                if self.time > (keydate + self.lifetime):
                     self.regen_jwk.append(keyname)
-        # Make any keys necessary
+        # Make any keys necessary. If 'last' keys are brand new, backdate them.
+        # If both keys in (encrypt/sign) need to be regenerated, artifically back-date
+        # the "last" keys in the set to preserve the correct ages when they start getting
+        # regularly regenerated on higher traffic rates. These backdated keys should never
+        # actually be used.
         for keyname in self.regen_jwk:
-            self.__write_key(keyname)
+            if ((self.config.get(keyname, "date") == '') and
+                    (keyname.find("last") != -1)):
+                #syslog.syslog("backdate1")
+                self.__write_key(keyname, mode="backdate")
+            elif ((len([x for x in self.regen_jwk if x.find("encrypt") != -1]) == 2) and
+                  (keyname.find("last") != -1)):
+                #syslog.syslog("backdate2")
+                self.__write_key(keyname, mode="backdate")
+            elif ((len([x for x in self.regen_jwk if x.find("sign") != -1]) == 2) and
+                  (keyname.find("last") != -1)):
+                #syslog.syslog("backdate3")
+                self.__write_key(keyname, mode="backdate")
+            else:
+                self.__write_key(keyname)
         # Write the settings to the shadow file once keys are generated
         if self.regen_jwk != []:
             with open(GlobalConfig.get('paths', 'config') + "/shadow.ini", "wb") as sfh:
                 self.config.write(sfh)
 
-    def __write_key(self, name):
+    def __write_key(self, name, mode="current"):
         """
         Given a keyname, generate the key and write it to the config file.
-        Persist the JWK key itself by "name" into the self.jwk{} dict
+        Persist the JWK key itself by "name" into the self.jwk{} dict.
+
+        Supports two modes:
+           - current: just create a token dated to the current time
+           - backdate: token is dated (ctime - sunset) to pre-age it.
         """
-        # TODO: mode for creating a sunset key that's already 1 day old for
-        # initial key generation!
         key_format = self.config.get("defaults", "key_format")
         key_size = self.config.getint("defaults", "key_size")
         self.jwk[name] = jwk.JWK.generate(kty=key_format, size=key_size)
@@ -98,9 +117,14 @@ class ConstantinaAuth:
             self.config.set(name, hash_key, data['_key'][hash_key])
         for hash_key in data['_params'].keys():
             self.config.set(name, hash_key, data['_params'][hash_key])
-        # When did we create this key? When the class was instant'ed
+        # When did we create this key? When the class was instant'ed, unless
+        # we're just generating the tokens and the "last" token needs to be
+        # backdated so it only lasts half the configured lifetime.
         self.jwk_iat[name] = self.time
         self.config.set(name, "date", str(self.jwk_iat[name]))
+        syslog.syslog("iat: %d time: %d sunset: %d" % (self.jwk_iat[name], self.time, self.sunset))
+        if mode == "backdate":
+            self.config.set(name, "date", str(self.jwk_iat[name] - self.sunset))
 
     def __read_key(self, name):
         """
@@ -202,9 +226,10 @@ class ConstantinaAuth:
 
     def __raw_cookie_to_token(self, raw_cookies):
         """
-        Split out just the JWE part of the cookie. Since we split
+        Split out just the JWE part of the cookie. Since we split by semicolon,
+        we also need to take off leading spaces (lstrip) that browsers tend to
+        print after semicolon-delimited lists of cookies.
         """
-        syslog.syslog(str(raw_cookies))
         for raw_data in raw_cookies.split(';'):
             raw_cookie = raw_data.lstrip()
             cookie_name = raw_cookie.split('=')[0]
