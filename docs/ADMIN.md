@@ -283,8 +283,8 @@ reduced the odds of "holes" occuring in your scrolling, but it's not perfect.
 
 
 ## Authentication
-Constantina Authentication is currently in testing/WIP, and is documented
-for both testing and for input from peers.
+**Constantina Authentication is currently a work in progress, and is documented
+for both testing and for input from peers.**
 
 
 ### Enabling Authentication and Configuring Accounts 
@@ -311,10 +311,10 @@ On the backend, Constantina uses *Argon2* password hashing for modern and
 tunable security of sensitive password hashes. All aspects of the Argon 
 hashing algorithm are configurable in the `shadow.ini` file, including:
 
- `v`: The version of the *Argon2* hash format (*19 is fine*)
- `m`: The memory cost of checking a hash, in kilobytes
- `t`: The time cost of checking a hash, in hash-iterations
- `p`: The parallelization parameter (set based on your CPU/thread count)
+ * `v`: The version of the *Argon2* hash format (*19 is fine*)
+ * `m`: The memory cost of checking a hash, in kilobytes
+ * `t`: The time cost of checking a hash, in hash-iterations
+ * `p`: The parallelization parameter (set based on your CPU/thread count)
 
 Session cookies are JWE tokens, a format for encrypted JSON data. Inside
 the JWE is a signed JWT that indicates a user, instance, and validity period.
