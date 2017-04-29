@@ -328,6 +328,6 @@ but the key is no longer used for encrypting or signing new tokens. The validity
 and sunsetting timeframes are configurable in the `key_settings` section of `shadow.ini`.
 
 Each instance of Constantina has an opaque ID that it addes to its JWE tokens. A
-given instance will only validate the cookie that contains the correct opaque ID.
-The opaque instance ID is stored in `constantina.ini` along with the other `hostname`
-and `port` information.
+given instance will only validate the cookie that contains the correct opaque ID in
+its cookie name. The opaque instance ID is stored in `constantina.ini` along with 
+the other `hostname` and `port` information.
