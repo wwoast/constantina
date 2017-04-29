@@ -42,7 +42,7 @@ function addMoreContent(was_clicked) {
 
    // Add content into the page
    $.get(
-      "/cwdc/?" + state,
+      "/?" + state,
        function (data) {
           $(".container").append(data);
        }
@@ -143,9 +143,9 @@ $(function() {
       query = escape(query);
 
       // Load more data
-      $("#searchForm").action = "/cwdc/?xs" + query;
+      $("#searchForm").action = "/?xs" + query;
       $.get(
-         "/cwdc/?xs" + query,
+         "/?xs" + query,
           function (data) {
              // hack hack hack (length check)
              if ( data.length <= 200 ) {
