@@ -170,6 +170,11 @@ div.card.quotes {
    padding: 0px 20px 0px 20px
 }
 
+div.card.error {
+   background-color: rgba(150, 30, 80, 0.78);
+   padding: 0px 20px 0px 20px
+}
+
 div.card.news {
    background-color: rgba(40, 50, 150, 0.78);
    padding: 10px 20px 10px 20px;
@@ -722,7 +727,7 @@ div.card.help pre {
       background-image: radial-gradient(top left, rgba(0,0,0,1.0) 0%, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.0) 70%);
    }
 
-   div.header, div.container, div.card.news, div.card.store, div.card.image, div.card.song, div.card.features, div.card.quotes, div.card.heading, div.card.topics, div.card.login, div.card.forumMenu, div.card.forum, div.card.rolldown, div.card.rolldown.newThread, div.card.settings, div.card.help {
+   div.header, div.container, div.card.news, div.card.store, div.card.image, div.card.song, div.card.features, div.card.quotes, div.card.heading, div.card.topics, div.card.login, div.card.forumMenu, div.card.forum, div.card.rolldown, div.card.rolldown.newThread, div.card.settings, div.card.help, div.card.error {
       position: relative;
       max-width: 98%;
       width: 98%;
