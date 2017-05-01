@@ -164,9 +164,9 @@ function activateTopicLinks() {
    }
 }
 
-function cardToggle(id) {
+function revealToggle(id) {
    var card = document.getElementById(id);
-   var largeImgs = card.querySelectorAll('#imgExpand')
+   var largeImgs = card.querySelectorAll('.imgExpand')
    var expandLink = card.querySelector('.showShort')
    var expandDiv = card.querySelector('.divExpand')
    var todo = expandLink.style.display;
@@ -185,4 +185,55 @@ function cardToggle(id) {
          largeImgs[i].style.display = "none";
       }
    }   
+}
+
+function createPost(id, mode) {
+   var card = document.getElementById(id);
+   var newPostCard = document.createElement('div');
+   newPostCard.className = 'newPostCard';
+   var reply = document.createElement('textarea');
+   reply.className = "newThread";
+   reply.required = true;
+
+   // If reply already clicked, get rid of previous text boxes
+   var nextElement = card.nextElementSibling;
+   if ( nextElement.classList.contains("newPostCard") ) {
+      card.nextSibling.remove();
+   }
+   if ( nextElement.classList.contains(mode) ) {
+      return;   // Undraw, and call it good
+   }
+
+   reply.name = mode;
+   newPostCard.classList.add(mode);
+   if ( mode === "quote" ) {
+      // Get body of the earlier message, and format it without nested
+      // quotes. Only basic paragraphs (avoid pre/code/friends) TODO
+      quotetext = card.childNodes[3].getElementsByClassName('postBody');
+      // TODO: munge all paragraphs, and put it in a [QUOTE] tag.
+      reply.defaultValue = quotetext[0].textContent;
+
+   } else {
+      reply.placeholder = "Add Your Reply!";
+   }
+
+   // Append edit menu afterwards
+   var replyFooter = document.createElement('div');
+   // TODO: not newthread class!
+   replyFooter.className = "card rolldown newthread";
+   var attachmentButton = document.createElement('input');
+   attachmentButton.className = "threadFileInput";
+   attachmentButton.type = "file";
+   attachmentButton.name = "attachment";
+   var submitButton = document.createElement('input');
+   submitButton.className = "threadSubmit";
+   submitButton.type = "submit";
+   submitButton.name = "submit";
+   replyFooter.appendChild(attachmentButton);
+   replyFooter.appendChild(submitButton);
+
+   newPostCard.appendChild(reply);
+   newPostCard.appendChild(replyFooter);
+
+   card.insertAdjacentElement('afterEnd', newPostCard);
 }

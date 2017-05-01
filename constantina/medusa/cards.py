@@ -265,7 +265,7 @@ def create_medusa_textcard(card, display_state):
         output += """      <h2>%s</h2>\n""" % card.title
         output += """      <p class="subject">%s</p>\n""" % card.cdate
     else:
-        output += """      <h2><a href="#%s" onclick="cardToggle('%s');">%s</a></h2>\n""" % (anchor, anchor, card.title)
+        output += """      <h2><a href="#%s" onclick="revealToggle('%s');">%s</a></h2>\n""" % (anchor, anchor, card.title)
         output += """      <p class="subject">%s</p>\n""" % topic_header
     output += """   </div>\n"""
 
@@ -294,11 +294,11 @@ def create_medusa_textcard(card, display_state):
                     (card.permalink is False) and
                     (card.search_result is False) and
                     (ptags >= 3)):
-                    e.attrib.update({"id": "imgExpand"})
+                    e.attrib['class'] += " imgExpand"
             elif ((ptags >= 3) and (card.permalink is False) and
                   (card.search_result is False)):
                 # Add a showExtend tag to hide it
-                e.attrib.update({"id": "imgExpand"})
+                e.attrib['class'] += " imgExpand"
             else:
                 pass
 
@@ -322,7 +322,7 @@ def create_medusa_textcard(card, display_state):
                   (card.search_result is False)):
                 # First <p> is OK, but follow it with a (Read More) link, and a
                 # div with showExtend that hides all the other elements
-                read_more = """ <a href="#%s" class="showShort" onclick="cardToggle('%s');">(Read&nbsp;More...)</a>""" % (anchor, anchor)
+                read_more = """ <a href="#%s" class="showShort" onclick="revealToggle('%s');">(Read&nbsp;More...)</a>""" % (anchor, anchor)
                 prep = lxml.html.tostring(e)
                 output += prep.replace('</p>', read_more + '</p>')
                 output += """<div class="divExpand">\n"""

@@ -438,7 +438,7 @@ div.card.song p.songName {
    }
 }
 
-#imgExpand, .divExpand {
+img.imgExpand, .divExpand {
    display: none;
 }
 
@@ -807,7 +807,6 @@ div.card.help pre {
 
    img.InlineNewsLeft, img.InlineNewsRight, img.InlineNewsCenterFocus {
       position: relative;
-      display: block;
       text-align: center;
       clear: both;
       margin-left: auto;
