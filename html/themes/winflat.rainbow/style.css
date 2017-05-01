@@ -193,12 +193,13 @@ div.card.store, div.card.heading {
 
 div.card.quotes {
    background-color: rgba(93, 21, 115, 0.78);
-   padding: 0px 20px 0px 20px
+   padding: 0px 20px 0px 20px;
 }
 
 div.card.error {
    background-color: rgba(150, 30, 80, 0.78);
-   padding: 0px 20px 0px 20px
+   padding: 0px 20px 0px 20px;
+   display: none;
 }
 
 div.card.news {
