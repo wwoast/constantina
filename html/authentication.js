@@ -16,3 +16,12 @@
 })();
 
 // TODO: block authentication form when HTTP is used
+(function() {
+	if ( document.url.indexOf("https") != 0 ) {
+        login = document.getElementsByClassName("login")[0];
+		login.style.display = "none";
+
+		https_error = document.getElementsByClassName("https_error")[0];
+		login.style.display = "block";
+	}
+})
