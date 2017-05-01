@@ -5,23 +5,7 @@
 <link rel="Shortcut Icon" href="favicon.png" />
 <link rel="apple-touch-icon" href="iphone.png" />
 <script type="text/javascript" src="zepto.js"></script>
-<script type="text/javascript">
-(function() {
-	if ( navigator.platform === "iPad" ) {
-		var scale = 1.2;
-		document.write('<meta name="viewport" content="width=device-width; initial-scale='+scale+'; minimum-scale='+scale+'; maximum-scale='+scale+'; user-scalable=0;" />');
-
-	} else if ( navigator.platform === "iPhone" ) {
-		var scale = 1.0;
-		document.write('<meta name="viewport" content="width=device-width; initial-scale='+scale+'; minimum-scale='+scale+'; maximum-scale='+scale+'; user-scalable=0;" />');
-
-	} else if ( navigator.userAgent.indexOf("Android") != -1 ) {
-		var scale = 1.2;
-		document.write('<meta name="viewport" content="width=device-width; initial-scale-'+scale+'; minimum-scale='+scale+'; maximum-scale='+scale+'; user-scalable=0; target-densitydpi="device-dpi"; />');
-	} else {
-		return;
-	}
-})(); 
+<script type="text/javascript" src="authentication.js"></script>
 </script>
 </head>
 <body>
