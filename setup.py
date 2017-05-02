@@ -205,6 +205,7 @@ Programming Language :: Python :: 2.7""".splitlines(),
                 'constantina',
                 'constantina.medusa',
                 'constantina.zoo',
+                'constantina.util'
             ],
             'cmdclass': {
                 'configure': ConfigurePyCommand,
