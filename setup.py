@@ -15,7 +15,7 @@ from setuptools import setup, Command
 from setuptools.command.install import install
 
 # Use same command line parsing for setup.py and configuration after the fact
-from bin.constantina_configure import ConstantinaConfig, HelpStrings, install_arguments
+from constantina.util.constantina_configure import ConstantinaConfig, HelpStrings, install_arguments
 
 # Globals, so all the Configure objects get configured from a consistent
 # place prior to distutils running the setup commands
@@ -211,8 +211,8 @@ Programming Language :: Python :: 2.7""".splitlines(),
                 'install': InstallPyCommand
             },
             'scripts': [
-                'bin/constantina_configure.py',
-                'bin/constantina_index.py'
+                'constantina/util/constantina_configure.py',
+                'constantina/util/constantina_index.py',
             ],
             'setup_requires': [
                 'passlib'

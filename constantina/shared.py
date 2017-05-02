@@ -145,7 +145,7 @@ class BaseState:
     each one has its own config file and tracks its own state, extended from
     this utility class.
 
-    Constantina state values are serialized and deserialized from a string 
+    Constantina state values are serialized and deserialized from a string
     embedded into the page itself that describes the following details:
         - The distance from the last-displayed item of this type to the end
           of the displayed page

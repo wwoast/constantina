@@ -15,7 +15,7 @@ from medusa.search import MedusaSearch
 
 # Look up Cards by application config name, instead of calling
 # MedusaCard/ZooCard directly
-CardClass = { 
+CardClass = {
     'medusa'  : MedusaCard
 #   'zoo'     : ZooCard,
 #   'dracula' : DraculaCard
@@ -257,7 +257,7 @@ class ConstantinaPage:
         card-type distances are properly represented.
         """
         # TODO: doesn't support zoo cards yet!
-        news_items = int(self.state.medusa.news.count) * self.state.page 
+        news_items = int(self.state.medusa.news.count) * self.state.page
 
         # Then add the appropriate page count's worth of news
         for n in xrange(0, news_items):
