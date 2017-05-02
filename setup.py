@@ -63,7 +63,7 @@ class ConfigurePyCommand(Command):
 
     def run(self):
         """Run a configuration script post-install"""
-        command = ['./bin/constantina_configure.py']
+        command = ['./constantina/util/constantina_configure.py']
         if self.instance:
             command.append('--instance')
             command.append(self.instance)
