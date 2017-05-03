@@ -28,11 +28,11 @@ class ConfigurePyCommand(Command):
     description = 'configure Constantina defaults for a site'
     user_options = [
         ('instance=', 'i', HelpStrings['instance']),
-        ('config_root=', 'c', HelpStrings['config_root']),
+        ('config-root=', 'c', HelpStrings['config_root']),
         ('cgi-bin=', 'b', HelpStrings['cgi_bin']),
         ('hostname=', 'n', HelpStrings['hostname']),
         ('port=', 'P', HelpStrings['port']),
-        ('data_root=', 'r', HelpStrings['data_root']),
+        ('data-root=', 'r', HelpStrings['data_root']),
         ('username=', 'u', HelpStrings['username']),
         ('groupname=', 'g', HelpStrings['groupname']),
     ]
@@ -74,7 +74,7 @@ class ConfigurePyCommand(Command):
             command.append('--port')
             command.append(self.port)
         if self.data_root:
-            command.append('--data_root')
+            command.append('--data-root')
             command.append(self.data_root)
         if self.username:
             command.append('--username')
@@ -86,7 +86,7 @@ class ConfigurePyCommand(Command):
             command.append('--cgi-bin')
             command.append(self.cgi_bin)
         if self.config_root:
-            command.append('--config_root')
+            command.append('--config-root')
             command.append(self.config_root)
         self.announce(
             'Running command: %s' % str(command),
@@ -99,11 +99,11 @@ class InstallPyCommand(install):
     description = 'install and configure Constantina at a site'
     install.user_options += [
         ('instance=', 'i', HelpStrings['instance']),
-        ('config_root=', None, HelpStrings['config_root']),
+        ('config-root=', None, HelpStrings['config_root']),
         ('cgi-bin=', 'b', HelpStrings['cgi_bin']),
         ('hostname=', None, HelpStrings['hostname']),
         ('port=', 'P', HelpStrings['port']),
-        ('data_root=', 'r', HelpStrings['data_root']),
+        ('data-root=', 'r', HelpStrings['data_root']),
         ('username=', 'u', HelpStrings['username']),
         ('groupname=', 'g', HelpStrings['groupname']),
     ]
