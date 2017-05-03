@@ -32,7 +32,7 @@ class ConfigurePyCommand(Command):
         ('cgi-bin=', 'b', HelpStrings['cgi_bin']),
         ('hostname=', 'n', HelpStrings['hostname']),
         ('port=', 'P', HelpStrings['port']),
-        ('web_root=', 'r', HelpStrings['web_root']),
+        ('data_root=', 'r', HelpStrings['data_root']),
         ('username=', 'u', HelpStrings['username']),
         ('groupname=', 'g', HelpStrings['groupname']),
     ]
@@ -44,7 +44,7 @@ class ConfigurePyCommand(Command):
         self.cgi_bin = Settings.cgi_bin
         self.hostname = Settings.hostname
         self.port = Settings.port
-        self.web_root = Settings.web_root
+        self.data_root = Settings.data_root
         self.username = Settings.username
         self.groupname = Settings.groupname
 
@@ -57,7 +57,7 @@ class ConfigurePyCommand(Command):
         assert getgrnam(self.groupname), 'Group name not found'
         assert isinstance(self.hostname, str), 'Invalid hostname'
         assert (int(self.port) < 65536) and (int(self.port) > 1024), 'Invalid or privileged port given'
-        assert isinstance(self.web_root, str), 'Invalid web_root directory'
+        assert isinstance(self.data_root, str), 'Invalid data_root directory'
         assert isinstance(self.config_root, str), 'Invalid config directory'
         assert isinstance(self.cgi_bin, str), 'Invalid cgi-bin directory'
 
@@ -73,9 +73,9 @@ class ConfigurePyCommand(Command):
         if self.port:
             command.append('--port')
             command.append(self.port)
-        if self.web_root:
-            command.append('--web_root')
-            command.append(self.web_root)
+        if self.data_root:
+            command.append('--data_root')
+            command.append(self.data_root)
         if self.username:
             command.append('--username')
             command.append(self.username)
@@ -103,7 +103,7 @@ class InstallPyCommand(install):
         ('cgi-bin=', 'b', HelpStrings['cgi_bin']),
         ('hostname=', None, HelpStrings['hostname']),
         ('port=', 'P', HelpStrings['port']),
-        ('web_root=', 'r', HelpStrings['web_root']),
+        ('data_root=', 'r', HelpStrings['data_root']),
         ('username=', 'u', HelpStrings['username']),
         ('groupname=', 'g', HelpStrings['groupname']),
     ]
@@ -115,7 +115,7 @@ class InstallPyCommand(install):
         self.cgi_bin = Settings.cgi_bin
         self.hostname = Settings.default.hostname
         self.port = Settings.default.port
-        self.web_root = Settings.default.web_root
+        self.data_root = Settings.default.data_root
         self.username = Settings.default.username
         self.groupname = Settings.default.groupname
         install.initialize_options(self)
@@ -133,7 +133,7 @@ class InstallPyCommand(install):
         assert getgrnam(self.groupname), 'Group name not found'
         assert isinstance(self.hostname, str), 'Invalid hostname'
         assert (int(self.port) < 65536) and (int(self.port) > 1024), 'Invalid or privileged port given'
-        assert isinstance(self.web_root, str), 'Invalid web_root directory'
+        assert isinstance(self.data_root, str), 'Invalid data_root directory'
         assert isinstance(self.config_root, str), 'Invalid config directory'
         assert isinstance(self.cgi_bin, str), 'Invalid cgi-bin directory'
         install.finalize_options(self)
@@ -165,12 +165,12 @@ class InstallPyCommand(install):
             (Settings.cgi_bin,
                 ['cgi-bin/constantina.cgi']))
 
-        # The HTML web_root folder. Add these recursively to data_files
+        # The HTML data_root folder. Add these recursively to data_files
         # so they can be both part of the install and the sdist.
         for (path, directories, files) in os.walk("html"):
             subdir = '/'.join(path.split("/")[1:])
             Package['data_files'].append(
-                (Settings.web_root + '/' + subdir, 
+                (Settings.data_root + '/' + subdir, 
                     [os.path.join(path, filename) for filename in files]))
 
         print Package['data_files'][-10:]
