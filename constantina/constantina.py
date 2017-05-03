@@ -528,7 +528,7 @@ def application(env, start_response, instance="default"):
     generate a special randomized page just for that link,
     with an introduction, footers, an image, and more...
     """
-    root_dir = GlobalConfig.get("paths", "webroot")
+    root_dir = GlobalConfig.get("paths", "config_root")
     os.chdir(root_dir)
     in_state = env.get('QUERY_STRING')
     if (in_state is not None) and (in_state != ''):

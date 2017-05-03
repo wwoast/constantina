@@ -17,12 +17,12 @@ HelpStrings = {
     'delete_user': "remove a Constantina user account",
     'password': "set password for a Constantina user account",
     'revoke_logins': "delete stored session keys, forcing users to re-login",
-    'config': "path to the configuration directory",
+    'config_root': "path to the configuration and private data root directory",
     'cgi_bin': "path to the directory containing CGI scripts",
     'instance': "config directory isolation: /etc/constantina/<instance>",
     'hostname': "hostname that Constantina will run on",
     'port': "localhost-bound port that Constantina runs on (and Apache/Nginx proxies to)",
-    'webroot': "where Constantina html resources are served from",
+    'web_root': "where Constantina html resources are served from",
     'username': "the Unix username that Constantina data is owned by",
     'groupname': "the Unix groupname that Constantina data is owned by",
 }
@@ -38,14 +38,14 @@ class ConstantinaDefaults:
         self.port = str(randint(44000, 44500))   # Random local listener port
         self.username = getuser()   # Unix user account the server runs in
         self.groupname = getuser()   # Unix group account the server runs in
-        self.config = sys.prefix + "/etc/constantina"
-        self.webroot = sys.prefix + "/var/www/constantina"
+        self.config_root = sys.prefix + "/etc/constantina"
+        self.web_root = sys.prefix + "/var/www/constantina"
         self.cgi_bin = sys.prefix + "/var/cgi-bin/constantina"
         self.templates = sys.prefix, "/etc/constantina/templates"
         if sys.prefix == "/usr":
             # Default prefix? Unprefix the target directories
-            self.webroot = "/var/www/constantina"
-            self.config = "/etc/constantina"
+            self.web_root = "/var/www/constantina"
+            self.config_root = "/etc/constantina"
             self.cgi_bin = "/var/cgi-bin/constantina"
             self.templates = "/etc/constantina/templates"
 
@@ -67,10 +67,10 @@ class ConstantinaConfig:
         self.instance = self.default.instance
         self.hostname = self.default.hostname
         self.port = self.default.port
-        self.webroot = self.default.webroot
+        self.web_root = self.default.web_root
         self.username = self.default.username
         self.groupname = self.default.groupname
-        self.config = self.default.config
+        self.config_root = self.default.config_root
         self.cgi_bin = self.default.cgi_bin
         self.templates = self.default.templates
 
@@ -101,26 +101,26 @@ class ConstantinaConfig:
 
     def update_configs(self):
         """Make config changes once the config files are staged"""
-        self.settings.read(self.config + "/constantina.ini")
+        self.settings.read(self.config_root + "/constantina.ini")
         self.configure(self.settings, "server", "hostname", self.hostname)
         self.configure(self.settings, "server", "port", self.port)
         self.configure(self.settings, "server", "username", self.username)
         self.configure(self.settings, "server", "groupname", self.username)
-        self.configure(self.settings, "paths", "webroot", self.webroot)
-        self.configure(self.settings, "paths", "config", self.config)
+        self.configure(self.settings, "paths", "web_root", self.web_root)
+        self.configure(self.settings, "paths", "config_root", self.config_root)
         self.configure(self.settings, "paths", "cgi_bin", self.cgi_bin)
         self.configure(self.settings, "server", "instance_id", self.opaque_instance())
-        with open(self.config + "/constantina.ini", "wb") as cfh:
+        with open(self.config_root + "/constantina.ini", "wb") as cfh:
             self.settings.write(cfh)
 
         # Set UWSGI config file settings for this instance too
-        self.uwsgi.read(self.config + "/uwsgi.ini")
-        self.configure(self.uwsgi, "uwsgi", "chdir", self.webroot)
+        self.uwsgi.read(self.config_root + "/uwsgi.ini")
+        self.configure(self.uwsgi, "uwsgi", "chdir", self.web_root)
         self.configure(self.uwsgi, "uwsgi", "env", "INSTANCE=" + self.instance)
         self.configure(self.uwsgi, "uwsgi", "procname", "constantina-" + self.instance)
         if self.hostname is not None:
             self.configure(self.uwsgi, "uwsgi", "socket", self.hostname + ":" + str(self.port))
-        with open(self.config + "/uwsgi.ini", "wb") as ufh:
+        with open(self.config_root + "/uwsgi.ini", "wb") as ufh:
             self.uwsgi.write(ufh)
 
     def update_instance_directory(self, directory):
@@ -139,7 +139,7 @@ class ConstantinaConfig:
             setattr(self, item[0], item[1])
         self.update_instance_directory("config")
         self.update_instance_directory("cgi_bin")
-        self.update_instance_directory("webroot")
+        self.update_instance_directory("web_root")
 
     def chown_installed_files(self):
         """
@@ -148,7 +148,7 @@ class ConstantinaConfig:
         """
         uid = getpwnam(self.username)[2]
         gid = getgrnam(self.groupname)[2]
-        for path in [self.webroot, self.config, self.cgi_bin]:
+        for path in [self.web_root, self.config_root, self.cgi_bin]:
             if path is None:
                 continue
             for root, dirs, files in os.walk(path, topdown=False):
@@ -164,11 +164,11 @@ class ShadowConfig:
     Configure keys and user accounts through the command line. Pass the
     configuration directory so we know what instance we're dealing with.
     """
-    def __init__(self, config):
+    def __init__(self, config_root):
         """Read in the shadow.ini config file and settings."""
         self.settings = ConfigParser.SafeConfigParser(allow_no_value=True)
-        self.config = config
-        self.settings.read(self.config + "/shadow.ini")
+        self.config_root = config_root
+        self.settings.read(self.config_root + "/shadow.ini")
         self.admin_exists = self.settings.has_option("passwords", "admin")
         self.argon2_setup()
 
@@ -194,7 +194,7 @@ class ShadowConfig:
             password = getpass(prompt=prompt)
         pwhash = argon2.hash(password)
         self.settings.set("passwords", username, pwhash)
-        with open(self.config + "/shadow.ini", "wb") as cfh:
+        with open(self.config_root + "/shadow.ini", "wb") as cfh:
             self.settings.write(cfh)
         # Update the detection for whether an admin exists, so we don't
         # get asked to add an admin account more than once
@@ -203,7 +203,7 @@ class ShadowConfig:
     def delete_user(self, username):
         """Remove an account from the shadow file"""
         self.settings.remove_option("passwords", username)
-        with open(self.config + "/shadow.ini", "wb") as cfh:
+        with open(self.config_root + "/shadow.ini", "wb") as cfh:
             self.settings.write(cfh)
         # Don't recreate an admin that we just deleted (no admin update here)
 
@@ -238,12 +238,12 @@ def install_arguments():
     parser.add_argument("-a", "--add-user", nargs='?', help=HelpStrings['add_user'])
     parser.add_argument("-d", "--delete-user", nargs='?', help=HelpStrings['delete_user'])
     parser.add_argument("-p", "--password", nargs='?', help=HelpStrings['password'])
-    parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=conf.default.config)
+    parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=conf.default.config_root)
     parser.add_argument("-b", "--cgi-bin", nargs='?', help=HelpStrings['cgi_bin'], default=conf.default.cgi_bin)
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
     parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'], default=conf.default.hostname)
     parser.add_argument("-P", "--port", nargs='?', help=HelpStrings['port'], default=conf.default.port)
-    parser.add_argument("-r", "--webroot", nargs='?', help=HelpStrings['webroot'], default=conf.default.webroot)
+    parser.add_argument("-r", "--web_root", nargs='?', help=HelpStrings['web_root'], default=conf.default.web_root)
     parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
     parser.add_argument("-g", "--groupname", nargs='?', help=HelpStrings['groupname'], default=conf.default.groupname)
     parser.add_argument("-k", "--revoke-logins", help=HelpStrings['revoke_logins'], action='store_true')
@@ -268,12 +268,12 @@ def configure_arguments():
     parser.add_argument("-a", "--add-user", nargs='?', help=HelpStrings['add_user'])
     parser.add_argument("-d", "--delete-user", nargs='?', help=HelpStrings['delete_user'])
     parser.add_argument("-p", "--password", nargs='?', help=HelpStrings['password'])
-    parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=conf.default.config)
+    parser.add_argument("-c", "--config", nargs='?', help=HelpStrings['config'], default=conf.default.config_root)
     parser.add_argument("-b", "--cgi-bin", nargs='?', help=HelpStrings['cgi_bin'])
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
     parser.add_argument("-n", "--hostname", nargs='?', help=HelpStrings['hostname'])
     parser.add_argument("-P", "--port", nargs='?', help=HelpStrings['port'])
-    parser.add_argument("-r", "--webroot", nargs='?', help=HelpStrings['webroot'])
+    parser.add_argument("-r", "--web_root", nargs='?', help=HelpStrings['web_root'])
     parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
     parser.add_argument("-g", "--groupname", nargs='?', help=HelpStrings['groupname'], default=conf.default.groupname)
     parser.add_argument("-k", "--revoke-logins", help=HelpStrings['revoke_logins'], action='store_true')
@@ -284,7 +284,7 @@ def configure_arguments():
 
 
 def user_management():
-    accounts = ShadowConfig(conf.config)
+    accounts = ShadowConfig(conf.config_root)
     if conf.add_user != None:
         accounts.add_user(conf.add_user, conf.password)
     if conf.delete_user != None:

@@ -154,7 +154,7 @@ SetEnv INSTANCE default
 ## Configuration Settings
 `/etc/constantina/<INSTANCE>/constantina.ini` stores all operational configuration for Constantina.
 
- * `[paths].webroot` is the root of your public HTML directory where files are hosted
+ * `[paths].web_root` is the root of your public HTML directory where files are hosted
  * `[authentication]` is not used yet, and should just be set to `blog`.
  * `[themes]` defines where Constantina's themes are located
   * Any themes you add must be listed by number, aside from the `default` entry

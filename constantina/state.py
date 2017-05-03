@@ -316,7 +316,8 @@ class ConstantinaState(BaseState):
             for ctype in app_state.config.get("card_properties", "pagecount").replace(" ", "").split(","):
                 card_limit = card_limit + getattr(app_state, ctype).file_count
         syslog.syslog("card_limit: " + str(card_limit) + "   card_count: " + str(card_count))
-        if card_count >= card_limit:
+        # TODO: testing (card_limit -1 is a test)
+        if card_count >= card_limit - 1:
             return True
         else:
             return False

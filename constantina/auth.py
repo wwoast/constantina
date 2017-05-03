@@ -309,7 +309,7 @@ class ConstantinaAccount:
     """
     def __init__(self):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
-        self.config.read(GlobalConfig.get("paths", "config") + "/shadow.ini")
+        self.config.read(GlobalConfig.get("paths", "config_root") + "/shadow.ini")
         self.valid = False
         self.username = None
         self.password = None

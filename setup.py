@@ -28,11 +28,11 @@ class ConfigurePyCommand(Command):
     description = 'configure Constantina defaults for a site'
     user_options = [
         ('instance=', 'i', HelpStrings['instance']),
-        ('config=', 'c', HelpStrings['config']),
+        ('config_root=', 'c', HelpStrings['config_root']),
         ('cgi-bin=', 'b', HelpStrings['cgi_bin']),
         ('hostname=', 'n', HelpStrings['hostname']),
         ('port=', 'P', HelpStrings['port']),
-        ('webroot=', 'r', HelpStrings['webroot']),
+        ('web_root=', 'r', HelpStrings['web_root']),
         ('username=', 'u', HelpStrings['username']),
         ('groupname=', 'g', HelpStrings['groupname']),
     ]
@@ -40,11 +40,11 @@ class ConfigurePyCommand(Command):
     def initialize_options(self):
         """Where default settings for each user_options value is set"""
         self.instance = Settings.instance
-        self.config = Settings.config
+        self.config_root = Settings.config_root
         self.cgi_bin = Settings.cgi_bin
         self.hostname = Settings.hostname
         self.port = Settings.port
-        self.webroot = Settings.webroot
+        self.web_root = Settings.web_root
         self.username = Settings.username
         self.groupname = Settings.groupname
 
@@ -57,8 +57,8 @@ class ConfigurePyCommand(Command):
         assert getgrnam(self.groupname), 'Group name not found'
         assert isinstance(self.hostname, str), 'Invalid hostname'
         assert (int(self.port) < 65536) and (int(self.port) > 1024), 'Invalid or privileged port given'
-        assert isinstance(self.webroot, str), 'Invalid webroot directory'
-        assert isinstance(self.config, str), 'Invalid config directory'
+        assert isinstance(self.web_root, str), 'Invalid web_root directory'
+        assert isinstance(self.config_root, str), 'Invalid config directory'
         assert isinstance(self.cgi_bin, str), 'Invalid cgi-bin directory'
 
     def run(self):
@@ -73,9 +73,9 @@ class ConfigurePyCommand(Command):
         if self.port:
             command.append('--port')
             command.append(self.port)
-        if self.webroot:
-            command.append('--webroot')
-            command.append(self.webroot)
+        if self.web_root:
+            command.append('--web_root')
+            command.append(self.web_root)
         if self.username:
             command.append('--username')
             command.append(self.username)
@@ -85,9 +85,9 @@ class ConfigurePyCommand(Command):
         if self.cgi_bin:
             command.append('--cgi-bin')
             command.append(self.cgi_bin)
-        if self.config:
-            command.append('--config')
-            command.append(self.config)
+        if self.config_root:
+            command.append('--config_root')
+            command.append(self.config_root)
         self.announce(
             'Running command: %s' % str(command),
             level=distutils.log.INFO)
@@ -99,11 +99,11 @@ class InstallPyCommand(install):
     description = 'install and configure Constantina at a site'
     install.user_options += [
         ('instance=', 'i', HelpStrings['instance']),
-        ('config=', None, HelpStrings['config']),
+        ('config_root=', None, HelpStrings['config_root']),
         ('cgi-bin=', 'b', HelpStrings['cgi_bin']),
         ('hostname=', None, HelpStrings['hostname']),
         ('port=', 'P', HelpStrings['port']),
-        ('webroot=', 'r', HelpStrings['webroot']),
+        ('web_root=', 'r', HelpStrings['web_root']),
         ('username=', 'u', HelpStrings['username']),
         ('groupname=', 'g', HelpStrings['groupname']),
     ]
@@ -111,11 +111,11 @@ class InstallPyCommand(install):
     def initialize_options(self):
         """Where default settings for each user_options value is set"""
         self.instance = Settings.default.instance
-        self.config = Settings.default.config
+        self.config_root = Settings.default.config_root
         self.cgi_bin = Settings.cgi_bin
         self.hostname = Settings.default.hostname
         self.port = Settings.default.port
-        self.webroot = Settings.default.webroot
+        self.web_root = Settings.default.web_root
         self.username = Settings.default.username
         self.groupname = Settings.default.groupname
         install.initialize_options(self)
@@ -133,8 +133,8 @@ class InstallPyCommand(install):
         assert getgrnam(self.groupname), 'Group name not found'
         assert isinstance(self.hostname, str), 'Invalid hostname'
         assert (int(self.port) < 65536) and (int(self.port) > 1024), 'Invalid or privileged port given'
-        assert isinstance(self.webroot, str), 'Invalid webroot directory'
-        assert isinstance(self.config, str), 'Invalid config directory'
+        assert isinstance(self.web_root, str), 'Invalid web_root directory'
+        assert isinstance(self.config_root, str), 'Invalid config directory'
         assert isinstance(self.cgi_bin, str), 'Invalid cgi-bin directory'
         install.finalize_options(self)
 
@@ -152,8 +152,9 @@ class InstallPyCommand(install):
                  'config/zoo.ini',
                  'config/shadow.ini']))
         # Initial config files for your chosen instance
+        # TODO: move medusa/zoo files into data_dir under instance_root
         Package['data_files'].append(
-            (Settings.config,
+            (Settings.config_root,
                 ['config/constantina.ini',
                  'config/medusa.ini',
                  'config/uwsgi.ini',
@@ -164,12 +165,12 @@ class InstallPyCommand(install):
             (Settings.cgi_bin,
                 ['cgi-bin/constantina.cgi']))
 
-        # The HTML webroot folder. Add these recursively to data_files
+        # The HTML web_root folder. Add these recursively to data_files
         # so they can be both part of the install and the sdist.
         for (path, directories, files) in os.walk("html"):
             subdir = '/'.join(path.split("/")[1:])
             Package['data_files'].append(
-                (Settings.webroot + '/' + subdir, 
+                (Settings.web_root + '/' + subdir, 
                     [os.path.join(path, filename) for filename in files]))
 
         print Package['data_files'][-10:]
