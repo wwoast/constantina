@@ -123,12 +123,12 @@ class ConstantinaConfig:
         with open(self.config_root + "/uwsgi.ini", "wb") as ufh:
             self.uwsgi.write(ufh)
 
-    def update_instance_directory(self, directory):
+    def update_instance_directory(self, directory, suffix=''):
         """Add instance to the end of the chosen directory"""
         to_update = getattr(self, directory)
         default = getattr(self.default, directory)
         if to_update == default and default is not None:
-            setattr(self, directory, to_update + "/" + self.instance)
+            setattr(self, directory, to_update + "/" + self.instance + suffix)
 
     def import_parsed(self, namespace):
         """
@@ -137,9 +137,9 @@ class ConstantinaConfig:
         """
         for item in namespace.__dict__.iteritems():
             setattr(self, item[0], item[1])
-        self.update_instance_directory("config")
+        self.update_instance_directory("config_root")
         self.update_instance_directory("cgi_bin")
-        self.update_instance_directory("data_root")
+        self.update_instance_directory("data_root", "/public")
 
     def chown_installed_files(self):
         """
