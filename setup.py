@@ -170,7 +170,7 @@ class InstallPyCommand(install):
         for (path, directories, files) in os.walk("html"):
             subdir = '/'.join(path.split("/")[1:])
             Package['data_files'].append(
-                (Settings.data_root + '/' + subdir, 
+                (Settings.data_root + '/' + subdir,
                     [os.path.join(path, filename) for filename in files]))
 
         print Package['data_files'][-10:]
