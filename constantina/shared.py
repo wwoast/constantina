@@ -174,11 +174,9 @@ class BaseState:
 
     def __read_config(self, config_file):
         """Read the configuration file that will populate the sub-application"""
-        self.config_path = GlobalConfig.get('paths', 'config') + "/" + config_file
+        self.config_path = GlobalConfig.get('paths', 'config_root') + "/" + config_file
         self.config = ConfigParser.SafeConfigParser()
         self.config.read(self.config_path)
-        # syslog.syslog(self.config.get('paths', 'news'))
-        # syslog.syslog(self.config.get('card_counts', 'news'))
 
 
     def __set_state_defaults(self):
@@ -434,7 +432,8 @@ def opendir(config, ctype, hidden=False):
     list all the files therein. Used for both searching and for the
     card reading functions, so it's part of the shared module.
     """
-    directory = config.get("paths", ctype)
+    card_root = GlobalConfig.get("paths", "data_root") + "/private"
+    directory = card_root + "/" + config.get("paths", ctype)
     if hidden is True:
         directory += "/hidden"
         ctype += "/hidden"

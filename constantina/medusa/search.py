@@ -32,7 +32,6 @@ class MedusaSearch:
 
     Finally, there is an "index-tree" list where if specific search terms
     are queried, all related terms are pulled in as well. If the user requests
-
     the related phrases can be turned off.
     """
     def __init__(self, state):
@@ -73,9 +72,10 @@ class MedusaSearch:
         self.filtered = state.filtered
 
         # File paths for loading things
-        self.index_dir = self.config.get('search', 'index_dir')
-        self.words_file = self.config.get('search', 'ignore_words')
-        self.symobls_file = self.config.get('search', 'ignore_symbols')
+        card_root = GlobalConfig.get("paths", "data_root") + "/private"
+        self.index_dir = card_root + "/" + self.config.get('search', 'index_dir')
+        self.words_file = card_root + "/" + self.config.get('search', 'ignore_words')
+        self.symobls_file = card_root + "/" + self.config.get('search', 'ignore_symbols')
         self.search_types = self.config.get("card_properties", "search").replace(" ", "").split(",")
 
         unsafe_query_terms = state.medusa.search
@@ -200,7 +200,8 @@ class MedusaSearch:
         # Enable writing to our chosen index. To limit the index
         # locking, this is the only function that writes to the index.
         writer = self.index.writer()
-        card_path = self.config.get("paths", ctype)
+        card_root = GlobalConfig.get("paths", "data_root") + "/private"
+        card_path = card_root + "/" + self.config.get("paths", ctype)
 
         with open(card_path + "/" + filename, 'r') as indexfh:
             body = ""
@@ -225,7 +226,8 @@ class MedusaSearch:
         body contents to the index."""
         # Make sure BaseFiles is populated
         opendir(self.config, ctype)
-        card_path = self.config.get("paths", ctype)
+        card_root = GlobalConfig.get("paths", "data_root") + "/private"
+        card_path = card_root + "/" + self.config.get("paths", ctype)
 
         for filename in BaseFiles[ctype]:
             try:

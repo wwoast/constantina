@@ -120,7 +120,8 @@ class MedusaCard:
         """
         magi = magic.Magic(mime=True)
 
-        base_path = self.config.get("paths", self.ctype)
+        card_root = GlobalConfig.get("paths", "data_root") + "/private"
+        base_path = card_root + "/" + self.config.get("paths", self.ctype)
         if self.hidden is True:
             fpath = base_path + "/hidden/" + thisfile
         else:

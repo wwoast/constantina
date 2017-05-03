@@ -13,7 +13,7 @@ CONFIG = ConfigParser.SafeConfigParser()
 CONFIG.read('constantina.ini')
 
 ROOT_DIR = CONFIG.get("paths", "data_root")
-
+PRIVATE_DIR = ROOT_DIR + "/private"
 chdir(ROOT_DIR)
 
 # one page, 20 results per page, search for Constantina, no 

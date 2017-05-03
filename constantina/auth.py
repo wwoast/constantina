@@ -20,7 +20,7 @@ class ConstantinaAuth:
     """
     def __init__(self, mode, **kwargs):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
-        self.config.read(GlobalConfig.get('paths', 'config') + "/shadow.ini")
+        self.config.read(GlobalConfig.get('paths', 'config_root') + "/shadow.ini")
         self.account = ConstantinaAccount()
         self.cookie_name = ("__Secure-" +
                             GlobalConfig.get('server', 'hostname') + "-" +
@@ -96,7 +96,7 @@ class ConstantinaAuth:
                 self.__write_key(keyname)
         # Write the settings to the shadow file once keys are generated
         if self.regen_jwk != []:
-            with open(GlobalConfig.get('paths', 'config') + "/shadow.ini", "wb") as sfh:
+            with open(GlobalConfig.get('paths', 'config_root') + "/shadow.ini", "wb") as sfh:
                 self.config.write(sfh)
 
     def __write_key(self, name, mode="current"):
