@@ -86,7 +86,9 @@ python ./setup.py install -i staging --port 9091 \
 
 #### File Locations
 Post-installation, files are installed in the following locations:
- * static HTML: `/var/www/constantina/default`
+ * the data root directory: `/var/www/constantina/default`
+  * static HTML (open to the world): `/var/www/constantina/default/public`
+  * card data (private, if auth is configured): `/var/www/constantina/default/private`
  * config files: `/etc/constantina/default`
  * Python files: (your system or local Python directories)
  * CGI scripts: `/var/cgi-bin/constantina/default`
@@ -103,7 +105,7 @@ of its root directory.
 server {
         # Port, config, SSL, and other details here
         listen  localhost:8080;
-        root  /var/www/constantina/default;
+        root  /var/www/constantina/default/public;
 
         # Just proxy the exact location on your webserver that you
         # want Constantina to load within. All other locations are 
@@ -123,7 +125,7 @@ plugin       = python
 module       = constantina.constantina
 processes    = 3
 procname     = constantina-default
-chdir        = /var/www/constantina/default
+chdir        = /var/www/constantina/default/public
 max-requests = 5
 master
 close-on-exec
@@ -183,7 +185,8 @@ SetEnv INSTANCE default
 ## How Cards Work
 Cards are the basis of Constantina. News cards are shown in reverse-time
 order, while images, quotes, and ordering of cards are all randomized on
-the server.
+the server. In authentication situations, card access is only permitted with
+a successful login, so all cards are found in `[paths].data_root`/`private`.
 
 
 ### Card Naming Standards

@@ -173,7 +173,6 @@ class InstallPyCommand(install):
                 (Settings.data_root + '/' + subdir,
                     [os.path.join(path, filename) for filename in files]))
 
-        print Package['data_files'][-10:]
 
     def run(self):
         """
