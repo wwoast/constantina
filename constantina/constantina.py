@@ -511,16 +511,42 @@ def contents_page(start_response, state, headers):
     return html
 
 
-def get_file(in_uri, auth=None):
+def get_file(in_uri, start_response, headers, auth=None):
     """
     Without authentication, if there is a file we can return, do that
     instead of running any page generation stuff.
-    
+
     With authentication, check for the file in /public and return if
     it's found regardless if auth.account.valid is True or not. If the
     auth is True, try and find the file in /private as well.
     """
-    pass
+    file_dirs = [
+        GlobalConfig.get("paths", "data_root") + "/public",
+        GlobalConfig.get("paths", "data_root") + "/private"
+    ]
+    if auth is None:
+        file_dirs.pop()
+    elif auth.account.valid is False:
+        file_dirs.pop()
+
+    in_uri = in_uri[1:]   # No leading slash
+    http_response = '200 OK'
+    for file_dir in file_dirs:
+        os.chdir(file_dir)
+        syslog.syslog(file_dir + "/" + in_uri)
+        try:
+            with open(in_uri) as f:
+                # TODO: Either HTML or MP3 or IMG headers
+                start_response(http_response, headers)
+                return f.read()
+        except IOError:
+            continue
+
+    # If no files available, return 404. This might be a lie
+    http_response = '404 Not Found'
+    start_response(http_response, headers)
+    return ''
+
 
 
 def application(env, start_response, instance="default"):
@@ -545,16 +571,32 @@ def application(env, start_response, instance="default"):
     os.chdir(root_dir)
     in_state = env.get('QUERY_STRING')
     in_uri = env.get('REQUEST_URI')
-    # How to characterize application GETs from file GETs?
-    #   file gets have no state.
-    #   file gets are not for /
-    #   also, if no HTTP_COOKIE, try the file get immediately
+    in_cookie = env.get('HTTP_COOKIE')
 
+    # Normalize the state and truncate if the query string is
+    # longer than 512 characters. 4096 characters is the upper limit
+    # for many browsers, but we don't trust browsers :)
     if (in_state is not None) and (in_state != ''):
         # Truncate state variable at 512 characters
         in_state = in_state[0:512]
     else:
         in_state = None
+
+    # Normalize the inbound URI, for purpose of deciding whether to
+    # serve dynamic HTML or load a file.
+    if in_uri == '/' or in_uri[0] != '/':
+        in_uri = None
+
+    # Normalize the inbound cookie details
+    if in_cookie == '':
+        in_cookie = None
+
+    # How to characterize application GETs from file GETs?
+    #   file gets have no state.
+    #   file gets are not for /
+    #   also, if no HTTP_COOKIE, try the file get immediately
+    if (in_state is None) and (in_uri is not None) and (in_cookie is None):
+        return get_file(in_uri, start_response, [], None)
 
     state = ConstantinaState(in_state)   # Create state object
     auth_mode = GlobalConfig.get("authentication", "mode")
@@ -562,7 +604,9 @@ def application(env, start_response, instance="default"):
     auth = authentication(env)
 
     # based on auth_mode and in_uri, do a thing.
-    if (auth_mode == "blog") or (auth_mode == "combined"):
+    if in_uri is not None:
+        return get_file(in_uri, start_response, [], auth)
+    elif (auth_mode == "blog") or (auth_mode == "combined"):
         return contents_page(start_response, state, auth.headers)
     else:
         if auth.account.valid is True:

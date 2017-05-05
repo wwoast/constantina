@@ -139,7 +139,7 @@ class ConstantinaConfig:
             setattr(self, item[0], item[1])
         self.update_instance_directory("config_root")
         self.update_instance_directory("cgi_bin")
-        self.update_instance_directory("data_root", "/public")
+        self.update_instance_directory("data_root")
 
     def chown_installed_files(self):
         """
