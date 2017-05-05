@@ -463,4 +463,6 @@ def opendir(config, ctype, hidden=False):
         if ctype == "news":
             BaseFiles[ctype] = remove_future(BaseFiles[ctype])
 
+        # syslog.syslog("ctype: %s   basefiles: %s" % (ctype, BaseFiles[ctype]))
+
     return BaseFiles[ctype]

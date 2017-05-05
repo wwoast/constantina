@@ -96,6 +96,7 @@ class MedusaCard:
             else:
                 return "nofile"
 
+        # syslog.syslog(str(type_files[which_file]))
         return self.__interpretfile(type_files[which_file])
 
 
@@ -122,10 +123,11 @@ class MedusaCard:
 
         card_root = GlobalConfig.get("paths", "data_root") + "/private"
         base_path = card_root + "/" + self.config.get("paths", self.ctype)
+
+        fpath = base_path + "/" + thisfile
         if self.hidden is True:
             fpath = base_path + "/hidden/" + thisfile
-        else:
-            fpath = base_path + "/" + thisfile
+        syslog.syslog("path: " + fpath)
 
         try:
             with open(fpath, 'r') as cfile:
@@ -374,8 +376,7 @@ def create_medusa_imagecard(card):
     # Get URI absolute path out of a Python relative path
     uripath = "/" + "/".join(card.cfile.split('/')[0:])
 
-    output = ""
-    output += """<div class="card image" id="%s">\n""" % anchor
+    output = """<div class="card image" id="%s">\n""" % anchor
     output += """   <img src="%s" />\n""" % uripath
     output += """</div>\n"""
     return output
@@ -389,9 +390,7 @@ def create_medusa_songcard(card):
     appearing in a single card list. The M3U version should be
     randomly sorted, and ideally has no more than 6 songs.
     """
-
-    output = ""
-    output += """<div class="card song">"""
+    output = """<div class="card song">"""
     for song in card.songs:
         # Songs DIR can only be TLD, followed by album, and then songname
         uripath = "/" + "/".join(song.songfile.split("/")[-4:])

@@ -122,7 +122,7 @@ class ConstantinaAuth:
         # backdated so it only lasts half the configured lifetime.
         self.jwk_iat[name] = self.time
         self.config.set(name, "date", str(self.jwk_iat[name]))
-        syslog.syslog("iat: %d time: %d sunset: %d" % (self.jwk_iat[name], self.time, self.sunset))
+        # syslog.syslog("iat: %d time: %d sunset: %d" % (self.jwk_iat[name], self.time, self.sunset))
         if mode == "backdate":
             self.config.set(name, "date", str(self.jwk_iat[name] - self.sunset))
 
@@ -245,8 +245,8 @@ class ConstantinaAuth:
         """
         try:
             # TODO: How to check date prior to signing?
-            syslog.syslog("serial: " + str(serial))
-            syslog.syslog("key: " + str(self.jwk[keyname]))
+            # syslog.syslog("serial: " + str(serial))
+            # syslog.syslog("key: " + str(self.jwk[keyname]))
             self.jwt = jwt.JWT(key=self.jwk[keyname], jwt=serial)
             return True
         except Exception as err:
@@ -276,10 +276,9 @@ class ConstantinaAuth:
         if token is None:
             return False
         if self.__check_jwe(token) is True:
-            syslog.syslog("jwe passed")
             if self.__check_jwt(self.jwe.claims) is True:
                 self.serial = self.jwe.serialize()
-                syslog.syslog("serial: " + self.serial)
+                # syslog.syslog("serial: " + self.serial)
                 self.__read_jwt_claims()
                 return True
         return False
