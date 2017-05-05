@@ -511,10 +511,23 @@ def contents_page(start_response, state, headers):
     return html
 
 
+def get_file(in_uri, auth=None):
+    """
+    Without authentication, if there is a file we can return, do that
+    instead of running any page generation stuff.
+    
+    With authentication, check for the file in /public and return if
+    it's found regardless if auth.account.valid is True or not. If the
+    auth is True, try and find the file in /private as well.
+    """
+    pass
+
+
 def application(env, start_response, instance="default"):
     """
     uwsgi entry point and main Constantina application.
 
+    UPDATE COMMENTS!
     If no previous state is given, assume we're returning
     HTML for a browser to render. Include the first page
     worth of card DIVs, and embed the state into the next-
@@ -533,6 +546,9 @@ def application(env, start_response, instance="default"):
     in_state = env.get('QUERY_STRING')
     in_uri = env.get('REQUEST_URI')
     # How to characterize application GETs from file GETs?
+    #   file gets have no state.
+    #   file gets are not for /
+    #   also, if no HTTP_COOKIE, try the file get immediately
 
     if (in_state is not None) and (in_state != ''):
         # Truncate state variable at 512 characters

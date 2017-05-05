@@ -384,6 +384,24 @@ class ConstantinaAccount:
             return False
 
 
+def check_authorization():
+    """
+    TODO TODO TODO
+    When multiple accounts are created, and files can be walled off between
+    users, we should have a authorization module that does file checks based
+    on user accounts.
+
+    The file list will have individual files in it, as well as a list of users
+    or * that are allowed to see the file. If a file isn't in the list, a folder
+    can be specified instead that sets permissions valid for all files in the
+    sub-folders.abs
+    
+    The details of authorization will likely be different for each subapp in
+    Constantina, so maybe this lives elsewhere eventually.
+    """
+    pass
+
+
 def authentication_page(start_response, state):
     """
     If Constantina is in "forum" mode, you get the authentication
