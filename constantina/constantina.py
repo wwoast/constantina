@@ -531,6 +531,7 @@ def application(env, start_response, instance="default"):
     root_dir = GlobalConfig.get("paths", "data_root") + "/public"
     os.chdir(root_dir)
     in_state = env.get('QUERY_STRING')
+    syslog.syslog(str(env))
     if (in_state is not None) and (in_state != ''):
         # Truncate state variable at 512 characters
         in_state = in_state[0:512]
