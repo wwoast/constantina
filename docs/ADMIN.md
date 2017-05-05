@@ -107,12 +107,15 @@ server {
         listen  localhost:8080;
         root  /var/www/constantina/default/public;
 
-        # Just proxy the exact location on your webserver that you
-        # want Constantina to load within. All other locations are 
-        # static files that shouldn't be proxied.
-        location = / {
-                proxy_pass        http://localhost:9090/;
-                proxy_set_header  X-Real-IP $remote_addr;
+        location / {
+                uwsgi_pass      geodesic:9090;
+                include         /etc/nginx/uwsgi_params;
+
+                # uwsgi_param   INSTANCE default;
+                uwsgi_param     Host $host;
+                uwsgi_param     X-Real-IP $remote_addr;
+                uwsgi_param     X-Forwarded-For $proxy_add_x_forwarded_for;
+                uwsgi_param     X-Forwarded-Proto $http_x_forwarded_proto;
         }
 }
 ```
@@ -120,7 +123,7 @@ server {
 `uwsgi.constantina.ini`:
 ```
 [uwsgi]
-http-socket  = localhost:9090
+socket  = localhost:9090
 plugin       = python
 module       = constantina.constantina
 processes    = 3

@@ -531,7 +531,9 @@ def application(env, start_response, instance="default"):
     root_dir = GlobalConfig.get("paths", "data_root") + "/public"
     os.chdir(root_dir)
     in_state = env.get('QUERY_STRING')
-    syslog.syslog(str(env))
+    in_uri = env.get('REQUEST_URI')
+    # How to characterize application GETs from file GETs?
+
     if (in_state is not None) and (in_state != ''):
         # Truncate state variable at 512 characters
         in_state = in_state[0:512]
@@ -542,6 +544,8 @@ def application(env, start_response, instance="default"):
     auth_mode = GlobalConfig.get("authentication", "mode")
 
     auth = authentication(env)
+
+    # based on auth_mode and in_uri, do a thing.
     if (auth_mode == "blog") or (auth_mode == "combined"):
         return contents_page(start_response, state, auth.headers)
     else:
