@@ -200,13 +200,11 @@ class MedusaSong:
     def __init__(self, filename):
         self.songfile = filename
         self.songtitle = filename.split("/")[-1].replace(".mp3", "")
-        syslog.syslog(self.songtitle)
         audio = MP3(filename)
         time = audio.info.length
         minutes = time / 60
         seconds = time % 60
         self.songlength = str(int(minutes)) + ":" + str(int(seconds))
-        syslog.syslog(self.songlength)
         songmb = os.path.getsize(filename) / 1048576.0
         self.songsize = "%.2f MB" % songmb
 

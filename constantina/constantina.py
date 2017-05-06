@@ -519,6 +519,9 @@ def get_file(in_uri, start_response, headers, auth=None):
     With authentication, check for the file in /public and return if
     it's found regardless if auth.account.valid is True or not. If the
     auth is True, try and find the file in /private as well.
+
+    TODO: fake mimetypes for jpg/png/mp3. Otherwise MP3 won't play
+    inside the browser.
     """
     file_dirs = [
         GlobalConfig.get("paths", "data_root") + "/public",
