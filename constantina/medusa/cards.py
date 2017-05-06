@@ -102,8 +102,10 @@ class MedusaCard:
 
     def __songfiles(self):
         """Create an array of song objects for this card"""
+        # TODO: only operate out of private?
         for songpath in self.body.splitlines():
-            songpath = self.config.get("paths", "songs") + "/" + songpath
+            card_root = GlobalConfig.get("paths", "data_root") + "/private"
+            songpath = card_root + "/" + self.config.get("paths", "songs") + "/" + songpath
             self.songs.append(MedusaSong(songpath))
 
 
@@ -127,8 +129,6 @@ class MedusaCard:
         fpath = base_path + "/" + thisfile
         if self.hidden is True:
             fpath = base_path + "/hidden/" + thisfile
-        syslog.syslog("path: " + fpath)
-
         try:
             with open(fpath, 'r') as cfile:
                 ftype = magi.from_file(fpath)
@@ -192,20 +192,23 @@ class MedusaCard:
 class MedusaSong:
     """
     Basic grouping of song-related properties with a filename.
-    Use pymad to determine the length of each song that appears
+    Use mutagen to determine the length of each song that appears
     in the page itself.
+
+    TODO: cache this data, so you don't need to load it on every page load!
     """
     def __init__(self, filename):
         self.songfile = filename
         self.songtitle = filename.split("/")[-1].replace(".mp3", "")
+        syslog.syslog(self.songtitle)
         audio = MP3(filename)
         time = audio.info.length
         minutes = time / 60
         seconds = time % 60
         self.songlength = str(int(minutes)) + ":" + str(int(seconds))
+        syslog.syslog(self.songlength)
         songmb = os.path.getsize(filename) / 1048576.0
         self.songsize = "%.2f MB" % songmb
-
 
 
 def create_medusa_simplecard(card, next_state, state):
