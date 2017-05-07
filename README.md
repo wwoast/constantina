@@ -63,7 +63,10 @@ to use it, I'd love your help in making it better.
 
 Constantina is a Python web application, and running it requires solid knowledge
 of Unix tools (`ssh` or `sftp`, Python, `uwsgi`). If you have basic footing in these 
-technologies, read the [installation and configuration notes](https://github.com/wwoast/constantina/blob/master/docs/ADMIN.md) to get started!
+technologies, try setting up an instance yourself!
+ * [Installation](https://github.com/wwoast/constantina/blob/master/docs/INSTALL.md)
+ * [Configuration](https://github.com/wwoast/constantina/blob/master/docs/CONFIG.md)
+ * [Security Notes](https://github.com/wwoast/constantina/blob/master/docs/SECURITY.md)
 
 While this is currently a blog engine, I intend Constantina to be a platform
 for small online communities. Eventually I'll implement authentication and then
