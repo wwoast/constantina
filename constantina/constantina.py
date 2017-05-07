@@ -286,7 +286,6 @@ class ConstantinaPage:
             old_cards = getattr(self.state.medusa, ctype).clist
             prev_shown_cards = int(card_count) * (int(self.state.page) - 1)
             for cnum in old_cards[0:prev_shown_cards]:
-                syslog.syslog("insert priors: ctype: %s  cnum: %s" % (ctype, str(cnum)))
                 self.cards.insert(put, MedusaCard(ctype, cnum, state=self.state.medusa, grab_body=False))
 
         # Current length should properly track the starting point

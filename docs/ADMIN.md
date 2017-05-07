@@ -1,6 +1,7 @@
 # Constantina
 ### A dynamic-content blog platform
-##### Justin Cassidy, February 2017
+
+
 
 ## Summary
 [Constantina](https://github.com/wwoast/constantina) is a static site generator designed for *grazing*. It is licensed under the [GNU Affero General Public License](https://github.com/wwoast/constantina/blobs/master/LICENSE.md).
@@ -285,54 +286,3 @@ typically problems with scrolling tiled wallpapers. If you scroll the page
 prior to the content fully loading, it will leave a "hole" in the
 wallpaper the length of your first scroll event. iOS 10 seems to have
 reduced the odds of "holes" occuring in your scrolling, but it's not perfect.
-
-
-## Authentication
-**Constantina Authentication is currently a work in progress, and is documented
-for both testing and for input from peers.**
-
-
-### Enabling Authentication and Configuring Accounts 
-Constantina supports username and password-based authentication in version 
-0.5.0, but there are no enrollment flows through the web interface yet.
-However, a Python CLI script called `constantina_configure.py` lets you 
-configure Constantina users.
-
-To create a user and be interactively prompted for a new password:
-`constantina_configure.py -a <login_name>`
-
-To create a user and set an initial password in one step:
-`constantina_configure.py -a <login_name> -p <initial_password>`
-
-Enabling authentication in Constantina is a matter of setting `authentication`
-to `forum` in your instance's `constantina.ini`.
-
-
-### How Authentication and Sessions Work
-If Authentication is enabled, relevant settings for users and session cookies
-will appear in your instance's `/etc/constantina/<instance>/shadow.ini` file.
-
-On the backend, Constantina uses *Argon2* password hashing for modern and 
-tunable security of sensitive password hashes. All aspects of the Argon 
-hashing algorithm are configurable in the `shadow.ini` file, including:
-
- * `v`: The version of the *Argon2* hash format (*19 is fine*)
- * `m`: The memory cost of checking a hash, in kilobytes
- * `t`: The time cost of checking a hash, in hash-iterations
- * `p`: The parallelization parameter (set based on your CPU/thread count)
-
-Session cookies are JWE tokens, a format for encrypted JSON data. Inside
-the JWE is a signed JWT that indicates a user, instance, and validity period.
-The `shadow.ini` file, after a user first loads Constantina in a browser, contains
-two encryption keys and two signing keys using the HMAC-SHA256 algorithm. One key
-is labelled "current" and the other is labelled "last".
-
-Each signing and encryption key has a two-day validity period by default, and is 
-sunsetted after one day. Sunsetting is where existing older tokens are still valid,
-but the key is no longer used for encrypting or signing new tokens. The validity
-and sunsetting timeframes are configurable in the `key_settings` section of `shadow.ini`.
-
-Each instance of Constantina has an opaque ID that it addes to its JWE tokens. A
-given instance will only validate the cookie that contains the correct opaque ID in
-its cookie name. The opaque instance ID is stored in `constantina.ini` along with 
-the other `hostname` and `port` information.
