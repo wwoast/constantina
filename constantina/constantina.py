@@ -3,6 +3,7 @@ import os
 from math import floor
 from random import randint, seed
 import syslog
+import magic
 
 from auth import authentication, authentication_page
 from shared import GlobalConfig, BaseFiles, opendir
@@ -519,9 +520,6 @@ def get_file(in_uri, start_response, headers, auth=None):
     With authentication, check for the file in /public and return if
     it's found regardless if auth.account.valid is True or not. If the
     auth is True, try and find the file in /private as well.
-
-    TODO: fake mimetypes for jpg/png/mp3. Otherwise MP3 won't play
-    inside the browser.
     """
     file_dirs = [
         GlobalConfig.get("paths", "data_root") + "/public",
@@ -539,9 +537,13 @@ def get_file(in_uri, start_response, headers, auth=None):
         syslog.syslog("static file:" + file_dir + "/" + in_uri)
         try:
             with open(in_uri) as f:
-                # TODO: Either HTML or MP3 or IMG headers
+                # w/o content-type headers, things like MP3s won't play
+                # within the browser, so add them.
+                magi = magic.Magic(mime=True)
+                buf = f.read()
+                headers.append(("Content-Type", magi.from_buffer(buf)))
                 start_response(http_response, headers)
-                return f.read()
+                return buf
         except IOError:
             continue
 
