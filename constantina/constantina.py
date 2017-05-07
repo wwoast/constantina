@@ -534,13 +534,13 @@ def get_file(in_uri, start_response, headers, auth=None):
     http_response = '200 OK'
     for file_dir in file_dirs:
         os.chdir(file_dir)
-        syslog.syslog("static file:" + file_dir + "/" + in_uri)
+        # syslog.syslog("static file:" + file_dir + "/" + in_uri)
         try:
-            with open(in_uri) as f:
+            with open(in_uri) as handle:
                 # w/o content-type headers, things like MP3s won't play
                 # within the browser, so add them.
                 magi = magic.Magic(mime=True)
-                buf = f.read()
+                buf = handle.read()
                 headers.append(("Content-Type", magi.from_buffer(buf)))
                 start_response(http_response, headers)
                 return buf
@@ -589,9 +589,9 @@ def application(env, start_response, instance="default"):
 
     # Normalize the inbound URI, for purpose of deciding whether to
     # serve dynamic HTML or load a file.
-    if in_uri == '/' or in_uri[0] != '/':
+    if in_uri == '/' or in_uri[0] != '/' or in_uri[1] == '?':
         in_uri = None
-
+    syslog.syslog("in_uri: " + str(in_uri))
     # Normalize the inbound cookie details
     if in_cookie == '':
         in_cookie = None
