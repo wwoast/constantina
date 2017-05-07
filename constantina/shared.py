@@ -182,7 +182,7 @@ class BaseState:
     def __set_state_defaults(self):
         """
         Set default values for special_state properties and normal content-card
-        properties, as well as upper limits on how many cards can exist on a 
+        properties, as well as upper limits on how many cards can exist on a
         single Constantina page for this type of application.
         """
         self.max_items = 0             # Max items per page, based on
@@ -336,7 +336,7 @@ class BaseState:
                 if common_seen is False:
                     getattr(self, common).distance = card.num
                     common_seen = True
-                    syslog.syslog("=> %s dist: %d i: %d card-len: %d  eff-len: %d" %
+                    syslog.syslog("last_dist: %s dist: %d i: %d card-len: %d  eff-len: %d" %
                                  (card.ctype, card.num, i, len(cards), len(cards) - hidden_cards))
                 continue
             if card.ctype == 'heading':

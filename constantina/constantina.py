@@ -279,9 +279,14 @@ class ConstantinaPage:
             dist = getattr(self.state.medusa, ctype).distance
             if (len(getattr(self.state.medusa, ctype).clist) == 0) or (dist is None):
                 continue
-            # syslog.syslog("ctype, len, and dist: " + str(ctype) + " " + str(len(self.cards)) + " " + str(dist))
+            syslog.syslog("ctype, len, and dist: " + str(ctype) + " " + str(len(self.cards)) + " " + str(dist))
             put = len(self.cards) - 1 - int(dist)
-            for cnum in getattr(self.state.medusa, ctype).clist:
+            # TODO: don't put all the shuffled range clist cards in. Just go back 
+            # the maximum number of cards necessary.
+            old_cards = getattr(self.state.medusa, ctype).clist
+            prev_shown_cards = int(card_count) * (int(self.state.page) - 1)
+            for cnum in old_cards[0:prev_shown_cards]:
+                syslog.syslog("insert priors: ctype: %s  cnum: %s" % (ctype, str(cnum)))
                 self.cards.insert(put, MedusaCard(ctype, cnum, state=self.state.medusa, grab_body=False))
 
         # Current length should properly track the starting point

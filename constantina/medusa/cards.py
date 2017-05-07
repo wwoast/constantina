@@ -102,7 +102,6 @@ class MedusaCard:
 
     def __songfiles(self):
         """Create an array of song objects for this card"""
-        # TODO: only operate out of private?
         for songpath in self.body.splitlines():
             card_root = GlobalConfig.get("paths", "data_root") + "/private"
             songpath = card_root + "/" + self.config.get("paths", "songs") + "/" + songpath
@@ -180,6 +179,7 @@ class MedusaCard:
             file.close(cfile)
 
         except:   # File got moved in between dirlist caching and us reading it
+            self.topics = []   # Makes the card go away if we had an error reading content
             return self.config.get("card_defaults", "file")
 
         if self.hidden is True:
@@ -292,7 +292,6 @@ def create_medusa_textcard(card, display_state):
                 # Add the dot in front to let the URIs be absolute, but the
                 # Python directories be relative to CWD
                 img = Image.open("." + e.attrib['src'])
-                # TODO: am I really an image? Have a bg script tell you
                 if ((img.size[0] > 300) and
                     (img.size[1] > 220) and
                     (card.permalink is False) and
