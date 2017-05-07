@@ -298,11 +298,17 @@ def create_medusa_textcard(card, display_state):
                     (card.permalink is False) and
                     (card.search_result is False) and
                     (ptags >= 3)):
-                    e.attrib['class'] += " imgExpand"
+                    if 'class' in e.attrib:
+                        e.attrib['class'] += " imgExpand"
+                    else:
+                        e.attrib['class'] = "imgExpand"
             elif ((ptags >= 3) and (card.permalink is False) and
                   (card.search_result is False)):
                 # Add a showExtend tag to hide it
-                e.attrib['class'] += " imgExpand"
+                if 'class' in e.attrib:
+                    e.attrib['class'] += " imgExpand"
+                else:
+                    e.attrib['class'] = "imgExpand"
             else:
                 pass
 
