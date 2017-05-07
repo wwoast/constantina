@@ -453,7 +453,7 @@ def opendir(config, ctype, hidden=False):
         # structure for packaging purposes.
         for testpath in dirlisting:
             if os.path.isfile(os.path.join(directory, testpath)):
-                if testpath.find("placeholder") != -1:
+                if testpath.find("placeholder") == -1:
                     BaseFiles[ctype].append(testpath)
 
         # Sort the output. Most directories should use
