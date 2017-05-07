@@ -574,7 +574,8 @@ def application(env, start_response, instance="default"):
     in_state = env.get('QUERY_STRING')
     in_uri = env.get('REQUEST_URI')
     in_cookie = env.get('HTTP_COOKIE')
-
+    auth_mode = GlobalConfig.get("authentication", "mode")
+    
     # Normalize the state and truncate if the query string is
     # longer than 512 characters. 4096 characters is the upper limit
     # for many browsers, but we don't trust browsers :)
@@ -591,7 +592,7 @@ def application(env, start_response, instance="default"):
     elif safe_path(in_uri) is False:
         in_uri = "unsafe"
     # Normalize the inbound cookie details
-    if in_cookie == '':
+    if in_cookie == '' or auth_mode == "blog":
         in_cookie = None
 
     # How to characterize application GETs from file GETs?
@@ -602,8 +603,6 @@ def application(env, start_response, instance="default"):
         return get_file(in_uri, start_response, [], None)
 
     state = ConstantinaState(in_state)   # Create state object
-    auth_mode = GlobalConfig.get("authentication", "mode")
-
     auth = authentication(env)
 
     # based on auth_mode and in_uri, do a thing.
