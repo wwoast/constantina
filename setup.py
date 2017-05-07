@@ -163,7 +163,6 @@ class InstallPyCommand(install):
         Package['data_files'].append(
             (Settings.cgi_bin,
              ['cgi-bin/constantina.cgi']))
-
         # The HTML data_root folder. Add these recursively to data_files
         # so they can be both part of the install and the sdist.
         for (path, directories, files) in os.walk("html"):
@@ -171,7 +170,6 @@ class InstallPyCommand(install):
             Package['data_files'].append(
                 (Settings.data_root + '/' + subdir,
                  [os.path.join(path, filename) for filename in files]))
-
 
     def run(self):
         """
