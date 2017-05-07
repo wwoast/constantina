@@ -146,24 +146,23 @@ class InstallPyCommand(install):
         # Template files for constantina_configure to work from later
         Package['data_files'].append(
             (Settings.templates,
-                ['config/constantina.ini',
-                 'config/medusa.ini',
-                 'config/uwsgi.ini',
-                 'config/zoo.ini',
-                 'config/shadow.ini']))
+             ['config/constantina.ini',
+              'config/medusa.ini',
+              'config/uwsgi.ini',
+              'config/zoo.ini',
+              'config/shadow.ini']))
         # Initial config files for your chosen instance
-        # TODO: move medusa/zoo files into data_dir under instance_root
         Package['data_files'].append(
             (Settings.config_root,
-                ['config/constantina.ini',
-                 'config/medusa.ini',
-                 'config/uwsgi.ini',
-                 'config/zoo.ini',
-                 'config/shadow.ini']))
+             ['config/constantina.ini',
+              'config/medusa.ini',
+              'config/uwsgi.ini',
+              'config/zoo.ini',
+              'config/shadow.ini']))
         # The CGI script
         Package['data_files'].append(
             (Settings.cgi_bin,
-                ['cgi-bin/constantina.cgi']))
+             ['cgi-bin/constantina.cgi']))
 
         # The HTML data_root folder. Add these recursively to data_files
         # so they can be both part of the install and the sdist.
@@ -171,7 +170,7 @@ class InstallPyCommand(install):
             subdir = '/'.join(path.split("/")[1:])
             Package['data_files'].append(
                 (Settings.data_root + '/' + subdir,
-                    [os.path.join(path, filename) for filename in files]))
+                 [os.path.join(path, filename) for filename in files]))
 
 
     def run(self):

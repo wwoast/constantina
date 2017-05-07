@@ -448,10 +448,13 @@ def opendir(config, ctype, hidden=False):
             return BaseFiles[ctype]
 
         # Any newly-generated list of paths should be weeded out
-        # so that subdirectories don't get fopen'ed later
+        # so that subdirectories don't get fopen'ed later. Also
+        # don't include any placeholder files that keep the dir
+        # structure for packaging purposes.
         for testpath in dirlisting:
             if os.path.isfile(os.path.join(directory, testpath)):
-                BaseFiles[ctype].append(testpath)
+                if testpath.find("placeholder") != -1:
+                    BaseFiles[ctype].append(testpath)
 
         # Sort the output. Most directories should use
         # utimes for their filenames, which sort nicely. Use
@@ -479,3 +482,4 @@ def safe_path(in_uri):
     if in_uri.find("..") != -1 or in_uri.find("//") != -1:
         return False
     return True
+    

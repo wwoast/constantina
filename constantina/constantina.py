@@ -593,7 +593,6 @@ def application(env, start_response, instance="default"):
         in_uri = None
     elif safe_path(in_uri) is False:
         in_uri = "unsafe"
-    syslog.syslog("in_uri: " + str(in_uri))
     # Normalize the inbound cookie details
     if in_cookie == '':
         in_cookie = None
