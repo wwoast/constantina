@@ -131,7 +131,7 @@ class ConstantinaState(BaseState):
 
         # If page was read in as a special state variable, use that (for search results)
         if self.page is not None:
-            self.page = BaseState._int_translate(self, self.page, 1, 0)
+            self.page = BaseState._int_translate(self, self.page, 2, 0)
         else:
             self.page = 0
 
@@ -314,7 +314,10 @@ class ConstantinaState(BaseState):
         for application in self.config.get("applications", "enabled").replace(" ", "").split(","):
             app_state = getattr(self, application)
             for ctype in app_state.config.get("card_properties", "pagecount").replace(" ", "").split(","):
-                card_limit = card_limit + getattr(app_state, ctype).file_count
+                if ctype in app_state.config.get("card_properties", "randomize"):
+                    card_limit += self.page * app_state.config.getint("card_counts", ctype)
+                else:
+                    card_limit = card_limit + getattr(app_state, ctype).file_count
         syslog.syslog("card_limit: " + str(card_limit) + "   card_count: " + str(card_count))
         if card_count >= card_limit:
             return True

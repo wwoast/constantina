@@ -256,6 +256,7 @@ class BaseState:
         # from the current page.
         elif query in [s[0] for s in self.config.options("card_counts")]:
             hits = [token for token in self.state_vars if token.find(query) == 0]
+            # syslog.syslog("query: %s  hits: %s" % (query, hits))
             if len(hits) > 0:
                 output = int(hits[0][1:])
 
