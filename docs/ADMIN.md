@@ -8,15 +8,10 @@
 ## Installing Constantina
 
 ### List of Linux dependencies
-
 There are a handful of Linux packages needed (Debian/Ubuntu) to support the ones
 installed by Python:
 
- * `apt-get install libjpeg-dev libffi-dev libssl-dev`
-
- For use with uwsgi application servers, also install:
-
- * `apt-get install uwsgi uwsgi-plugin-python`
+ * `apt-get install libjpeg-dev libffi-dev libssl-dev uwsgi uwsgi-plugin-python`
 
 
 ### List of Python dependencies
@@ -131,7 +126,7 @@ procname     = constantina-default
 chdir        = /var/www/constantina/default/public
 max-requests = 5
 master
-close-on-exec
+
 ```
 
 At the command line, you can test Constantina by running:
@@ -154,6 +149,10 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^(.*)$ /cgi-bin/constantina.cgi
 SetEnv INSTANCE default
 ```
+
+Note that this is ''extremely slow performing''. CGI applications must run and reload
+all Python resources every time someone visits a site, and on embedded servers, this 
+can add many seconds of latency to the initial page load!
 
 
 ## Configuration Settings
