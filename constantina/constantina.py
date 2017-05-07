@@ -6,7 +6,7 @@ import syslog
 import magic
 
 from auth import authentication, authentication_page
-from shared import GlobalConfig, BaseFiles, opendir
+from shared import GlobalConfig, BaseFiles, opendir, safe_path
 from state import ConstantinaState
 from medusa.cards import *
 from medusa.search import MedusaSearch
@@ -536,7 +536,7 @@ def get_file(in_uri, start_response, headers, auth=None):
         os.chdir(file_dir)
         # syslog.syslog("static file:" + file_dir + "/" + in_uri)
         try:
-            with open(in_uri) as handle:
+            with open(in_uri, 'r') as handle:
                 # w/o content-type headers, things like MP3s won't play
                 # within the browser, so add them.
                 magi = magic.Magic(mime=True)
@@ -591,6 +591,8 @@ def application(env, start_response, instance="default"):
     # serve dynamic HTML or load a file.
     if in_uri == '/' or in_uri[0] != '/' or in_uri[1] == '?':
         in_uri = None
+    elif safe_path(in_uri) is False:
+        in_uri = "unsafe"
     syslog.syslog("in_uri: " + str(in_uri))
     # Normalize the inbound cookie details
     if in_cookie == '':

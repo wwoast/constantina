@@ -466,3 +466,16 @@ def opendir(config, ctype, hidden=False):
         # syslog.syslog("ctype: %s   basefiles: %s" % (ctype, BaseFiles[ctype]))
 
     return BaseFiles[ctype]
+
+
+def safe_path(in_uri):
+    """
+    If a path has unsafe tendencies in it, just return 404.
+    TODO: lots of security testing, limiting to configured known-good folders
+    """
+    if in_uri is None:
+        return True
+    # Prevents direct directory traversal in the URI
+    if in_uri.find("..") != -1 or in_uri.find("//") != -1:
+        return False
+    return True
