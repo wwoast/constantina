@@ -99,11 +99,11 @@ of its root directory.
 ```
 server {
         # Port, config, SSL, and other details here
-        listen  localhost:8080;
+        listen  8080;
         root  /var/www/constantina/default/public;
 
         location / {
-                uwsgi_pass      geodesic:9090;
+                uwsgi_pass      localhost:9090;
                 include         /etc/nginx/uwsgi_params;
 
                 # uwsgi_param   INSTANCE default;
@@ -118,7 +118,7 @@ server {
 `uwsgi.constantina.ini`:
 ```
 [uwsgi]
-socket  = localhost:9090
+socket       = localhost:9090
 plugin       = python
 module       = constantina.constantina
 processes    = 3

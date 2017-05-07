@@ -511,7 +511,7 @@ def contents_page(start_response, state, headers):
     return html
 
 
-def get_file(in_uri, start_response, headers, auth=None):
+def get_file(in_uri, start_response, headers, auth_mode, auth=None):
     """
     Without authentication, if there is a file we can return, do that
     instead of running any page generation stuff.
@@ -524,10 +524,11 @@ def get_file(in_uri, start_response, headers, auth=None):
         GlobalConfig.get("paths", "data_root") + "/public",
         GlobalConfig.get("paths", "data_root") + "/private"
     ]
-    if auth is None:
-        file_dirs.pop()
-    elif auth.account.valid is False:
-        file_dirs.pop()
+    if auth_mode != "blog":
+        if auth is None:
+            file_dirs.pop()
+        elif auth.account.valid is False:
+            file_dirs.pop()
 
     in_uri = in_uri[1:]   # No leading slash
     http_response = '200 OK'
@@ -575,7 +576,7 @@ def application(env, start_response, instance="default"):
     in_uri = env.get('REQUEST_URI')
     in_cookie = env.get('HTTP_COOKIE')
     auth_mode = GlobalConfig.get("authentication", "mode")
-    
+
     # Normalize the state and truncate if the query string is
     # longer than 512 characters. 4096 characters is the upper limit
     # for many browsers, but we don't trust browsers :)
@@ -600,14 +601,14 @@ def application(env, start_response, instance="default"):
     #   file gets are not for /
     #   also, if no HTTP_COOKIE, try the file get immediately
     if (in_state is None) and (in_uri is not None) and (in_cookie is None):
-        return get_file(in_uri, start_response, [], None)
+        return get_file(in_uri, start_response, [], auth_mode, None)
 
     state = ConstantinaState(in_state)   # Create state object
     auth = authentication(env)
 
     # based on auth_mode and in_uri, do a thing.
     if in_uri is not None:
-        return get_file(in_uri, start_response, [], auth)
+        return get_file(in_uri, start_response, [], auth_mode, auth)
     elif (auth_mode == "blog") or (auth_mode == "combined"):
         return contents_page(start_response, state, auth.headers)
     else:
