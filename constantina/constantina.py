@@ -3,7 +3,6 @@ import os
 from math import floor
 from random import randint, seed
 import syslog
-import magic
 
 from auth import authentication, authentication_page
 from shared import GlobalConfig, BaseFiles, opendir, safe_path
@@ -539,11 +538,10 @@ def get_file(in_uri, start_response, headers, auth=None):
             with open(in_uri, 'r') as handle:
                 # w/o content-type headers, things like MP3s won't play
                 # within the browser, so add them.
-                magi = magic.Magic(mime=True)
-                buf = handle.read()
-                headers.append(("Content-Type", magi.from_buffer(buf)))
+                if in_uri.find(".mp3") != -1:
+                    headers.append(("Content-Type", "audio/mpeg"))
                 start_response(http_response, headers)
-                return buf
+                return handle.read()
         except IOError:
             continue
 
@@ -551,7 +549,6 @@ def get_file(in_uri, start_response, headers, auth=None):
     http_response = '404 Not Found'
     start_response(http_response, headers)
     return ''
-
 
 
 def application(env, start_response, instance="default"):
