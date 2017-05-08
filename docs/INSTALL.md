@@ -152,3 +152,8 @@ SetEnv INSTANCE default
 Note that this is ''extremely slow performing''. CGI applications must run and reload
 all Python resources every time someone visits a site, and on embedded servers, this 
 can add many seconds of latency to the initial page load!
+
+
+### VirtualEnv setup
+Shared hosting environments may require you to bundle a bit of code together to support
+your Python application.

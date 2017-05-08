@@ -41,7 +41,7 @@ class ConstantinaDefaults:
         self.config_root = sys.prefix + "/etc/constantina"
         self.data_root = sys.prefix + "/var/www/constantina"
         self.cgi_bin = sys.prefix + "/var/cgi-bin/constantina"
-        self.templates = sys.prefix, "/etc/constantina/templates"
+        self.templates = sys.prefix + "/etc/constantina/templates"
         if sys.prefix == "/usr":
             # Default prefix? Unprefix the target directories
             self.data_root = "/var/www/constantina"
