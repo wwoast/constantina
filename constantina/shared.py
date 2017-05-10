@@ -472,6 +472,11 @@ def opendir(config, ctype, hidden=False):
     return BaseFiles[ctype]
 
 
+def escape_amp(in_str):
+    """Just escape ampersand characters so the etree parser can do its job."""
+    return in_str.replace("&", "&amp;")
+
+
 def safe_path(in_uri):
     """
     If a path has unsafe tendencies in it, just return 404.

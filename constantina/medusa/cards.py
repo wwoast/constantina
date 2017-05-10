@@ -11,7 +11,7 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
-from constantina.shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, count_ptags, opendir, unroll_newlines
+from constantina.shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, count_ptags, opendir, unroll_newlines, escape_amp
 
 syslog.openlog(ident='constantina.medusa.cards')
 
@@ -286,7 +286,7 @@ def create_medusa_textcard(card, display_state):
     for line in processed_lines:
         # Parsing the whole page only works for full HTML pages
         syslog.syslog(line)
-        e = fromstring(escape(line))
+        e = fromstring(escape_amp(line))
         if e.tag == 'img':
             if (line == first_line) and ('img' not in passed):
                 # Check image size. If it's the first line in the body and

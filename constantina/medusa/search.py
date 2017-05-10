@@ -4,11 +4,11 @@ from whoosh.fields import Schema, ID, TEXT
 from whoosh.qparser import QueryParser
 import re
 from defusedxml.ElementTree import fromstring, tostring
-from xml.sax.saxutils import escape, unescape
+from xml.sax.saxutils import unescape
 import syslog
 import ConfigParser
 
-from constantina.shared import GlobalConfig, BaseFiles, opendir, unroll_newlines
+from constantina.shared import GlobalConfig, BaseFiles, opendir, unroll_newlines, escape_amp
 
 syslog.openlog(ident='constantina.medusa.search')
 
@@ -209,7 +209,7 @@ class MedusaSearch:
             lines = indexfh.read().splitlines()
             unrolled = unroll_newlines(lines)
             for line in unrolled:
-                e = fromstring(escape(line))
+                e = fromstring(escape_amp(line))
                 if (e.tag == 'p'):
                     body += e.text + " "
             self.__process_input(body, returning="contents")
