@@ -23,7 +23,7 @@ Install the Python dependencies manually or from `pip`:
  * `pip install -r requirements.txt`
   * `argon2`, `argon2_cffi`, and `argon2pure` for password hashing
   * `jwcrypto` for managing JWT and JWE session token formats
-  * `lxml` for occasions where you need to parse HTML files
+  * `defusedxml` for occasions where you need to parse HTML files
   * `mutagen` for MP3 length parsing
   * `passlib` as a wrapper for password hashing
   * `pillow` for image operations. Successor to the older `PIL`

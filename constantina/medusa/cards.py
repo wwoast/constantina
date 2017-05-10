@@ -1,7 +1,8 @@
 from math import floor
 from random import random, randint, seed, shuffle
 from mutagen.mp3 import MP3
-import lxml.html
+from defusedxml.ElementTree import fromstring, tostring
+from xml.sax.saxutils import escape, unescape
 from PIL import Image
 from datetime import datetime
 import os
@@ -284,47 +285,47 @@ def create_medusa_textcard(card, display_state):
 
     for line in processed_lines:
         # Parsing the whole page only works for full HTML pages
-        e = xmltodict.parse(line)
-        if 'img' in e:
+        syslog.syslog(line)
+        e = fromstring(escape(line))
+        if e.tag == 'img':
             if (line == first_line) and ('img' not in passed):
                 # Check image size. If it's the first line in the body and
                 # it's relatively small, display with the first paragraph.
                 # Add the dot in front to let the URIs be absolute, but the
                 # Python directories be relative to CWD
-                ne = e['img']
-                img = Image.open("." + ne['@src'])
+                img = Image.open("." + e.attrib['src'])
                 if ((img.size[0] > 300) and
                     (img.size[1] > 220) and
                     (card.permalink is False) and
                     (card.search_result is False) and
                     (ptags >= 3)):
-                    if '@class' in ne:
-                        ne['@class'] += " imgExpand"
+                    if 'class' in e.attrib:
+                        e.attrib['class'] += " imgExpand"
                     else:
-                        ne['@class'] = "imgExpand"
+                        e.attrib['class'] = "imgExpand"
             elif ((ptags >= 3) and (card.permalink is False) and
                   (card.search_result is False)):
                 # Add a showExtend tag to hide it
-                if '@class' in ne:
-                    ne['@class'] += " imgExpand"
+                if 'class' in e.attrib:
+                    e.attrib['class'] += " imgExpand"
                 else:
-                    ne['@class'] = "imgExpand"
+                    e.attrib['class'] = "imgExpand"
             else:
                 pass
 
             # Track that we saw an img tag, and write the tag out
-            output += xmltodict.unparse(e, full_document=False)
+            output += unescape(tostring(e))
             passed.update({'img': True})
 
-        elif 'p' in e:
+        elif e.tag == 'p':
             # If further than the first paragraph, write output
             if 'p' in passed:
-                output += xmltodict.unparse(e, full_document=False)
+                output += unescape(tostring(e))
             # If more than three paragraphs, and it's a news entry,
             # and if the paragraph isn't a cute typography exercise...
             # start hiding extra paragraphs from view
-            elif len(e['p']) < 5:
-                output += xmltodict.unparse(e, full_document=False)
+            elif len(e.text) < 5:
+                output += unescape(tostring(e))
                 continue   # Don't mark as passed yet
 
             elif ((ptags >= 3) and
@@ -334,12 +335,12 @@ def create_medusa_textcard(card, display_state):
                 # div with showExtend that hides all the other elements
                 # TODO: rewrite as dict for xmltodict.unparse()
                 read_more = """ <a href="#%s" class="showShort" onclick="revealToggle('%s');">(Read&nbsp;More...)</a>""" % (anchor, anchor)
-                prep = lxml.html.tostring(e)
+                prep = unescape(tostring(e))
                 output += prep.replace('</p>', read_more + '</p>')
                 output += """<div class="divExpand">\n"""
 
             else:
-                output += xmltodict.unparse(e, full_document=False)
+                output += unescape(tostring(e))
 
             # Track that we saw an img tag, and write the tag out
             passed.update({'p': True})

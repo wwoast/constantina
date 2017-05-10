@@ -377,7 +377,7 @@ def count_ptags(processed_lines):
 def unroll_newlines(body_lines):
     """
     Given lines of text, remove all newlines that occur within an
-    HTML element. Anything that we parse with lxml.html will inevitably
+    HTML element. Anything that we parse with ElementTree will inevitably
     start trying to use this utility function.
     """
     processed_lines = []
