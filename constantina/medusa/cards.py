@@ -284,46 +284,47 @@ def create_medusa_textcard(card, display_state):
 
     for line in processed_lines:
         # Parsing the whole page only works for full HTML pages
-        e = lxml.html.fromstring(line)
-        if e.tag == 'img':
+        e = xmltodict.parse(line)
+        if 'img' in e:
             if (line == first_line) and ('img' not in passed):
                 # Check image size. If it's the first line in the body and
                 # it's relatively small, display with the first paragraph.
                 # Add the dot in front to let the URIs be absolute, but the
                 # Python directories be relative to CWD
-                img = Image.open("." + e.attrib['src'])
+                ne = e['img']
+                img = Image.open("." + ne['@src'])
                 if ((img.size[0] > 300) and
                     (img.size[1] > 220) and
                     (card.permalink is False) and
                     (card.search_result is False) and
                     (ptags >= 3)):
-                    if 'class' in e.attrib:
-                        e.attrib['class'] += " imgExpand"
+                    if '@class' in ne:
+                        ne['@class'] += " imgExpand"
                     else:
-                        e.attrib['class'] = "imgExpand"
+                        ne['@class'] = "imgExpand"
             elif ((ptags >= 3) and (card.permalink is False) and
                   (card.search_result is False)):
                 # Add a showExtend tag to hide it
-                if 'class' in e.attrib:
-                    e.attrib['class'] += " imgExpand"
+                if '@class' in ne:
+                    ne['@class'] += " imgExpand"
                 else:
-                    e.attrib['class'] = "imgExpand"
+                    ne['@class'] = "imgExpand"
             else:
                 pass
 
             # Track that we saw an img tag, and write the tag out
-            output += lxml.html.tostring(e)
+            output += xmltodict.unparse(e, full_document=False)
             passed.update({'img': True})
 
-        elif e.tag == 'p':
+        elif 'p' in e:
             # If further than the first paragraph, write output
             if 'p' in passed:
-                output += lxml.html.tostring(e)
+                output += xmltodict.unparse(e, full_document=False)
             # If more than three paragraphs, and it's a news entry,
             # and if the paragraph isn't a cute typography exercise...
             # start hiding extra paragraphs from view
-            elif len(e.text_content()) < 5:
-                output += lxml.html.tostring(e)
+            elif len(e['p']) < 5:
+                output += xmltodict.unparse(e, full_document=False)
                 continue   # Don't mark as passed yet
 
             elif ((ptags >= 3) and
@@ -331,13 +332,14 @@ def create_medusa_textcard(card, display_state):
                   (card.search_result is False)):
                 # First <p> is OK, but follow it with a (Read More) link, and a
                 # div with showExtend that hides all the other elements
+                # TODO: rewrite as dict for xmltodict.unparse()
                 read_more = """ <a href="#%s" class="showShort" onclick="revealToggle('%s');">(Read&nbsp;More...)</a>""" % (anchor, anchor)
                 prep = lxml.html.tostring(e)
                 output += prep.replace('</p>', read_more + '</p>')
                 output += """<div class="divExpand">\n"""
 
             else:
-                output += lxml.html.tostring(e)
+                output += xmltodict.unparse(e, full_document=False)
 
             # Track that we saw an img tag, and write the tag out
             passed.update({'p': True})
