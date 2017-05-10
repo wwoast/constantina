@@ -209,8 +209,8 @@ class MedusaSearch:
             lines = indexfh.read().splitlines()
             unrolled = unroll_newlines(lines)
             for line in unrolled:
-                e = fromstring(escape_amp(line))
-                if (e.tag == 'p'):
+                if line.find('<p') == 0:
+                    e = fromstring(escape_amp(line))
                     body += e.text + " "
             self.__process_input(body, returning="contents")
             # Update wraps add if the document hasn't been inserted, and

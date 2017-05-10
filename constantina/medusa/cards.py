@@ -1,7 +1,7 @@
 from math import floor
 from random import random, randint, seed, shuffle
 from mutagen.mp3 import MP3
-from defusedxml.ElementTree import fromstring, tostring
+from defusedxml.ElementTree import parse, unparse
 from xml.sax.saxutils import escape, unescape
 from PIL import Image
 from datetime import datetime
@@ -285,8 +285,11 @@ def create_medusa_textcard(card, display_state):
 
     for line in processed_lines:
         # Parsing the whole page only works for full HTML pages
+        # Pass tags we don't care about
+        if line.find('<img') != 0 or line.find('<p') != 0:
+            output += line + "\n"
         syslog.syslog(line)
-        e = fromstring(escape_amp(line))
+        e = parse(escape_amp(line))
         if e.tag == 'img':
             if (line == first_line) and ('img' not in passed):
                 # Check image size. If it's the first line in the body and
@@ -314,18 +317,18 @@ def create_medusa_textcard(card, display_state):
                 pass
 
             # Track that we saw an img tag, and write the tag out
-            output += unescape(tostring(e))
+            output += unescape(unparse(e))
             passed.update({'img': True})
 
         elif e.tag == 'p':
             # If further than the first paragraph, write output
             if 'p' in passed:
-                output += unescape(tostring(e))
+                output += unescape(unparse(e))
             # If more than three paragraphs, and it's a news entry,
             # and if the paragraph isn't a cute typography exercise...
             # start hiding extra paragraphs from view
             elif len(e.text) < 5:
-                output += unescape(tostring(e))
+                output += unescape(unparse(e))
                 continue   # Don't mark as passed yet
 
             elif ((ptags >= 3) and
@@ -335,12 +338,12 @@ def create_medusa_textcard(card, display_state):
                 # div with showExtend that hides all the other elements
                 # TODO: rewrite as dict for xmltodict.unparse()
                 read_more = """ <a href="#%s" class="showShort" onclick="revealToggle('%s');">(Read&nbsp;More...)</a>""" % (anchor, anchor)
-                prep = unescape(tostring(e))
+                prep = unescape(unparse(e))
                 output += prep.replace('</p>', read_more + '</p>')
                 output += """<div class="divExpand">\n"""
 
             else:
-                output += unescape(tostring(e))
+                output += unescape(unparse(e))
 
             # Track that we saw an img tag, and write the tag out
             passed.update({'p': True})
