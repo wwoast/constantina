@@ -308,6 +308,7 @@ def create_medusa_textcard(card, display_state):
                         e.attrib['class'] += " imgExpand"
                     else:
                         e.attrib['class'] = "imgExpand"
+
             elif ((ptags >= 3) and (card.permalink is False) and
                   (card.search_result is False)):
                 # Add a showExtend tag to hide it
@@ -326,6 +327,7 @@ def create_medusa_textcard(card, display_state):
             # If further than the first paragraph, write output
             if 'p' in passed:
                 output += unescape(tostring(e))
+
             # If more than three paragraphs, and it's a news entry,
             # and if the paragraph isn't a cute typography exercise...
             # start hiding extra paragraphs from view
@@ -340,6 +342,7 @@ def create_medusa_textcard(card, display_state):
                 # div with showExtend that hides all the other elements
                 read_more = """ <a href="#%s" class="showShort" onclick="revealToggle('%s');">(Read&nbsp;More...)</a>""" % (anchor, anchor)
                 prep = unescape(tostring(e))
+                syslog.syslog(prep)
                 output += prep.replace('</p>', read_more + '</p>')
                 output += """<div class="divExpand">\n"""
 
