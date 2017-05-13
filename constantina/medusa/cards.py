@@ -2,7 +2,7 @@ from math import floor
 from random import random, randint, seed, shuffle
 from mutagen.mp3 import MP3
 from defusedxml.ElementTree import fromstring, tostring
-from xml.sax.saxutils import escape, unescape
+from xml.sax.saxutils import unescape
 from PIL import Image
 from datetime import datetime
 import os
@@ -324,18 +324,12 @@ def create_medusa_textcard(card, display_state):
             passed.update({'img': True})
 
         elif e.tag == 'p':
-            syslog.syslog('p tag processing')
             # If further than the first paragraph, write output
             if 'p' in passed:
                 output += unescape(tostring(e))
 
             # If more than three paragraphs, and it's a news entry,
-            # and if the paragraph isn't a cute typography exercise...
             # start hiding extra paragraphs from view
-            elif len(e.text) < 5:
-                output += unescape(tostring(e))
-                continue   # Don't mark as passed yet
-
             elif ((ptags >= 3) and
                   (card.permalink is False) and
                   (card.search_result is False)):

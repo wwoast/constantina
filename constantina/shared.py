@@ -396,11 +396,26 @@ def unroll_newlines(body_lines):
             i = i + 1
             continue
 
+        # Break a line out whenever you see one of these elements.
+        # In other words, Constantina page processing looks at each
+        # of these elements on a single line.
         if this_line.find('<p>') == 0:
             if not ((pro_line.isspace()) or (pro_line == '')):
                 processed_lines.append(pro_line)
             pro_line = this_line
         elif (this_line.find('<img') != -1):
+            if not ((pro_line.isspace()) or (pro_line == '')):
+                processed_lines.append(pro_line)
+            pro_line = this_line
+        elif (this_line.find('<div') != -1):
+            if not ((pro_line.isspace()) or (pro_line == '')):
+                processed_lines.append(pro_line)
+            pro_line = this_line
+        elif (this_line.find('<ul') != -1):
+            if not ((pro_line.isspace()) or (pro_line == '')):
+                processed_lines.append(pro_line)
+            pro_line = this_line
+        elif (this_line.find('<h5') != -1):
             if not ((pro_line.isspace()) or (pro_line == '')):
                 processed_lines.append(pro_line)
             pro_line = this_line
