@@ -282,11 +282,11 @@ def create_medusa_textcard(card, display_state):
     # Count all the <p> tags. If there's less than three paragraphs, don't do the
     # "Read More" logic for that item.
     ptags = count_ptags(processed_lines)
-
+    syslog.syslog("ptags: " + str(ptags))
     for line in processed_lines:
         # Parsing the whole page only works for full HTML pages
         # Pass tags we don't care about
-        if line.find('<img') != 0 or line.find('<p') != 0:
+        if line.find('<img') != 0 and line.find('<p') != 0:
             output += line + "\n"
             continue
 
@@ -324,6 +324,7 @@ def create_medusa_textcard(card, display_state):
             passed.update({'img': True})
 
         elif e.tag == 'p':
+            syslog.syslog('p tag processing')
             # If further than the first paragraph, write output
             if 'p' in passed:
                 output += unescape(tostring(e))
@@ -342,7 +343,7 @@ def create_medusa_textcard(card, display_state):
                 # div with showExtend that hides all the other elements
                 read_more = """ <a href="#%s" class="showShort" onclick="revealToggle('%s');">(Read&nbsp;More...)</a>""" % (anchor, anchor)
                 prep = unescape(tostring(e))
-                syslog.syslog(prep)
+                syslog.syslog("prep string: " + prep)
                 output += prep.replace('</p>', read_more + '</p>')
                 output += """<div class="divExpand">\n"""
 
