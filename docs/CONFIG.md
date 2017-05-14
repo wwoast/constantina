@@ -70,12 +70,12 @@ Constantina does some tricks server-side to hide images or cards that have more 
 of text inside them. The tricks aren't very clever yet however, so as a result the **Limited HTML**
 format only supports the following tags at the beginning of a line:
 
- * <p>
- * <img>
- * <ul>
- * <ol>
- * <div>
- * <h5>
+ * `<p>`
+ * `<img>`
+ * `<ul>`
+ * `<ol>`
+ * `<div>`
+ * `<h5>`
 
 
 ### Image Card Format: PNG/JPG Images
