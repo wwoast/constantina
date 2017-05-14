@@ -415,6 +415,10 @@ def unroll_newlines(body_lines):
             if not ((pro_line.isspace()) or (pro_line == '')):
                 processed_lines.append(pro_line)
             pro_line = this_line
+        elif (this_line.find('<ol') != -1):
+            if not ((pro_line.isspace()) or (pro_line == '')):
+                processed_lines.append(pro_line)
+            pro_line = this_line
         elif (this_line.find('<h5') != -1):
             if not ((pro_line.isspace()) or (pro_line == '')):
                 processed_lines.append(pro_line)

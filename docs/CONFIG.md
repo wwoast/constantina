@@ -66,6 +66,18 @@ Education, Demonstration
 <p>The Limited HTML format is generally restricted to display logic that easily displays on both large screens and single-column portrait mobile displays. While Constantina itself does not restrict your HTML content, you should stick to simple layout designs, using just basic anchors, paragraphs, images, and subheadings.</p>
 ```
 
+Constantina does some tricks server-side to hide images or cards that have more than three paragraphs
+of text inside them. The tricks aren't very clever yet however, so as a result the **Limited HTML**
+format only supports the following tags at the beginning of a line:
+
+ * <p>
+ * <img>
+ * <ul>
+ * <ol>
+ * <div>
+ * <h5>
+
+
 ### Image Card Format: PNG/JPG Images
 Picture cards interleaved into the page are relatively large size, so you
 should be open to using high-quality JPG or PNG images, so they appear sharp
