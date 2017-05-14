@@ -3,7 +3,7 @@ from whoosh import index
 from whoosh.fields import Schema, ID, TEXT
 from whoosh.qparser import QueryParser
 import re
-from defusedxml.ElementTree import fromstring, tostring
+from defusedxml.ElementTree import fromstring
 from xml.sax.saxutils import unescape
 import syslog
 import ConfigParser
@@ -211,7 +211,8 @@ class MedusaSearch:
             for line in unrolled:
                 if line.find('<p') == 0:
                     e = fromstring(escape_amp(line))
-                    body += e.text + " "
+                    for t in e.itertext():
+                        body += t + " "
             self.__process_input(body, returning="contents")
             # Update wraps add if the document hasn't been inserted, and
             # replaces current indexed data if it has been inserted. This
