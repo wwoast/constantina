@@ -208,6 +208,8 @@ class MedusaSearch:
             body = ""
             lines = indexfh.read().splitlines()
             unrolled = unroll_newlines(lines)
+            body += unrolled[0]
+            body += unrolled[1]
             for line in unrolled:
                 if line.find('<p') == 0:
                     e = fromstring(escape_amp(line))
