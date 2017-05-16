@@ -4,7 +4,8 @@ html {
 
 /* Cover makes the background collapse at smaller sizes */
 body {
-   background-image: url("wallpaper.png") #2a550d;
+   background-image: url("wallpaper.png");
+   background-color: #2a550d;
    background-size: cover;
    background-position: 50% 50%;
    background-attachment: fixed;
