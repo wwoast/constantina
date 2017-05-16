@@ -77,6 +77,10 @@ Constantina supports username and password-based authentication in version
 However, a Python CLI script called `constantina_configure.py` lets you 
 configure Constantina users.
 
+**NOTE**: To make sure user ownership parameters for the config files don't get 
+changed, run `constantina_configure.py` as the webserver's user account. 
+This means you'll prefix it with `sudo -u www-data`.
+
 To create a user and be interactively prompted for a new password:
 `constantina_configure.py -a <login_name>`
 

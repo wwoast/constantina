@@ -175,4 +175,7 @@ can add many seconds of latency to the initial page load!
 
 ### VirtualEnv setup
 Shared hosting environments may require you to bundle a bit of code together to support
-your Python application.
+your Python application. The `make-venv.sh` script will create a directory of
+all the Python files and requirements that you need to run Constantina on another site.
+You'll likely want to edit on the `constantina.ini` config paths and other directory paths
+to match the specifics of where your server's Constantina files live.
