@@ -16,7 +16,7 @@ GlobalConfig = ConfigParser.SafeConfigParser()
 ConfigOptions = [
     sys.prefix + "/etc/constantina/" + Instance + "/constantina.ini",
     "/etc/constantina/" + Instance + "/constantina.ini",
-    os.path.expanduser("~") + "/constantina/etc/constantina/" + Instance + "/constantina.ini"
+    os.path.expanduser("~") + "/constantina/etc/constantina/default/constantina.ini"
 ]
 GlobalConfig.read(ConfigOptions)
 

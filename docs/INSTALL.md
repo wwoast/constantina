@@ -97,6 +97,13 @@ python ./setup.py install -i staging --port 9091 \
    --hostname codaworry.com -u www-data -g www-data \
 ```
 
+Instances are specified as an environment variable `INSTANCE`, provided in
+the web server configuration. This allows you to manage which external port
+on a web server virtualhost maps to a specific instance of Constantina.
+The `INSTANCE` value fills out the `/etc/constantina/$INSTANCE/` path that
+holds this copy of Constantina's configuration settings.
+
+
 #### File Locations
 Post-installation, files are installed in the following locations:
  * the data root directory: `/var/www/constantina/default`
@@ -179,3 +186,8 @@ your Python application. The `make-venv.sh` script will create a directory of
 all the Python files and requirements that you need to run Constantina on another site.
 You'll likely want to edit on the `constantina.ini` config paths and other directory paths
 to match the specifics of where your server's Constantina files live.
+
+**NOTE**: If you diverge from using `~/constantina` and instance name `default` for your 
+virtualenv, you will need to add a configuration lookup path in the top of `shared.py` so 
+that Constantina knows where to find its own `constantina.ini` file. Especially for shared
+hosting environments where you don't have control to 
