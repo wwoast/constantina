@@ -42,8 +42,8 @@ files for, the hostname the site will be accessed through, and a port number
 that the application will listen on:
 
 ```
-`python ./setup.py install -u www-data -g www-data \
-   --hostname codaworry.com --port 9090
+sudo python ./setup.py install -u www-data -g www-data \
+  --hostname codaworry.com --port 9090
 ```
 
 Although Constantina tries to choose useful defaults when running the install
@@ -55,6 +55,25 @@ Apache configuration.
 
 Once you've installed Constantina, you'll need to choose how the application
 will run on your webserver. But first, a couple of relevant details:
+
+
+### Upgrading Constantina
+By default, Constantina installs all required files and configuration for your
+site. If you want to install just the Python and HTML updates, you can add the
+`--upgrade` switch. This will preserve any card directories you have installed
+(i.e. the sample cards won't be added), and won't change any of your config
+files in `/etc/constantina/default`.
+
+```
+sudo python ./setup.py install --upgrade -u www-data -g www-data
+```
+
+Alternatively, you may install just the Python scripts. This puts any HTML or
+configuration file placement responsibilties in your hands:
+
+```
+python ./setup.py install --scriptonly
+```
 
 
 #### Instances
