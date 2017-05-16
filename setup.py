@@ -106,6 +106,8 @@ class InstallPyCommand(install):
         ('data-root=', 'r', HelpStrings['data_root']),
         ('username=', 'u', HelpStrings['username']),
         ('groupname=', 'g', HelpStrings['groupname']),
+        ('upgrade', None, HelpStrings['upgrade']),
+        ('scriptonly', None, HelpStrings['scriptonly']),
     ]
 
     def initialize_options(self):
@@ -118,6 +120,8 @@ class InstallPyCommand(install):
         self.data_root = Settings.default.data_root
         self.username = Settings.default.username
         self.groupname = Settings.default.groupname
+        self.upgrade = False
+        self.scriptonly = False
         install.initialize_options(self)
 
     def finalize_options(self):
@@ -152,24 +156,29 @@ class InstallPyCommand(install):
               'config/zoo.ini',
               'config/shadow.ini']))
         # Initial config files for your chosen instance
-        Package['data_files'].append(
-            (Settings.config_root,
-             ['config/constantina.ini',
-              'config/medusa.ini',
-              'config/uwsgi.ini',
-              'config/zoo.ini',
-              'config/shadow.ini']))
+        if self.upgrade is False and self.scriptonly is False:
+            Package['data_files'].append(
+                (Settings.config_root,
+                 ['config/constantina.ini',
+                  'config/medusa.ini',
+                  'config/uwsgi.ini',
+                  'config/zoo.ini',
+                  'config/shadow.ini']))
         # The CGI script
         Package['data_files'].append(
             (Settings.cgi_bin,
              ['cgi-bin/constantina.cgi']))
         # The HTML data_root folder. Add these recursively to data_files
         # so they can be both part of the install and the sdist.
-        for (path, directories, files) in os.walk("html"):
-            subdir = '/'.join(path.split("/")[1:])
-            Package['data_files'].append(
-                (Settings.data_root + '/' + subdir,
-                 [os.path.join(path, filename) for filename in files]))
+        if self.scriptonly is False:
+            for (path, directories, files) in os.walk("html"):
+                subdir = '/'.join(path.split("/")[1:])
+                if self.upgrade is not False:   # 1 if true
+                    if path.find("private") != -1:
+                        continue   # If upgrading, don't install cards
+                Package['data_files'].append(
+                    (Settings.data_root + '/' + subdir,
+                     [os.path.join(path, filename) for filename in files]))
 
     def run(self):
         """
@@ -180,7 +189,8 @@ class InstallPyCommand(install):
         Settings = install_arguments()
         self.data_files()
         install.run(self)
-        self.run_command('configure')
+        if self.scriptonly is False and self.upgrade is False:
+            self.run_command('configure')
 
 
 if __name__ == '__main__':

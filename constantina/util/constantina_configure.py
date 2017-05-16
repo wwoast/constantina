@@ -25,6 +25,8 @@ HelpStrings = {
     'data_root': "where Constantina html resources are served from",
     'username': "the Unix username that Constantina data is owned by",
     'groupname': "the Unix groupname that Constantina data is owned by",
+    'upgrade': "install just the Python and HTML code, not any sample cards or config",
+    'scriptonly': "install just the Python scripts, not any HTML or sample cards or config"
 }
 
 class ConstantinaDefaults:
