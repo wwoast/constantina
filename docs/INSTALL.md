@@ -189,5 +189,7 @@ to match the specifics of where your server's Constantina files live.
 
 **NOTE**: If you diverge from using `~/constantina` and instance name `default` for your 
 virtualenv, you will need to add a configuration lookup path in the top of `shared.py` so 
-that Constantina knows where to find its own `constantina.ini` file. Especially for shared
-hosting environments where you don't have control to 
+that Constantina knows where to find its own `constantina.ini` file. This is a crucial
+detail in shared hosting environments that don't allow you to specify an `INSTANCE` environment 
+variable in configuration. Rather than fight your hosting provider, just use the default
+virtualenv and instance settings.
