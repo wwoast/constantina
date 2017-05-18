@@ -131,7 +131,7 @@ server {
                 uwsgi_pass      localhost:9090;
                 include         /etc/nginx/uwsgi_params;
 
-                # uwsgi_param   INSTANCE default;
+                uwsgi_param   INSTANCE default;
                 uwsgi_param     Host $host;
                 uwsgi_param     X-Real-IP $remote_addr;
                 uwsgi_param     X-Forwarded-For $proxy_add_x_forwarded_for;
