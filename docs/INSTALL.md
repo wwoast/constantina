@@ -21,7 +21,7 @@ API than the version in `pip`.
 Install the Python dependencies manually or from `pip`:
 
  * `pip install -r requirements.txt`
-  * `argon2`, `argon2_cffi`, and `argon2pure` for password hashing
+  * `argon2_cffi` and `argon2pure` for password hashing
   * `jwcrypto` for managing JWT and JWE session token formats
   * `defusedxml` for occasions where you need to parse HTML files
   * `mutagen` for MP3 length parsing
@@ -30,7 +30,8 @@ Install the Python dependencies manually or from `pip`:
   * `python-magic` for file type checks
   * `whoosh` for reverse-index word searching
   * `wsgiref` if you need to use Apache and `mod_cgi`
-
+ * Second-order dependencies for the above libraries include:
+  * `appdirs`, `pyparsing`, `idna`, `asn1crypto`, and `cryptography` 
 
 ### Installing Constantina
 `python setup.py install -h` describes the options for installing Constantina.
