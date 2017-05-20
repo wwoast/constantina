@@ -746,6 +746,10 @@ div.card.help pre {
        text-align: center;
    }
 
+   ul, ol {
+       text-align: left;
+   }
+
    div.card p, div.card h2, div.card h3, div.card h5 {
       margin-left: 14px;
       margin-right: 8px;
