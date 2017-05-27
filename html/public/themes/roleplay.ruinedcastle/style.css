@@ -621,7 +621,7 @@ img.settingsThemePreview {
    margin-right: 8px;
 }
 
-div.newPostCard {
+div.card.newPost {
    width: 96%;
    margin-left: auto;
    margin-right: auto;
@@ -758,7 +758,7 @@ div.card.help pre {
       word-spacing: 2px;
    }
 
-   div.newPostCard {
+   div.card.newPost {
       position: relative;
       max-width: 100%;
       width: 100%;
