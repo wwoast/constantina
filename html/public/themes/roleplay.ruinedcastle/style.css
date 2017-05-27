@@ -646,7 +646,6 @@ div.card.rolldown.newThread {
    padding: 5px 20px 5px 20px;
    text-align: center;
    background-color: rgba(40, 40, 40, 0.78);
-   margin-bottom: 20px;
 }
 
 div.card.rolldown input {
@@ -659,10 +658,15 @@ div.card.rolldown input {
 
 div.card.rolldown input.threadFileInput {
    float: left;
+   margin-left: 10px;
+   margin-top: 8px;
 }
 
 div.card.rolldown input.threadSubmit {
    float: right;
+   margin-right: 20px;
+   margin-top: 8px;
+   margin-bottom: 8px;
 }
 
 div.card.settings {
@@ -764,6 +768,8 @@ div.card.help pre {
       width: 100%;
       padding-left: 0px;
       padding-right: 0px;
+      overflow-x: hidden;
+      border: none;
    }
 
    textarea.newThread {
