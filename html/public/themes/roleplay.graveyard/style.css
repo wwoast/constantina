@@ -622,11 +622,13 @@ img.settingsThemePreview {
    margin-right: 8px;
 }
 
-div.newPostCard {
+div.card.newPost {
    width: 96%;
    margin-left: auto;
    margin-right: auto;
    padding: 0 0 0 0;
+   border: none;
+   overflow-x: hidden;
 }
 
 textarea.newThread {
@@ -760,14 +762,6 @@ div.card.help pre {
       text-justify-last: none;
       letter-spacing: 0.8px;
       word-spacing: 2px;
-   }
-
-   div.newPostCard {
-      position: relative;
-      max-width: 100%;
-      width: 100%;
-      padding-left: 0px;
-      padding-right: 0px;
    }
 
    textarea.newThread {

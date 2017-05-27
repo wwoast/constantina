@@ -761,16 +761,6 @@ div.card.help pre {
       word-spacing: 2px;
    }
 
-   div.card.newPost {
-      position: relative;
-      max-width: 100%;
-      width: 100%;
-      padding-left: 0px;
-      padding-right: 0px;
-      overflow-x: hidden;
-      border: none;
-   }
-
    textarea.newThread {
       margin: 0 0 0 0;
    }
