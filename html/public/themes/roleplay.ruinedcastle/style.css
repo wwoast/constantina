@@ -161,7 +161,10 @@ div.rolldown {
 }
 
 div.card.store, div.card.heading { 
-   background-color: rgba(50, 60, 120, 0.78);
+   background-image: -webkit-radial-gradient(circle, rgba(40, 70, 40, 0.38) 0px, rgba(40, 240, 70, 0.38) 700px);
+   background-image: -moz-radial-gradient(circle, rgba(40, 70, 40, 0.38) 0px, rgba(40, 240, 70, 0.38) 700px);
+   background-image: radial-gradient(circle, rgba(40, 70, 40, 0.38) 0px, rgba(40, 240, 70, 0.38) 700px);
+   background-color: rgba(70, 70, 114, 0.78); 
    padding: 0px 20px 0px 20px;
 }
 
