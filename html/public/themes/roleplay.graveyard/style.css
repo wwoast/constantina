@@ -163,12 +163,12 @@ div.rolldown {
 }
 
 div.card.store, div.card.heading { 
-   background-color: rgba(50, 60, 120, 0.78);
+   background-color: rgba(147, 116, 28, 0.78);
    padding: 0px 20px 0px 20px;
 }
 
 div.card.quotes {
-   background-color: rgba(50, 60, 120, 0.78);
+   background-color: rgba(16, 93, 13, 0.78);
    padding: 0px 20px 0px 20px;
 }
 
@@ -179,7 +179,7 @@ div.card.error {
 }
 
 div.card.news {
-   background-color: rgba(40, 50, 150, 0.78);
+   background-color: rgba(101, 96, 128, 0.78);
    padding: 10px 20px 10px 20px;
 }
 
@@ -373,7 +373,7 @@ div.card.heading p#inProgress {
 }
 
 div.card.image {
-   background-color: rgba(50, 60, 120, 0.78);
+   background-color: rgba(36, 76, 145, 0.78);
    padding: 5px 20px 5px 20px;
    text-align: center;
    color: black;
@@ -388,7 +388,7 @@ div.card.image h2, div.card.image p, div.card.image a {
    All should be the same fixed length and spacing. Also, 
    all cells in this div should be center-aligned. */
 div.card.song {
-   background-color: rgba(50, 60, 120, 0.78);
+   background-color: rgba(137, 55, 42, 0.78);
    padding: 5px 20px 5px 20px;
    text-align: center;
 } 
@@ -664,7 +664,7 @@ div.rolldown input.threadFileInput {
    margin-top: 8px;
 }
 
-div.card.rolldown input.threadSubmit {
+div.rolldown input.threadSubmit {
    float: right;
    margin-right: 10px;
    margin-top: 5px;
