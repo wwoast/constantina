@@ -658,6 +658,7 @@ div.rolldown input {
 
 div.rolldown input.threadFileInput {
    float: left;
+   max-width: 200px;
 }
 
 div.rolldown input.threadSubmit {
