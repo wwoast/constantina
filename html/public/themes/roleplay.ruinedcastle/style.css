@@ -135,7 +135,7 @@ div.card {
    margin-right: auto;
    margin-bottom: 20px;
    overflow-y: hidden;
-   border: solid 3px #444444;
+   border: solid 3px #5C5C5C;
    border-radius: 0.5em;
 }
 
@@ -156,21 +156,18 @@ div.rolldown {
    margin-left: auto;
    margin-right: auto;
    overflow-y: hidden;
-   border: solid 3px #444444;
+   border: solid 3px #5C5C5C;
    border-radius: 0px 0px 0.5em 0.5em;
    vertical-align: middle;
 }
 
-div.card.store, div.card.heading { 
-   background-image: -webkit-radial-gradient(circle, rgba(40, 70, 40, 0.38) 0px, rgba(40, 240, 70, 0.38) 700px);
-   background-image: -moz-radial-gradient(circle, rgba(40, 70, 40, 0.38) 0px, rgba(40, 240, 70, 0.38) 700px);
-   background-image: radial-gradient(circle, rgba(40, 70, 40, 0.38) 0px, rgba(40, 240, 70, 0.38) 700px);
-   background-color: rgba(70, 70, 114, 0.78); 
+div.card.store, div.card.heading {
+   background-color: rgba(40, 50, 150, 0.78);
    padding: 0px 20px 0px 20px;
 }
 
 div.card.quotes {
-   background-color: rgba(50, 60, 120, 0.78);
+   background-color: rgba(173, 125, 40, 0.78);
    padding: 0px 20px 0px 20px;
 }
 
@@ -181,7 +178,7 @@ div.card.error {
 }
 
 div.card.news {
-   background-color: rgba(40, 50, 150, 0.78);
+   background-color: rgba(55, 115, 135, 0.78); 
    padding: 10px 20px 10px 20px;
 }
 
@@ -375,7 +372,7 @@ div.card.heading p#inProgress {
 }
 
 div.card.image {
-   background-color: rgba(50, 60, 120, 0.78);
+   background-color: rgba(79, 154, 107, 0.78);
    padding: 5px 20px 5px 20px;
    text-align: center;
    color: black;
@@ -390,7 +387,7 @@ div.card.image h2, div.card.image p, div.card.image a {
    All should be the same fixed length and spacing. Also, 
    all cells in this div should be center-aligned. */
 div.card.song {
-   background-color: rgba(50, 60, 120, 0.78);
+   background-color: rgba(125, 51, 71, 0.78);
    padding: 5px 20px 5px 20px;
    text-align: center;
 } 
