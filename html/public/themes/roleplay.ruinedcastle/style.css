@@ -158,6 +158,7 @@ div.rolldown {
    overflow-y: hidden;
    border: solid 3px #444444;
    border-radius: 0px 0px 0.5em 0.5em;
+   vertical-align: middle;
 }
 
 div.card.store, div.card.heading { 
@@ -646,7 +647,7 @@ textarea.newThread {
 }
 
 div.rolldown.newThread {
-   width: 94%;
+   width: 92.5%;
    padding: 5px 20px 5px 20px;
    text-align: center;
    background-color: rgba(40, 40, 40, 0.78);
@@ -656,20 +657,16 @@ div.rolldown input {
    display: block;
    margin-left: auto;
    margin-right: auto;
-   height: 2em;
+   margin-top: 2px;
+   margin-bottom: 2px;
 }
 
 div.rolldown input.threadFileInput {
    float: left;
-   margin-left: 10px;
-   margin-top: 8px;
 }
 
 div.rolldown input.threadSubmit {
    float: right;
-   margin-right: 10px;
-   margin-top: 5px;
-   margin-bottom: 8px;
 }
 
 div.card.settings {
