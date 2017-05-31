@@ -31,7 +31,7 @@ div.header, div.container {
 /* Largest screen, with borders at screen edges */
 @media screen and (min-width: 630px) {
    div.header, div.container {
-      max-width: 62.5%;
+      max-width: 780px;
       min-width: 630px;
    }
 }
