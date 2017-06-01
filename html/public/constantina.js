@@ -78,7 +78,7 @@ $(function() {
             shortener = last_element.querySelector('.showShort');
             if ( shortener ) { 
                if ( shortener.style.display == "none" ) {
-                  cardToggle(last_element.id);
+                  revealToggle(last_element.id);
                }
             }
             last_element.scrollIntoView();
@@ -187,53 +187,91 @@ function revealToggle(id) {
    }   
 }
 
+function modifyPostBox(card, nextCard, mode) {
+    // Switching between quote and reply mode in the text areas.
+    // If a reply was already typed, and quote is clicked, just change 
+    // the class of the existing box and add quote to the top of it.
+    //
+    // If a quote box is open and either reply or quote links are clicked,
+    // the box will be hidden but not removed. Quote text won't be added 
+    // after it first appears in the text box.
+    //
+    // Returns [need-to-create-card, need-to-add-quote-text]
+    createCard = true;
+    addText = false;
+
+    if (nextCard.classList.contains("newPost")) {
+        // Click Reply or Quote twice? Card disappears, but is not destroyed
+        if (nextCard.classList.contains(mode)) {
+            nextCard.style.display = "none";
+            createCard = false;
+        }
+        // Turning on a quote? Add contents to the textarea
+        else if ((nextCard.classList.contains("reply")) && (mode === "quote")) {
+            addText = true;
+            createCard = false;
+        }
+        else if ((nextCard.classList.contains("quote")) && (mode === "reply")) {
+            nextCard.classList.style.display = "none";
+            createCard = false;
+        }
+    }
+
+    if ((createCard == true) && (mode === "quote")) {
+        // Just adding a quote card where none existed.
+        addText = true;
+    }
+    return [createCard, addText];
+}
+
 function createPost(id, mode) {
    var card = document.getElementById(id);
-   var newPostCard = document.createElement('div');
-   newPostCard.className = 'card newPost';
    var reply = document.createElement('textarea');
    reply.className = "newThread";
    reply.required = true;
 
-   // If reply already clicked, get rid of previous text boxes
-   var nextElement = card.nextElementSibling;
-   if ( nextElement.classList.contains("newPost") ) {
-      card.nextSibling.remove();
-   }
-   if ( nextElement.classList.contains(mode) ) {
-      return;   // Undraw, and call it good
-   }
+   var nextCard = card.nextElementSibling;
+   var [createCard, addText] = modifyPostBox(card, nextCard, mode)
 
    reply.name = mode;
-   newPostCard.classList.add(mode);
-   if ( mode === "quote" ) {
+   if ( addText == true ) {
       // Get body of the earlier message, and format it without nested
-      // quotes. Only basic paragraphs (avoid pre/code/friends) TODO
+      // quotes. Only basic paragraphs (avoid pre/code/friends) 
+      // TODO is there a quote in there already? If so, don't add any more
       quotetext = card.childNodes[3].getElementsByClassName('postBody');
       // Munge all paragraphs, and put it in a [QUOTE] tag.
       reply.defaultValue = "[QUOTE]" + quotetext[0].textContent + "[/QUOTE]";
-
+   } else if ((createCard == false) && 
+              (nextCard.style.display == "none")) {
+       // Card already exists. Just show it.
+       nextCard.style.display = "block";
    } else {
       reply.placeholder = "Add Your Reply!";
    }
 
    // Append edit menu afterwards
-   var replyFooter = document.createElement('div');
-   // TODO: not newthread class!
-   replyFooter.className = "rolldown newthread";
-   var attachmentButton = document.createElement('input');
-   attachmentButton.className = "threadFileInput";
-   attachmentButton.type = "file";
-   attachmentButton.name = "attachment";
-   var submitButton = document.createElement('input');
-   submitButton.className = "threadSubmit";
-   submitButton.type = "submit";
-   submitButton.name = "submit";
-   replyFooter.appendChild(attachmentButton);
-   replyFooter.appendChild(submitButton);
+   if ( createCard == true) {
+      var newPostCard = document.createElement('div');
+      newPostCard.className = 'card newPost';
+      newPostCard.classList.add(mode);
 
-   newPostCard.appendChild(reply);
-   newPostCard.appendChild(replyFooter);
+      var replyFooter = document.createElement('div');
+      // TODO: not newthread class?
+      replyFooter.className = "rolldown newthread";
+      var attachmentButton = document.createElement('input');
+      attachmentButton.className = "threadFileInput";
+      attachmentButton.type = "file";
+      attachmentButton.name = "attachment";
+      var submitButton = document.createElement('input');
+      submitButton.className = "threadSubmit";
+      submitButton.type = "submit";
+      submitButton.name = "submit";
+      replyFooter.appendChild(attachmentButton);
+      replyFooter.appendChild(submitButton);
 
-   card.insertAdjacentElement('afterEnd', newPostCard);
+      newPostCard.appendChild(reply);
+      newPostCard.appendChild(replyFooter);
+
+      card.insertAdjacentElement('afterEnd', newPostCard);
+   }
 }
