@@ -295,9 +295,10 @@ def create_medusa_textcard(card, display_state):
             if (line == first_line) and ('img' not in passed):
                 # Check image size. If it's the first line in the body and
                 # it's relatively small, display with the first paragraph.
-                # Add the dot in front to let the URIs be absolute, but the
-                # Python directories be relative to CWD
-                img = Image.open("." + e.attrib['src'])
+                # Add the dot in front to let the URIs look absolute, but the
+                # Python directories be relative to the image folder in the
+                # private contents directory (not exposed when auth is used)
+                img = Image.open("../private" + e.attrib['src'])
                 if ((img.size[0] > 300) and
                     (img.size[1] > 220) and
                     (card.permalink is False) and
