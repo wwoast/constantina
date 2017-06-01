@@ -203,7 +203,6 @@ function modifyPostBox(card, nextCard, mode) {
     if (nextCard.classList.contains("newPost")) {
         // Click Reply or Quote twice? Card disappears, but is not destroyed
         if (nextCard.classList.contains(mode)) {
-            nextCard.style.display = "none";
             createCard = false;
         }
         // Turning on a quote? Add contents to the textarea
@@ -212,11 +211,9 @@ function modifyPostBox(card, nextCard, mode) {
             createCard = false;
         }
         else if ((nextCard.classList.contains("quote")) && (mode === "reply")) {
-            nextCard.classList.style.display = "none";
             createCard = false;
         }
     }
-
     if ((createCard == true) && (mode === "quote")) {
         // Just adding a quote card where none existed.
         addText = true;
@@ -237,14 +234,27 @@ function createPost(id, mode) {
    if ( addText == true ) {
       // Get body of the earlier message, and format it without nested
       // quotes. Only basic paragraphs (avoid pre/code/friends) 
-      // TODO is there a quote in there already? If so, don't add any more
       quotetext = card.childNodes[3].getElementsByClassName('postBody');
       // Munge all paragraphs, and put it in a [QUOTE] tag.
-      reply.defaultValue = "[QUOTE]" + quotetext[0].textContent + "[/QUOTE]";
-   } else if ((createCard == false) && 
-              (nextCard.style.display == "none")) {
-       // Card already exists. Just show it.
-       nextCard.style.display = "block";
+      quotecode = "[QUOTE]" + quotetext[0].textContent + "[/QUOTE]";
+      if (createCard == true) {
+         reply.defaultValue = quotecode;
+      } else {
+         // Is there a quote in there already? If so, don't add any more
+         existing = nextCard.firstElementChild.defaultValue;
+         if (existing.indexOf("[QUOTE]") == -1) { 
+            nextCard.firstElementChild.defaultValue = quotecode + "\n" + existing;
+         }
+      }
+      nextCard.classList.remove('reply');
+      nextCard.classList.add('quote');
+
+   } else if ((nextCard.classList.contains('reply')) || (nextCard.classList.contains('quote'))) {
+       if (nextCard.style.display == "none") {
+           nextCard.style.display = "block";
+       } else {
+           nextCard.style.display = "none";
+       }
    } else {
       reply.placeholder = "Add Your Reply!";
    }
