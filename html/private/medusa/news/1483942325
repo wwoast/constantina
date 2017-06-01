@@ -1,7 +1,7 @@
 Longer News Items
 Images, Paragraphs
 
-<img src="/themes/winflat.evergreen/wallpaper.png" class="InlineNewsCenterFocus" />
+<img src="/images/example.png" class="InlineNewsCenterFocus" />
 <p>For longer news items, you can have embedded images that only appear when you expand the entry.</p>
 
 <p>Just create a news entry with more than three paragraphs, and any image larger than 300&times;220px will automatically be hidden.</p>
