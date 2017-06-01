@@ -190,14 +190,14 @@ function revealToggle(id) {
 function createPost(id, mode) {
    var card = document.getElementById(id);
    var newPostCard = document.createElement('div');
-   newPostCard.className = 'newPostCard';
+   newPostCard.className = 'card newPost';
    var reply = document.createElement('textarea');
    reply.className = "newThread";
    reply.required = true;
 
    // If reply already clicked, get rid of previous text boxes
    var nextElement = card.nextElementSibling;
-   if ( nextElement.classList.contains("newPostCard") ) {
+   if ( nextElement.classList.contains("newPost") ) {
       card.nextSibling.remove();
    }
    if ( nextElement.classList.contains(mode) ) {
@@ -210,8 +210,8 @@ function createPost(id, mode) {
       // Get body of the earlier message, and format it without nested
       // quotes. Only basic paragraphs (avoid pre/code/friends) TODO
       quotetext = card.childNodes[3].getElementsByClassName('postBody');
-      // TODO: munge all paragraphs, and put it in a [QUOTE] tag.
-      reply.defaultValue = quotetext[0].textContent;
+      // Munge all paragraphs, and put it in a [QUOTE] tag.
+      reply.defaultValue = "[QUOTE]" + quotetext[0].textContent + "[/QUOTE]";
 
    } else {
       reply.placeholder = "Add Your Reply!";
@@ -220,7 +220,7 @@ function createPost(id, mode) {
    // Append edit menu afterwards
    var replyFooter = document.createElement('div');
    // TODO: not newthread class!
-   replyFooter.className = "card rolldown newthread";
+   replyFooter.className = "rolldown newthread";
    var attachmentButton = document.createElement('input');
    attachmentButton.className = "threadFileInput";
    attachmentButton.type = "file";
