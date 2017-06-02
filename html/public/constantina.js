@@ -17,6 +17,7 @@
 
 
 var clickMore = false;
+var wasFresh = [];
 
 // The last headingCard in the page is a hidden marker. If it can't be hidden
 // by Javascript, it will display a "load more content" link that can be
@@ -177,6 +178,13 @@ function revealToggle(id) {
       for ( var i = 0; i < largeImgs.length; i++ ) {
          largeImgs[i].style.display = "block";
       }
+      // If a card is color-highlighted (fresh), remove
+      // the highlight once it's expanded. This preserves
+      // the look of the gradient effect for smaler items.
+      if ( card.classList.contains("fresh") ) {
+         wasFresh.push(id);
+         card.classList.remove("fresh");
+      }
    }
    else {
       expandLink.style.display = "inline";
@@ -184,7 +192,13 @@ function revealToggle(id) {
       for ( var i = 0; i < largeImgs.length; i++ ) {
          largeImgs[i].style.display = "none";
       }
-   }   
+      // If a card was color-highlighted, add the 
+      // freshness back once shrunk.
+      if ( wasFresh.indexOf(id) != -1) {
+         wasFresh.splice(wasFresh.indexOf(id), 1);
+         card.classList.add("fresh");
+      }
+   }
 }
 
 function modifyPostBox(card, nextCard, mode) {
@@ -246,6 +260,7 @@ function createPost(id, mode) {
             nextCard.firstElementChild.defaultValue = quotecode + "\n" + existing;
          }
       }
+      // Once it gets a quote, give it the "quote" class, since we just added quote text.
       nextCard.classList.remove('reply');
       nextCard.classList.add('quote');
 
