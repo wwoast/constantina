@@ -140,15 +140,15 @@ div.card {
 }
 
 div.card.fresh.odd {
-   background-image: -webkit-radial-gradient(circle, rgba(40, 40, 70, 0.38) 0px, rgba(40, 70, 240, 0.38) 700px);
-   background-image: -moz-radial-gradient(circle, rgba(40, 40, 70, 0.38) 0px, rgba(40, 70, 240, 0.38) 700px);
-   background-image: radial-gradient(circle, rgba(40, 40, 70, 0.38) 0px, rgba(40, 70, 240, 0.38) 700px);
+   background-image: -webkit-radial-gradient(circle, rgba(90, 30, 70, 0.48) 0px, rgba(175, 40, 210, 0.48) 700px);
+   background-image: -moz-radial-gradient(circle, rgba(90, 30, 70, 0.48) 0px, rgba(175, 40, 210, 0.48) 700px);
+   background-image: radial-gradient(circle, rgba(90, 30, 70, 0.48) 0px, rgba(175, 40, 210, 0.48) 700px);
 }
 
 div.card.fresh.even {
-   background-image: -webkit-radial-gradient(circle, rgba(40, 40, 70, 0.48) 0px, rgba(40, 70, 240, 0.48) 700px);
-   background-image: -moz-radial-gradient(circle, rgba(40, 40, 70, 0.48) 0px, rgba(40, 70, 240, 0.48) 700px);
-   background-image: radial-gradient(circle, rgba(40, 40, 70, 0.48) 0px, rgba(40, 70, 240, 0.48) 700px);
+   background-image: -webkit-radial-gradient(circle, rgba(130, 70, 110, 0.48) 0px, rgba(215, 80, 250, 0.48) 700px);
+   background-image: -moz-radial-gradient(circle, rgba(130, 70, 110, 0.48) 0px, rgba(215, 80, 250, 0.48) 700px);
+   background-image: radial-gradient(circle, rgba(130, 70, 110, 0.48) 0px, rgba(215, 80, 250, 0.48) 700px);
 }
 
 div.rolldown {
