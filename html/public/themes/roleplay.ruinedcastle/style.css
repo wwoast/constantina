@@ -146,9 +146,9 @@ div.card.fresh.odd {
 }
 
 div.card.fresh.even {
-   background-image: -webkit-radial-gradient(circle, rgba(40, 70, 40, 0.48) 0px, rgba(40, 240, 70, 0.48) 350px);
-   background-image: -moz-radial-gradient(circle, rgba(40, 70, 40, 0.48) 0px, rgba(40, 240, 70, 0.48) 350px);
-   background-image: radial-gradient(circle, rgba(40, 70, 40, 0.48) 0px, rgba(40, 240, 70, 0.48) 350px);
+   background-image: -webkit-radial-gradient(circle, rgba(80, 110, 80, 0.38) 0px, rgba(80, 240, 110, 0.38) 350px);
+   background-image: -moz-radial-gradient(circle, rgba(80, 110, 80, 0.38) 0px, rgba(80, 240, 110, 0.38) 350px);
+   background-image: radial-gradient(circle, rgba(80, 110, 80, 0.38) 0px, rgba(80, 240, 110, 0.38) 350px);
 }
 
 div.rolldown {
