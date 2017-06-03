@@ -178,7 +178,8 @@ div.card.error {
 }
 
 div.card.news {
-   background-color: rgba(101, 96, 128, 0.78);
+   /* background-color: rgba(101, 96, 128, 0.78); */
+   background-color: rgba(121, 161, 118, 0.78);
    padding: 10px 20px 10px 20px;
 }
 
@@ -528,7 +529,7 @@ div.card.forum h2, div.card.forum h5, div.card.settings h2, div.card.settings h5
 }
 
 div.card.forum.odd {
-   background-color: rgba(70, 70, 114, 0.78); 
+   background-color: rgba(70, 70, 114, 0.78);
 }
 
 div.card.forum.even {
