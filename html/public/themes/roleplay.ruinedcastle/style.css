@@ -802,14 +802,34 @@ div.card.help pre {
       font-weight: bold;
    }
 
-   div.bottom p.cardNav, div.bottom p.postDate {
+   /* Formatting for forum card Reply links, so they are easily touched in
+      a phone's Portrait mode. Also moves the date underneath. */
+   div.card.forum div.bottom p.cardNav, div.card.forum div.bottom p.postDate {
       margin-bottom: 0px;
       padding-bottom: 0px;
-      font-size: 9pt;
+      font-size: 14pt;
+      display: block;
+      width: 90%;
    }
 
    div.bottom p.cardNav {
       padding-left: 14px;
+   }
+
+   div.card.forum div.bottom p.postDate {
+       float: left;
+       font-size: 9pt;
+       text-align: left;
+       padding-left: 14px;
+       letter-spacing: normal;
+   }
+
+   div.card.news div.bottom p.postDate {
+       padding-right: 8px;
+       font-size: 9pt;
+       text-align: right;
+       width: 25%;
+       letter-spacing: normal;
    }
 
    div.bottom p.postDate { 
