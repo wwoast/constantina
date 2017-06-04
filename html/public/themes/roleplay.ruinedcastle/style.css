@@ -17,6 +17,15 @@ body {
    color: white;
 }
 
+/* For really big screens, let a color border exist on the shoulders */
+@media screen and (min-width: 1950px) {
+    body {
+        background-size: auto 100%;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+}
+
 div.header, div.container {
    position: relative;
    margin-left: auto;

@@ -2,7 +2,8 @@ html {
     -webkit-text-size-adjust: 100%; /* Prevent font scaling in landscape */
 }
 
-/* Cover makes the background collapse at smaller sizes */
+/* Cover makes the background collapse at smaller sizes, and stretch too far
+   for large widescreen monitors, so use 100% height and auto width instead. */
 body {
    background-image: url("wallpaper.jpg");
    background-color: #527050;
@@ -17,6 +18,14 @@ body {
    line-height: 1.4;
    font-size: 14pt;
    color: white;
+}
+
+/* For really big screens, let a color border exist on the shoulders */
+@media screen and (min-width: 1500px) {
+    body {
+        background-size: auto 100%;
+        background-repeat: no-repeat;
+    }
 }
 
 div.header, div.container {
