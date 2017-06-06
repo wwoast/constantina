@@ -63,6 +63,9 @@ $(function() {
       loadingButton();
    }
 
+   // Add the search text pre-populated into the search bar
+   document.getElementById("searchEntry").placeholder = searchPlaceholderText();
+
    // Detect when we loaded more content, and scroll to it if it was done via
    // a button click at the bottom of the page. Need a timeout value so that 
    // we scrollIntoView() only when all divs are finally rendered
@@ -122,6 +125,14 @@ $(function() {
    });
 });
 
+function searchPlaceholderText() { 
+   if (window.location.href.indexOf("?xs") != -1) {
+       var placeholder = window.location.href.split("?")[1].slice(2)
+       return placeholder;
+   } else {
+       return "";
+   }
+}
 
 function activateTopicLinks() { 
    var linkList = document.getElementsByClassName('topicLink');
