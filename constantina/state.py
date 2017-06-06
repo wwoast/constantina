@@ -247,7 +247,7 @@ class ConstantinaState(BaseState):
 
     def reshuffle_mode(self):
         """An empty search was given, so reshuffle the page"""
-        if ((self.all("search") is not None) and
+        if ((self.all("search") is None) and
             (self.all("reshuffle", "or") is True) and
             (self.all("card_filter") is None)):
             return True

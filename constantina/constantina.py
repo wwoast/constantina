@@ -491,18 +491,23 @@ def contents_page(start_response, state, headers):
         html = html.replace(substitute, create_page(page))
         start_response('200 OK', headers)
 
-    # Did we get an empty search? If so, reshuffle
+    # Empty search
     elif state.reshuffle_mode() is True:
-        syslog.syslog("***** Reshuffle Page Contents *****")
+        syslog.syslog("***** Empty Search / Reshuffle Mode *****")
         state = ConstantinaState(None)
         page = ConstantinaPage(state)
-        html = create_page(page)
+        base = open(state.theme + '/contents.html', 'r')
+        html = base.read()
+        html = html.replace(substitute, create_page(page))
         start_response('200 OK', headers)
 
     # Doing a search or a filter process
-    elif state.search_mode() is True:
+    elif state.search_mode() is True and state.page == 0:
+        syslog.syslog("***** New Search Page Results *****")
         page = ConstantinaPage(state)
-        html = create_page(page)
+        base = open(state.theme + '/contents.html', 'r')
+        html = base.read()
+        html = html.replace(substitute, create_page(page))
         start_response('200 OK', headers)
 
     # Otherwise, there is state, but no special headers.

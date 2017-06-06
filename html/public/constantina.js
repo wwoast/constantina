@@ -113,44 +113,12 @@ $(function() {
    $('#searchForm').submit(function() {
       $('#searchEntry').blur();   // Make iOS keyboard disappear after submitting
       var query = $('#searchEntry').val().trim();
-      // Remove or escape any search processing characters here like commas
-      $(".container").empty();
-
-      // Create a now-searching div
-      var loadingText = ''
-      if ( query == '' ) {
-         loadingText = document.createTextNode('Reshuffling...');
-      } else {
-         loadingText = document.createTextNode('Searching...');
-      }
-      var loading = document.createElement('div');
-      loading.className = "card heading";
-      loading.id = "search_waiting";
-      var loadingContents = document.createElement('p');
-      loadingContents.id = "loadButton";
-      loadingContents.appendChild(loadingText);
-      loading.appendChild(loadingContents);
-      $(".container").append(loading);
-
+      // TODO: Remove or escape any search processing characters here like commas
       // Allow searches using special characters like #
       query = escape(query);
 
       // Load more data
-      $("#searchForm").action = "/?xs" + query;
-      $.get(
-         "/?xs" + query,
-          function (data) {
-             // hack hack hack (length check)
-             if ( data.length <= 200 ) {
-                var failedText = document.createTextNode('No results.');
-                loadingContents.removeChild(loadingText);
-                loadingContents.appendChild(failedText);
-             } else {
-                $(".container").empty();
-                $(".container").append(data);
-             }
-          }
-      );
+      window.location.assign("/?xs" + query);
    });
 });
 
