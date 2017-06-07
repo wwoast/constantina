@@ -128,7 +128,7 @@ $(function() {
 function searchPlaceholderText() { 
    if (window.location.href.indexOf("?xs") != -1) {
        var placeholder = window.location.href.split("?")[1].slice(2)
-       return placeholder;
+       return unescape(placeholder);
    } else {
        return "";
    }
