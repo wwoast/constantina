@@ -384,10 +384,14 @@ div#scrollstone, div#old_scrollstone {
    height: 0px;
 }
 
-div#tombstone, div#old_tombstone, div#search_waiting {
+div#tombstone, div#old_tombstone, div#empty {
    background-color: rgba(190, 124, 20, 0.78);
    font-weight: bold;
    text-justify: none;
+}
+
+div#empty p {
+    text-align: center;
 }
 
 div#tombstone p#state, div#old_tombstone p#state {

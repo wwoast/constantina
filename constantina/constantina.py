@@ -100,6 +100,8 @@ class ConstantinaPage:
                 self.cards.insert(len(self.cards) - 7, MedusaCard('heading', 'scrollstone', state=self.state.medusa, grab_body=True))
                 # Finally, add the "next page" tombstone to load more content
                 self.cards.append(MedusaCard('heading', 'tombstone', state=self.state.medusa, grab_body=True))
+            elif len(self.cards) == 0:
+                self.cards.append(MedusaCard('heading', 'empty', state=self.state.medusa, grab_body=True))
             else:
                 self.cards.append(MedusaCard('heading', 'bottom', state=self.state.medusa, grab_body=True))
 
