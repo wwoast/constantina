@@ -509,6 +509,18 @@ ul.quiet {
    font-size: 12pt;
 }
 
+::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+  color: lightpink;
+}
+::-moz-placeholder { /* Firefox 19+ */
+  color: lightpink;
+}
+:-ms-input-placeholder { /* IE 10+ */
+  color: lightpink;
+}
+:-moz-placeholder { /* Firefox 18- */
+  color: lightpink;
+}
 
 /* Portrait mode, default for iPhones and for frames that are in a 
    similar layout / resolution */
