@@ -497,6 +497,11 @@ def escape_amp(in_str):
     return in_str.replace("&", "&amp;")
 
 
+def urldecode(in_uri):
+    """TODO: Establish a standard by which authenticated files are read from disk."""
+    return unquote_plus(in_uri)
+
+
 def safe_path(in_uri):
     """
     If a path has unsafe tendencies in it, just return 404.

@@ -5,7 +5,7 @@ from random import randint, seed
 import syslog
 
 from auth import authentication, authentication_page
-from shared import GlobalConfig, BaseFiles, opendir, safe_path
+from shared import GlobalConfig, BaseFiles, opendir, safe_path, urldecode
 from state import ConstantinaState
 from medusa.cards import *
 from medusa.search import MedusaSearch
@@ -541,11 +541,12 @@ def get_file(in_uri, start_response, headers, auth_mode, auth=None):
         elif auth.account.valid is False:
             file_dirs.pop()
 
+    in_uri = urldecode(in_uri)   # No url-encoded characters
     in_uri = in_uri[1:]   # No leading slash
     http_response = '200 OK'
     for file_dir in file_dirs:
         os.chdir(file_dir)
-        # syslog.syslog("static file:" + file_dir + "/" + in_uri)
+        syslog.syslog("static file:" + file_dir + "/" + in_uri)
         try:
             with open(in_uri, 'r') as handle:
                 # w/o content-type headers, things like MP3s won't play
