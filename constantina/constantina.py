@@ -552,6 +552,14 @@ def get_file(in_uri, start_response, headers, auth_mode, auth=None):
                 # within the browser, so add them.
                 if in_uri.find(".mp3") != -1:
                     headers.append(("Content-Type", "audio/mpeg"))
+                elif in_uri.find(".png") != -1:
+                    headers.append("Content-Type", "image/png"))
+                    headers.append("Cache-Control", "private"))
+                    headers.append("Cache-Control", "max-age=31536000"))
+                elif in_uri.find(".jpg") != -1:
+                    headers.append("Content-Type", "image/jpeg"))
+                    headers.append("Cache-Control", "private"))
+                    headers.append("Cache-Control", "max-age=31536000"))
                 start_response(http_response, headers)
                 return handle.read()
         except IOError:
