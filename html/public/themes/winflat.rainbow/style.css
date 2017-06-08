@@ -513,16 +513,16 @@ ul.quiet {
    font-size: 12pt;
 }
 
-::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+input#searchEntry::-webkit-input-placeholder { /* Chrome/Opera/Safari */
   color: lightpink;
 }
-::-moz-placeholder { /* Firefox 19+ */
+input#searchEntry::-moz-placeholder { /* Firefox 19+ */
   color: lightpink;
 }
-:-ms-input-placeholder { /* IE 10+ */
+input#searchEntry:-ms-input-placeholder { /* IE 10+ */
   color: lightpink;
 }
-:-moz-placeholder { /* Firefox 18- */
+input#searchEntry:-moz-placeholder { /* Firefox 18- */
   color: lightpink;
 }
 
