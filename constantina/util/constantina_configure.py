@@ -235,13 +235,15 @@ class AccountSettingsConfig:
 
     def account_defaults(self):
         """
-        Create the account 
+        Create the account
         """
         pass
 
     def reset_settings(self):
         """
-
+        Reset the key for seeing the settings cookie
+        """
+        pass
 
 
 def install_arguments():
