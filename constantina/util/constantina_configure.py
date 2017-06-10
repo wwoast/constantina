@@ -86,21 +86,6 @@ class ConstantinaConfig:
         if value is not None:
             config.set(section, option, value)
 
-    def opaque_instance(self):
-        """
-        Create an opaque instance ID, so that cookies for multiple Constantina
-        instances on the same domain name, don't squash each other. It's a random
-        number, converted to a BASE62 minus similar characters list.
-        """
-        random_id = randint(0, 2**32-1)
-        base = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
-        length = len(base)
-        opaque = ''
-        while random_id != 0:
-            opaque = base[random_id % length] + opaque
-            random_id /= length
-        return opaque
-
     def update_configs(self):
         """Make config changes once the config files are staged"""
         self.settings.read(self.config_root + "/constantina.ini")
@@ -111,7 +96,7 @@ class ConstantinaConfig:
         self.configure(self.settings, "paths", "data_root", self.data_root)
         self.configure(self.settings, "paths", "config_root", self.config_root)
         self.configure(self.settings, "paths", "cgi_bin", self.cgi_bin)
-        self.configure(self.settings, "server", "instance_id", self.opaque_instance())
+        self.configure(self.settings, "server", "instance_id", opaque_instance())
         with open(self.config_root + "/constantina.ini", "wb") as cfh:
             self.settings.write(cfh)
 
@@ -318,6 +303,25 @@ def user_management():
     # create an admin account now as well.
     if accounts.admin_exists is False:
         accounts.add_user("admin")
+
+
+def opaque_instance():
+    """
+    Create an opaque instance ID. This is used for a couple things:
+    1) So that cookies for multiple Constantina instances on the same domain name, 
+       don't squash each other. (instance_id)
+    2) So that each user preference key has a unique identifier that can be merged
+       with the above instance_id.
+    It's a random number, converted to a BASE62 minus similar characters list.
+    """
+    random_id = randint(0, 2**32-1)
+    base = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
+    length = len(base)
+    opaque = ''
+    while random_id != 0:
+        opaque = base[random_id % length] + opaque
+        random_id /= length
+    return opaque
 
 
 if __name__ == '__main__':
