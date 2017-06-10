@@ -24,6 +24,10 @@ GlobalConfig.read(ConfigOptions)
 # The other Constantina modules need access to this "globally".
 BaseFiles = {}
 
+# An alphabet we use for opaque instance IDs that is BASE62 minus homomorph
+# characters that could easily be mistaken for each other.
+OpaqueBase = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
+
 
 class BaseCardType:
     """
@@ -362,7 +366,6 @@ class BaseState:
                 break
 
 
-
 def count_ptags(processed_lines):
     """
     Count all the <p> tags. If there's less than three paragraphs, the
@@ -490,6 +493,50 @@ def opendir(config, ctype, hidden=False):
         # syslog.syslog("ctype: %s   basefiles: %s" % (ctype, BaseFiles[ctype]))
 
     return BaseFiles[ctype]
+
+
+def opaque_identifier(random_id=randint(0, 2**32-1)):
+    """
+    Create an opaque instance ID. This is used for a couple things:
+    1) So that cookies for multiple Constantina instances on the same domain name,
+       don't squash each other. (instance_id)
+    2) So that each user preference key has a unique identifier that can be merged
+       with the above instance_id.
+    It's a random number, converted to a BASE62 minus similar characters list.
+    """
+    base = OpaqueBase
+    length = len(base)
+    opaque = ''
+    while random_id != 0:
+        opaque = base[random_id % length] + opaque
+        random_id /= length
+    return opaque
+
+
+def opaque_integer(id):
+    """
+    Convert an opaque identifier back into the random number it came from.
+    """
+    base = OpaqueBase
+    length = len(base)
+    strlen = len(id)
+    num = 0
+    idx = 0
+    for char in id:
+        power = (strlen - (idx + 1))
+        num += base.index(char) * (length ** power)
+        idx += 1
+    return num
+
+
+def opaque_mix(id1, id2):
+    """
+    Given two opaque identifiers, convert them back to integers, XOR the results,
+    and then create a new opaque identifier from the result.
+    """
+    rand1 = opaque_integer(id1)
+    rand2 = opaque_integer(id2)
+    return opaque_identifier(rand1 ^ rand2)
 
 
 def escape_amp(in_str):

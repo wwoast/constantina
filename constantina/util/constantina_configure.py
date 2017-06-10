@@ -96,7 +96,7 @@ class ConstantinaConfig:
         self.configure(self.settings, "paths", "data_root", self.data_root)
         self.configure(self.settings, "paths", "config_root", self.config_root)
         self.configure(self.settings, "paths", "cgi_bin", self.cgi_bin)
-        self.configure(self.settings, "server", "instance_id", opaque_instance())
+        self.configure(self.settings, "server", "instance_id", opaque_identifier())
         with open(self.config_root + "/constantina.ini", "wb") as cfh:
             self.settings.write(cfh)
 
@@ -223,7 +223,7 @@ class AccountPreferencesConfig:
         Create the cookie_id and account key
         """
         # if config exists, fail.
-        cookie_id = opaque_instance()
+        cookie_id = opaque_identifier()
         pass
 
     def reset_preferences(self, username):
@@ -231,7 +231,7 @@ class AccountPreferencesConfig:
         Reset the key for seeing the settings cookie
         """
         # if config doesn't exist, fail.
-        cookie_id = opaque_instance()
+        cookie_id = opaque_identifier()
         # make new keys for this user
         pass
 
@@ -310,8 +310,10 @@ def user_management():
         accounts.add_user("admin")
 
 
-def opaque_instance():
+def opaque_identifier(random_id=randint(0, 2**32-1)):
     """
+    Copied from shared.py, since at install time it can't easily be included!
+
     Create an opaque instance ID. This is used for a couple things:
     1) So that cookies for multiple Constantina instances on the same domain name,
        don't squash each other. (instance_id)
@@ -319,7 +321,6 @@ def opaque_instance():
        with the above instance_id.
     It's a random number, converted to a BASE62 minus similar characters list.
     """
-    random_id = randint(0, 2**32-1)
     base = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
     length = len(base)
     opaque = ''
