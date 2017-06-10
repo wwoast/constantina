@@ -210,7 +210,7 @@ class ShadowConfig:
         self.__delete_key("sign_current")
 
 
-class AccountSettingsConfig:
+class AccountPreferencesConfig:
     """
     When creating a new account, draft default settings for how various applications
     appear to users.
@@ -218,16 +218,21 @@ class AccountSettingsConfig:
     def __init__(self):
         pass
 
-    def account_defaults(self):
+    def new_account_preferences(self, username):
         """
         Create the cookie_id and account key
         """
+        # if config exists, fail.
+        cookie_id = opaque_instance()
         pass
 
-    def reset_settings(self):
+    def reset_preferences(self, username):
         """
         Reset the key for seeing the settings cookie
         """
+        # if config doesn't exist, fail.
+        cookie_id = opaque_instance()
+        # make new keys for this user
         pass
 
 
@@ -308,7 +313,7 @@ def user_management():
 def opaque_instance():
     """
     Create an opaque instance ID. This is used for a couple things:
-    1) So that cookies for multiple Constantina instances on the same domain name, 
+    1) So that cookies for multiple Constantina instances on the same domain name,
        don't squash each other. (instance_id)
     2) So that each user preference key has a unique identifier that can be merged
        with the above instance_id.
