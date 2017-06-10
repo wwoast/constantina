@@ -235,7 +235,7 @@ class AccountSettingsConfig:
 
     def account_defaults(self):
         """
-        Create the account
+        Create the cookie_id and account key
         """
         pass
 
