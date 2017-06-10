@@ -539,7 +539,7 @@ def opaque_mix(id1, id2):
     return opaque_identifier(rand1 ^ rand2)
 
 
-def specific_cookie(self, check_name, raw_cookies):
+def specific_cookie(check_name, raw_cookies):
     """
     Split out just the JWE part of the cookie. Since we split by semicolon,
     we also need to take off leading spaces (lstrip) that browsers tend to
