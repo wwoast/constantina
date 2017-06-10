@@ -20,13 +20,13 @@ ConfigOptions = [
 ]
 GlobalConfig.read(ConfigOptions)
 
+# An alphabet used for opaque instance IDs that is BASE62 minus homomorph
+# characters that could easily be mistaken for each other.
+OpaqueBase = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
+
 # Only do opendir once per directory, and store results here
 # The other Constantina modules need access to this "globally".
 BaseFiles = {}
-
-# An alphabet we use for opaque instance IDs that is BASE62 minus homomorph
-# characters that could easily be mistaken for each other.
-OpaqueBase = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
 
 
 class BaseCardType:
@@ -537,6 +537,21 @@ def opaque_mix(id1, id2):
     rand1 = opaque_integer(id1)
     rand2 = opaque_integer(id2)
     return opaque_identifier(rand1 ^ rand2)
+
+
+def specific_cookie(self, check_name, raw_cookies):
+    """
+    Split out just the JWE part of the cookie. Since we split by semicolon,
+    we also need to take off leading spaces (lstrip) that browsers tend to
+    print after semicolon-delimited lists of cookies.
+    """
+    for raw_data in raw_cookies.split(';'):
+        raw_cookie = raw_data.lstrip()
+        cookie_name = raw_cookie.split('=')[0]
+        token = raw_cookie.split('=')[1]
+        if cookie_name == check_name:
+            return token
+    return None
 
 
 def escape_amp(in_str):

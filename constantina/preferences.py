@@ -4,7 +4,7 @@ import json
 import syslog
 from jwcrypto import jwk, jwt
 
-from shared import GlobalConfig, opaque_identifier, opaque_mix
+from shared import GlobalConfig, opaque_identifier, opaque_integer, opaque_mix, specific_cookie
 
 
 syslog.openlog(ident='constantina.preferences')
@@ -24,12 +24,17 @@ class ConstantinaPreferences:
     cookie's purpose may remain opaque on the client, and the settings cannot be
     changed or sniffed on the server without an active session from the user
     actively occuring.
-
-    # cookie name: __Secure_hostname-cookieid
     """
-    def __init__(self):
+    def __init__(self, username, mode, **kwargs):
+        # TODO: read in the cookie name
         self.__read_config()
-        self.default_preferences()
+        self.__default_preferences()
+        
+        if mode == "set":
+            pass
+        if mode == "cookie":
+            # Cookie name things go here
+            pass
 
     def __read_config(self):
         """Necessary config files for setting preferences."""
@@ -41,7 +46,7 @@ class ConstantinaPreferences:
         self.shadow = ConfigParser.SafeConfigParser()
         self.shadow.read(self.config_root + "/shadow.ini")
 
-    def default_preferences(self):
+    def __default_preferences(self):
         """
         Set all the default preference claims a user gets:
             thm: the user's chosen theme
@@ -50,14 +55,24 @@ class ConstantinaPreferences:
                 0=expand all threads
                 N>0: expand last N*10 threads
             rev: user's configured time for editing a thread.
-        Also initialize the available signing and encryption keys to "None".
+        Initialize the available signing and encryption keys to "None".
+        Based on the username, set the expected cookie name and id.
+        TODO: refactor auth settings to use similar default strategy.
         """
         self.thm = GlobalConfig.get("themes", "default")
         self.top = "general"
         self.gro = 0
         self.rev = self.zoo.get('zoo', 'edit_window')
+
         self.encrypt = None
         self.sign = None
+
+        self.instance_id = GlobalConfig.get("server", "instance_id")
+        self.preference_id = self.preferences.get(username, "preference_id")
+        self.cookie_id = create_cookie_id(self.instance_id, self.preference_id)
+        self.cookie_name = ("__Secure-" +
+                            GlobalConfig.get('server', 'hostname') + "-" +
+                            self.cookie_id)
 
     def set_preference_claims(self, pref_dict):
         """
@@ -100,49 +115,26 @@ class ConstantinaPreferences:
         Whichever preference-id XORs the cookie-id into the instance-id, that
         is the correct key for dealing with this cookie.
         """
-        # From base62:
-        pass
+        instance_int = opaque_integer(instance_id)
+        cookie_int = opaque_integer(cookie_id)
+        return opaque_identifier(instance_int ^ cookie_int)
 
     def create_cookie_id(self, instance_id, preference_id):
         """
-        Given the instance_id and preference_id, XOR the two numbers together,
+        XOR the instance_id and preference_id binary representations together, and
         and then output the BASE62 minus similar characters result, for use as the
         cookie identifier. This ties setting cookies to a specific site instance.
         """
-        # From base62:
-        
+        return opaque_mix(instance_id, preference_id)
 
-        # Putting it into base62:
-        # random_id = randint(0, 2**32-1)
-        # base = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
-        # length = len(base)
-        # opaque = ''
-        # while random_id != 0:
-        #    opaque = base[random_id % length] + opaque
-        #    random_id /= length
-        pass
-
-    def read_cookie_preferences(self):
+    def read_cookie_preferences(self, cookie):
         """Given a cookie, read the preferences so the settings screen can be populated."""
-        pass
+        preference_id = self.get_cookie_preference_id(self.instance_id, self.cookie_id)
+        # TODO: use keys to decrypt cookie and read deets from preferences.
 
     def write_cookie_preferences(self, cookie_id):
         """Set new preferences, and then write a new cookie."""
         pass
-    
-    def __raw_cookie_to_token(self, raw_cookies):
-        """
-        Split out just the JWE part of the cookie. Since we split by semicolon,
-        we also need to take off leading spaces (lstrip) that browsers tend to
-        print after semicolon-delimited lists of cookies.
-        """
-        for raw_data in raw_cookies.split(';'):
-            raw_cookie = raw_data.lstrip()
-            cookie_name = raw_cookie.split('=')[0]
-            token = raw_cookie.split('=')[1]
-            if cookie_name == self.cookie_name:
-                return token
-        return None
 
     def check_token(self, cookie):
         """
@@ -153,7 +145,7 @@ class ConstantinaPreferences:
         If any part of this fails, do not set a cookie and return False.
         TODO: Greatly simplify the cookie checking functions in auth.py!
         """
-        token = self.__raw_cookie_to_token(cookie)
+        token = specific_cookie(self.cookie_name, cookie)
         try:
             decrypted = jwt.JWT(key=self.encrypt, jwt=token)
             validated = jwt.JWT(key=self.sign, jwt=decrypted.claims)

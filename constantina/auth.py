@@ -7,7 +7,7 @@ import syslog
 from jwcrypto import jwk, jwt
 from passlib.hash import argon2
 
-from shared import GlobalConfig
+from shared import GlobalConfig, specific_cookie
 
 
 syslog.openlog(ident='constantina.auth')
@@ -224,20 +224,6 @@ class ConstantinaAuth:
                 return True
         return False
 
-    def __raw_cookie_to_token(self, raw_cookies):
-        """
-        Split out just the JWE part of the cookie. Since we split by semicolon,
-        we also need to take off leading spaces (lstrip) that browsers tend to
-        print after semicolon-delimited lists of cookies.
-        """
-        for raw_data in raw_cookies.split(';'):
-            raw_cookie = raw_data.lstrip()
-            cookie_name = raw_cookie.split('=')[0]
-            token = raw_cookie.split('=')[1]
-            if cookie_name == self.cookie_name:
-                return token
-        return None
-
     def __validate_jwt(self, serial, keyname):
         """
         Try validating the signature of a JWT and its claims.
@@ -272,7 +258,7 @@ class ConstantinaAuth:
         JWT's claims, and return True.
         If any part of this fails, do not set a cookie and return False.
         """
-        token = self.__raw_cookie_to_token(cookie)
+        token = specific_cookie(self.cookie_name, cookie)
         if token is None:
             return False
         if self.__check_jwe(token) is True:
