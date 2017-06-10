@@ -216,13 +216,32 @@ class ShadowConfig:
 
     def delete_keys(self):
         """
-        Delete all sets of keys. This will guarantee that all usres will need
+        Delete all sets of keys. This will guarantee that all users will need
         to log back in with their current credentials.
         """
         self.__delete_key("encrypt_last")
         self.__delete_key("sign_last")
         self.__delete_key("encrypt_current")
         self.__delete_key("sign_current")
+
+
+class AccountSettingsConfig:
+    """
+    When creating a new account, draft default settings for how various applications
+    appear to users.
+    """
+    def __init__(self):
+        pass
+
+    def account_defaults(self):
+        """
+        Create the account 
+        """
+        pass
+
+    def reset_settings(self):
+        """
+
 
 
 def install_arguments():
