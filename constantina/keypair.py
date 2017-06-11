@@ -22,39 +22,42 @@ class ConstantinaKeypair:
     tokens are validated, we may need to generate updated signing or encryption
     keys, so there are a number of supporting methods for this behavior here.
 
-    section might be "current" or "last" when dealing with auth keypairs, or 
+    key_id might be "current" or "last" when dealing with auth keypairs, or
     a preference_id, when dealing with settings keys.
 
-    To not leak how much time it takes to generate multiple keypair objects, 
+    To not leak how much time it takes to generate multiple keypair objects,
     specify the time value as an input prior to creating multiples of these.
     """
-    def __init__(self, config_file, section, time=jwt.time.time()):
+    def __init__(self, config_file, key_id, stamp="current", time=jwt.time.time()):
         self.config_file = config_file
-        self.section = section
-        self.time = time
+        self.key_id = key_id
+        self.stamp = stamp   # Backdate key issue time, or make it current?
+        self.time = time     # The timestamp used if we set keys.
 
         self.__read_config(config_file)
-        self.__set_defaults(section)
-
-        # TODO: define init operations.
-        # Get the config file section. If it doesn't exist, try and make the keypair
+        self.__set_defaults(key_id)
+        self.regen_keypair(key_id)
 
     def __read_config(self, config_file):
-        self.config = ConfigParser.SafeConfigParser()
+        self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config_path = GlobalConfig.get('paths', 'config_root')
         self.config.read(self.config_path + "/" + self.config_file)
         self.shadow = ConfigParser.SafeConfigParser()
         self.shadow.read(self.config_path + "/shadow.ini")
 
-    def __set_defaults(self, section):
+    def __set_defaults(self, key_id):
+        """
+        Default settings from config, and empty values for the encrypt/sign keys
+        and the read-in iat (issued-at) times
+        """
         self.key_format = self.shadow.get("defaults", "key_format")
         self.key_size = self.shadow.getint("defaults", "key_size")
-        self.sign = self.__read_key("sign", self.section)
-        self.encrypt = self.__read_key("encrypt", self.section)
         self.lifetime = self.shadow.getint("key_settings", "lifetime")
         self.sunset = self.shadow.getint("key_settings", "sunset")
-        self.time = int(jwt.time.time())    # Don't leak multiple timestamps
         self.iat = {}
+        self.encrypt = None
+        self.sign = None
+        self.read_keypair(key_id)
 
     def __read_key(self, key_type, section):
         """
@@ -77,12 +80,18 @@ class ConstantinaKeypair:
         self.iat[key_type] = self.config.get(section, "date")
         return getattr(self, key_type)   # Read into the object, but also return it
 
-    def __write_key(self, key_type, section, mode="current"):
+    def read_keypair(self, key_id):
+        """Read in the keypair for this key_id"""
+        for key_type in ["sign", "encrypt"]:
+            section = key_type + "_" + key_id
+            self.__read_key(key_type, section)
+
+    def __write_key(self, key_type, section):
         """
         Given a keyname, generate the key and write it to the config file.
         key_type here is either "sign" or "encrypt".
 
-        Supports two modes:
+        Supports two timestamping modes (stamp):
            - current: just create a token dated to the current time
            - backdate: token is dated (ctime - sunset) to pre-age it.
         """
@@ -99,33 +108,45 @@ class ConstantinaKeypair:
         self.iat[key_type] = self.time
         self.config.set(section, "date", str(self.iat[key_type]))
         # syslog.syslog("iat: %d time: %d sunset: %d" % (self.iat[key_type]], self.time, self.sunset))
-        if mode == "backdate":
+        if self.stamp == "backdate":
             self.config.set(section, "date", str(self.iat[key_type] - self.sunset))
 
-    def __regen_key(self, key_type, section, mode="current"):
+    def write_keypair(self, key_id):
         """
-        Check the date associated with this key in the config file.
-        If the key has expired, regenerate it (write a totally new key).
-        """
-        if self.config.get(section, "date") == '':
-            self.__write_key(key_type, section, mode)
-        else:
-            keydate = self.config.getint(section, "date")
-            if self.time > (keydate + self.lifetime):
-                self.__write_key(key_type, section, mode)
-
-    def regen_keypair(self, section, mode):
-        """
-        If the datestamps on either member of a keypair have expired, 
-        generate new keys.
+        Write new keypairs for the given key_id.
+        Backdate the issued-at time if necessary, like when we issue new
+        authorization keys for the first time.
         """
         for key_type in ["sign", "encrypt"]:
-            self.__regen_key(key_type, section, mode)
+            section = key_type + "_" + key_id
+            self.__write_key(key_type, section)
+
+    def regen_keypair(self, key_id):
+        """
+        If the datestamps on either member of a keypair have expired, or if the
+        date parameter in the slot is un-set for either of the pair, generate
+        new keys for both slots.
+        """
+        regen_pair = False
+        for key_type in ["sign", "encrypt"]:
+            section = key_type + "_" + key_id
+            if self.config.get(section, "date") == '':
+                regen_pair = True
+                break
+            else:
+                keydate = self.config.getint(section, "date")
+                if self.time > (keydate + self.lifetime):
+                    regen_pair = True
+                    break
+        if regen_pair is True:
+            self.write_keypair(key_id)
 
     def check_token(self, token):
         """
-        Process a JWE settings token from a user cookie. If all the validation works,
-        self.token becomes a valid JWT, and return True.
+        Process a JWE settings token from a user cookie, checking to see if
+        it is signed by this keypair's signing key, and encrypted with its
+        encryption key.
+        If all the validation works, return a validated JWT.
         If any part of this fails, do not set a cookie and return False.
         """
         try:
@@ -134,3 +155,4 @@ class ConstantinaKeypair:
             return validated
         except:
             return False
+            

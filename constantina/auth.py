@@ -51,6 +51,7 @@ class ConstantinaAuth:
             # Check if the token is valid, and if it was, the token and account
             # objects will be properly set. To start, read in any keys we need
             # to validate proper signing.
+            # TODO: create keypairs
             for keyname in ["encrypt_last", "encrypt_current", "sign_last", "sign_current"]:
                 self.__read_key(keyname)
             if self.check_token(**kwargs) is True:
