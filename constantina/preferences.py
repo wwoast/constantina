@@ -29,7 +29,7 @@ class ConstantinaPreferences:
         self.username = username
         self.__read_config()
         self.__default_preferences()
-        
+
         if mode == "set":
             pass
         if mode == "cookie":
@@ -67,13 +67,13 @@ class ConstantinaPreferences:
         self.rev = self.zoo.get('zoo', 'edit_window')
 
         self.instance_id = GlobalConfig.get("server", "instance_id")
-        self.preference_id = self.preferences.get(username, "preference_id")
-        self.cookie_id = create_cookie_id(self.instance_id, self.preference_id)
+        self.preference_id = self.preferences.get(self.username, "preference_id")
+        self.cookie_id = self.create_cookie_id(self.instance_id, self.preference_id)
         self.cookie_name = ("__Secure-" +
                             GlobalConfig.get('server', 'hostname') + "-" +
                             self.cookie_id)
 
-        # Given the preference_id, load the keypair
+        # Given the preference_id, create/load the keypair
         self.keypair = ConstantinaKeypair(self.config_file, self.cookie_id)
 
     def set_preference_claims(self, pref_dict):
@@ -96,23 +96,6 @@ class ConstantinaPreferences:
         account is made, but it calls here to set it.
         """
         self.preferences.set(username, "preference_id", preference_id)
-
-        self.preferences.set
-        key_format = self.shadow.get("defaults", "key_format")
-        key_size = self.shadow.getint("defaults", "key_size")
-        self.sign = jwk.JWK.generate(kty=key_format, size=key_size)
-        self.encrypt = jwk.JWK.generate(kty=key_format, size=key_size)
-
-        # Whatever key properties exist, set them in the config
-        for keytype in ["sign", "encrypt"]:
-            data = getattr(self, keytype).__dict__
-            for hash_key in data['_key'].keys():
-                self.preferences.set(username, keytype + "_" + hash_key, data['_key'][hash_key])
-            for hash_key in data['_params'].keys():
-                self.preferences.set(username, keytype + "_" + hash_key, data['_params'][hash_key])
-        # Write the settings to the preferences file
-        with open(self.config_root + "/preferences.ini", "wb") as cfh:
-            self.preferences.write(cfh)
 
     def get_cookie_preference_id(self, instance_id, cookie_id):
         """
@@ -137,8 +120,6 @@ class ConstantinaPreferences:
         If the cookie doesn't exist, return False.
         """
         preference_id = self.get_cookie_preference_id(self.instance_id, self.cookie_id)
-        # TODO: factor out specific JWE/JWT/JWK processing into a single module
-        # Then have both auth and preferences use the same read_key / write_key stuff
         # TODO: use keys to decrypt cookie and read deets from preferences.
 
     def write_cookie_preferences(self, cookie_id):
