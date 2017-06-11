@@ -102,6 +102,26 @@ class ConstantinaKeypair:
         if mode == "backdate":
             self.config.set(section, "date", str(self.iat[key_type] - self.sunset))
 
+    def __regen_key(self, key_type, section, mode="current"):
+        """
+        Check the date associated with this key in the config file.
+        If the key has expired, regenerate it (write a totally new key).
+        """
+        if self.config.get(section, "date") == '':
+            self.__write_key(key_type, section, mode)
+        else:
+            keydate = self.config.getint(section, "date")
+            if self.time > (keydate + self.lifetime):
+                self.__write_key(key_type, section, mode)
+
+    def regen_keypair(self, section, mode):
+        """
+        If the datestamps on either member of a keypair have expired, 
+        generate new keys.
+        """
+        for key_type in ["sign", "encrypt"]:
+            self.__regen_key(key_type, section, mode)
+
     def check_token(self, token):
         """
         Process a JWE settings token from a user cookie. If all the validation works,

@@ -27,7 +27,6 @@ class ConstantinaAuth:
         self.sunset = self.config.getint("key_settings", "sunset")
         self.time = int(jwt.time.time())    # Don't leak multiple timestamps
         self.headers = []    # Auth headers we add later
-        self.regen_jwk = []  # List of JWKs to regenerate, if needed
         self.jwk = {}        # One of N keys for signing/encryption
         self.jwk_iat = {}    # Expiry dates for the JWKs
         self.jwe = None      # The encrypted token
@@ -66,35 +65,37 @@ class ConstantinaAuth:
         Regenerate any expired JWK shared secret keys in the config file. If a key
         doesn't exist, create it.
         """
+        regen_jwk = []  # List of JWKs to regenerate, if needed
         for keyname in ["encrypt_last", "encrypt_current", "sign_last", "sign_current"]:
             if self.config.get(keyname, "date") == '':
-                self.regen_jwk.append(keyname)
+                regen_jwk.append(keyname)
             else:
                 keydate = self.config.getint(keyname, "date")
                 if self.time > (keydate + self.lifetime):
-                    self.regen_jwk.append(keyname)
+                    regen_jwk.append(keyname)
         # Make any keys necessary. If 'last' keys are brand new, backdate them.
         # If both keys in (encrypt/sign) need to be regenerated, artifically back-date
         # the "last" keys in the set to preserve the correct ages when they start getting
         # regularly regenerated on higher traffic rates. These backdated keys should never
         # actually be used.
-        for keyname in self.regen_jwk:
+        # TODO: iterate over ConstantinaKeypair objects
+        for keyname in regen_jwk:
             if ((self.config.get(keyname, "date") == '') and
                     (keyname.find("last") != -1)):
                 #syslog.syslog("backdate1")
                 self.__write_key(keyname, mode="backdate")
-            elif ((len([x for x in self.regen_jwk if x.find("encrypt") != -1]) == 2) and
+            elif ((len([x for x in regen_jwk if x.find("encrypt") != -1]) == 2) and
                   (keyname.find("last") != -1)):
                 #syslog.syslog("backdate2")
                 self.__write_key(keyname, mode="backdate")
-            elif ((len([x for x in self.regen_jwk if x.find("sign") != -1]) == 2) and
+            elif ((len([x for x in regen_jwk if x.find("sign") != -1]) == 2) and
                   (keyname.find("last") != -1)):
                 #syslog.syslog("backdate3")
                 self.__write_key(keyname, mode="backdate")
             else:
                 self.__write_key(keyname)
         # Write the settings to the shadow file once keys are generated
-        if self.regen_jwk != []:
+        if regen_jwk != []:
             with open(GlobalConfig.get('paths', 'config_root') + "/shadow.ini", "wb") as sfh:
                 self.config.write(sfh)
 
