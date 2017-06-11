@@ -6,7 +6,7 @@ from jwcrypto import jwk, jwt
 from passlib.hash import argon2
 
 from shared import GlobalConfig, specific_cookie
-
+from keypair import ConstantinaKeypair
 
 syslog.openlog(ident='constantina.auth')
 
@@ -27,8 +27,7 @@ class ConstantinaAuth:
         self.sunset = self.config.getint("key_settings", "sunset")
         self.time = int(jwt.time.time())    # Don't leak multiple timestamps
         self.headers = []    # Auth headers we add later
-        self.jwk = {}        # One of N keys for signing/encryption
-        self.jwk_iat = {}    # Expiry dates for the JWKs
+        self.keypair = {}        # One of N keys for signing/encryption
         self.jwe = None      # The encrypted token
         self.jwt = None      # The internal signed token
         self.serial = None   # Token serialized and read/written into cookies
@@ -38,9 +37,9 @@ class ConstantinaAuth:
         self.nbf = None      # JWT not-before time
         self.sub = None      # JWT subject (subject_id/username)
 
-        # Check if JWKs need to be regenerated before accepting any cookies
-        # or signing any new tokens
-        self.__regen_all_jwk()
+        # Read in the authorization signing/encryption keys, and regenerate them
+        # if either one is expired.
+        self.__read_auth_keypair()
 
         if mode == "password":
             # Check username and password, and if the login was valid, the
@@ -48,107 +47,20 @@ class ConstantinaAuth:
             self.account.login_password(**kwargs)
             self.set_token()
         elif mode == "cookie":
-            # Check if the token is valid, and if it was, the token and account
-            # objects will be properly set. To start, read in any keys we need
-            # to validate proper signing.
-            # TODO: create keypairs
-            for keyname in ["encrypt_last", "encrypt_current", "sign_last", "sign_current"]:
-                self.__read_key(keyname)
+            # Check if the auth cookie is valid
             if self.check_token(**kwargs) is True:
                 self.account.login_cookie(self.sub)
         else:
             # No token or valid account
             pass
 
-    def __regen_all_jwk(self):
+    def __read_auth_keypair(self):
         """
-        TODO: Keep this, since the logic is goofy
-        Regenerate any expired JWK shared secret keys in the config file. If a key
-        doesn't exist, create it.
+        Read and regenerate the signing and encyption keys that manage
+        Constantina's auth cookies as necessary.
         """
-        regen_jwk = []  # List of JWKs to regenerate, if needed
-        for keyname in ["encrypt_last", "encrypt_current", "sign_last", "sign_current"]:
-            if self.config.get(keyname, "date") == '':
-                regen_jwk.append(keyname)
-            else:
-                keydate = self.config.getint(keyname, "date")
-                if self.time > (keydate + self.lifetime):
-                    regen_jwk.append(keyname)
-        # Make any keys necessary. If 'last' keys are brand new, backdate them.
-        # If both keys in (encrypt/sign) need to be regenerated, artifically back-date
-        # the "last" keys in the set to preserve the correct ages when they start getting
-        # regularly regenerated on higher traffic rates. These backdated keys should never
-        # actually be used.
-        # TODO: iterate over ConstantinaKeypair objects
-        for keyname in regen_jwk:
-            if ((self.config.get(keyname, "date") == '') and
-                    (keyname.find("last") != -1)):
-                #syslog.syslog("backdate1")
-                self.__write_key(keyname, mode="backdate")
-            elif ((len([x for x in regen_jwk if x.find("encrypt") != -1]) == 2) and
-                  (keyname.find("last") != -1)):
-                #syslog.syslog("backdate2")
-                self.__write_key(keyname, mode="backdate")
-            elif ((len([x for x in regen_jwk if x.find("sign") != -1]) == 2) and
-                  (keyname.find("last") != -1)):
-                #syslog.syslog("backdate3")
-                self.__write_key(keyname, mode="backdate")
-            else:
-                self.__write_key(keyname)
-        # Write the settings to the shadow file once keys are generated
-        if regen_jwk != []:
-            with open(GlobalConfig.get('paths', 'config_root') + "/shadow.ini", "wb") as sfh:
-                self.config.write(sfh)
-
-    def __write_key(self, name, mode="current"):
-        """
-        TODO: REMOVE/USE ConstantinaKeypair
-        Given a keyname, generate the key and write it to the config file.
-        Persist the JWK key itself by "name" into the self.jwk{} dict.
-
-        Supports two modes:
-           - current: just create a token dated to the current time
-           - backdate: token is dated (ctime - sunset) to pre-age it.
-        """
-        key_format = self.config.get("defaults", "key_format")
-        key_size = self.config.getint("defaults", "key_size")
-        self.jwk[name] = jwk.JWK.generate(kty=key_format, size=key_size)
-        # Whatever key properties exist, set them in the config
-        data = self.jwk[name].__dict__
-        for hash_key in data['_key'].keys():
-            self.config.set(name, hash_key, data['_key'][hash_key])
-        for hash_key in data['_params'].keys():
-            self.config.set(name, hash_key, data['_params'][hash_key])
-        # When did we create this key? When the class was instant'ed, unless
-        # we're just generating the tokens and the "last" token needs to be
-        # backdated so it only lasts half the configured lifetime.
-        self.jwk_iat[name] = self.time
-        self.config.set(name, "date", str(self.jwk_iat[name]))
-        # syslog.syslog("iat: %d time: %d sunset: %d" % (self.jwk_iat[name], self.time, self.sunset))
-        if mode == "backdate":
-            self.config.set(name, "date", str(self.jwk_iat[name] - self.sunset))
-
-    def __read_key(self, name):
-        """
-        TODO: REMOVE/USE ConstantinaKeypair
-        Read the desired key from the configuration file, and load it as
-        a JWK for purpose of signing or encryption. This tries to load the
-        exact parameters from the config file into their equivalent places
-        in the JWK object. Namely, the k value goes in _key, and all the
-        other ones of interest go in _params.
-        Any objects that don't go into the JWK object get removed,
-        including the date value we track separately.
-        Persist the JWK key itself by "name" into the self.jwk{} dict
-        """
-        jwk_data = {}
-        exclude = ["date"]
-        for section, value in self.config.items(name):
-            jwk_data[section] = value
-        for section in exclude:
-            del(jwk_data[section])
-        self.jwk[name] = jwk.JWK(**jwk_data)
-        self.jwk_iat[name] = self.config.get(name, "date")
-        return self.jwk[name]   # Read into the object, but also return it
+        self.keypair['last'] = ConstantinaKeypair('shadow.ini', 'last', 'backdate', self.time)
+        self.keypair['current'] = ConstantinaKeypair('shadow.ini', 'current', 'current', self.time)
 
     def __create_jwt(self):
         """
@@ -159,7 +71,7 @@ class ConstantinaAuth:
         signing_algorithm = self.config.get("defaults", "signing_algorithm")
         subject_id = self.config.get("defaults", "subject_id")
         instance_id = GlobalConfig.get("server", "instance_id")
-        signing_key = self.__read_key("sign_current")
+        signing_key = self.keypair["current"].sign
         self.iat = self.time    # Don't leak how long operations take
         self.aud = GlobalConfig.get("server", "hostname")
         self.sub = subject_id + "-"  + instance_id + "/" + self.account.username
@@ -196,11 +108,10 @@ class ConstantinaAuth:
 
     def __create_jwe(self):
         """
-        TODO: Rename, since this is just an AUTH JWE
-        Create a JWE token whose "claims" set (payload) is a signed JWT.
+        Create a JWE auth token whose "claims" set (payload) is a signed JWT.
         """
         self.jwt = self.__create_jwt()
-        encryption_key = self.__read_key("encrypt_current")
+        encryption_key = self.keypair["current"].encrypt
         encryption_parameters = {
             "alg": self.config.get("defaults", "encryption_algorithm"),
             "enc": self.config.get("defaults", "encryption_mode")
@@ -209,61 +120,8 @@ class ConstantinaAuth:
         self.jwe = jwt.JWT(header=encryption_parameters, claims=payload)
         self.jwe.make_encrypted_token(encryption_key)
 
-    def __decrypt_jwe(self, token, keyname):
-        """
-        TODO: this disappears when using keypair methods
-        Try decrpyting a JWE with a key. If successful, return true.
-        """
-        try:
-            self.jwe = jwt.JWT(key=self.jwk[keyname], jwt=token)
-            return True
-        except:
-            return False
-
-    def __check_jwe(self, token):
-        """
-        TODO: REMOVE/USE ConstantinaKeypair
-        Given a serialized blob, parse it as a JWE token. If it fails, return
-        false. If it succeeds, return true, and set self.jwe to be the
-        serialized JWT inside the JWE.
-        """
-        for keyname in ["encrypt_current", "encrypt_last"]:
-            if self.__decrypt_jwe(token, keyname) is True:
-                return True
-        return False
-
-    def __validate_jwt(self, serial, keyname):
-        """
-        TODO: this disappears when using keypair methods
-        Try validating the signature of a JWT and its claims.
-        If successful, return true.
-        """
-        try:
-            # TODO: How to check date prior to signing?
-            # syslog.syslog("serial: " + str(serial))
-            # syslog.syslog("key: " + str(self.jwk[keyname]))
-            self.jwt = jwt.JWT(key=self.jwk[keyname], jwt=serial)
-            return True
-        except Exception as err:
-            syslog.syslog("JWT validation error: " + err.message)
-            return False
-
-    def __check_jwt(self, serial):
-        """
-        TODO: this disappears when using keypair methods
-        Given a serialized blob, parse it as a JWT token. If it fails, return
-        false. If it succeeds, return true, and set self.jwt to be the JWT.
-        """
-        for keyname in ["sign_current", "sign_last"]:
-            if self.__validate_jwt(serial, keyname) is True:
-                return True
-            else:
-                pass
-        return False
-
     def check_token(self, cookie):
         """
-        TODO: rewrite from keypair check_token, rename check_auth?
         Process a JWE token. In Constantina these come from the users' cookie.
         If all the validation works, self.jwt becomes a valid JWT, read in the
         JWT's claims, and return True.
@@ -272,8 +130,11 @@ class ConstantinaAuth:
         token = specific_cookie(self.cookie_name, cookie)
         if token is None:
             return False
-        if self.__check_jwe(token) is True:
-            if self.__check_jwt(self.jwe.claims) is True:
+        for key_id in ["current", "last"]:
+            valid = self.keypair[key_id].check_token(token)
+            if valid is not False:
+                self.jwe = valid['decrypted']
+                self.jwt = valid['validated']
                 self.serial = self.jwe.serialize()
                 # syslog.syslog("serial: " + self.serial)
                 self.__read_jwt_claims()

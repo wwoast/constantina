@@ -36,14 +36,14 @@ class ConstantinaKeypair:
 
         self.__read_config(config_file)
         self.__set_defaults(key_id)
-        self.regen_keypair(key_id)
 
     def __read_config(self, config_file):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
-        self.config_path = GlobalConfig.get('paths', 'config_root')
-        self.config.read(self.config_path + "/" + self.config_file)
+        self.config_root = GlobalConfig.get('paths', 'config_root')
+        self.config_path = self.config_root + "/" + self.config_file
+        self.config.read(self.config_path)
         self.shadow = ConfigParser.SafeConfigParser()
-        self.shadow.read(self.config_path + "/shadow.ini")
+        self.shadow.read(self.config_root + "/shadow.ini")
 
     def __set_defaults(self, key_id):
         """
@@ -57,7 +57,8 @@ class ConstantinaKeypair:
         self.iat = {}
         self.encrypt = None
         self.sign = None
-        self.read_keypair(key_id)
+        self.regen_keypair(key_id)   # Check if any keys need to be regenerated
+        self.read_keypair(key_id)    # Read keys after they've been updated
 
     def __read_key(self, key_type, section):
         """
@@ -93,7 +94,8 @@ class ConstantinaKeypair:
 
         Supports two timestamping modes (stamp):
            - current: just create a token dated to the current time
-           - backdate: token is dated (ctime - sunset) to pre-age it.
+           - backdate: token is dated (ctime - sunset) to pre-age it, but only if the
+                key date was formerly undefined.
         """
         setattr(self, key_type, jwk.JWK.generate(kty=self.key_format, size=self.key_size))
         # Whatever key properties exist, set them in the config
@@ -105,11 +107,13 @@ class ConstantinaKeypair:
         # When did we create this key? When the class was instant'ed, unless
         # we're just generating the tokens and the "last" token needs to be
         # backdated so it only lasts half the configured lifetime.
+        current_date = self.config.get(section, "date")
         self.iat[key_type] = self.time
-        self.config.set(section, "date", str(self.iat[key_type]))
         # syslog.syslog("iat: %d time: %d sunset: %d" % (self.iat[key_type]], self.time, self.sunset))
-        if self.stamp == "backdate":
+        if self.stamp == "backdate" and current_date == '':
             self.config.set(section, "date", str(self.iat[key_type] - self.sunset))
+        else:
+            self.config.set(section, "date", str(self.iat[key_type]))
 
     def write_keypair(self, key_id):
         """
@@ -120,6 +124,9 @@ class ConstantinaKeypair:
         for key_type in ["sign", "encrypt"]:
             section = key_type + "_" + key_id
             self.__write_key(key_type, section)
+        # All settings created. Now write the config file
+        with open(self.config_path, 'wb') as sfh:
+            self.config.write(sfh)
 
     def regen_keypair(self, key_id):
         """
@@ -152,7 +159,8 @@ class ConstantinaKeypair:
         try:
             decrypted = jwt.JWT(key=self.encrypt, jwt=token)
             validated = jwt.JWT(key=self.sign, jwt=decrypted.claims)
-            return validated
-        except:
+            return {'decrypted': decrypted, 'validated': validated}
+        except Exception as err:
+            syslog.syslog("Token validation error: " + err.message)
             return False
             
