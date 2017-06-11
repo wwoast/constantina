@@ -5,7 +5,7 @@ import syslog
 from jwcrypto import jwk, jwt
 from passlib.hash import argon2
 
-from shared import GlobalConfig, specific_cookie
+from shared import GlobalConfig, GlobalTime, specific_cookie
 from keypair import ConstantinaKeypair
 
 syslog.openlog(ident='constantina.auth')
@@ -25,7 +25,7 @@ class ConstantinaAuth:
                             GlobalConfig.get('server', 'instance_id'))
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")
-        self.time = int(jwt.time.time())    # Don't leak multiple timestamps
+        self.time = GlobalTime    # Don't leak multiple timestamps
         self.headers = []    # Auth headers we add later
         self.keypair = {}        # One of N keys for signing/encryption
         self.jwe = None      # The encrypted token
@@ -59,8 +59,8 @@ class ConstantinaAuth:
         Read and regenerate the signing and encyption keys that manage
         Constantina's auth cookies as necessary.
         """
-        self.keypair['last'] = ConstantinaKeypair('shadow.ini', 'last', 'backdate', self.time)
-        self.keypair['current'] = ConstantinaKeypair('shadow.ini', 'current', 'current', self.time)
+        self.keypair['last'] = ConstantinaKeypair('shadow.ini', 'last', 'backdate')
+        self.keypair['current'] = ConstantinaKeypair('shadow.ini', 'current', 'current')
 
     def __create_jwt(self):
         """

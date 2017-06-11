@@ -3,7 +3,7 @@ import json
 import syslog
 from jwcrypto import jwk, jwt
 
-from shared import GlobalConfig, opaque_identifier, opaque_integer, opaque_mix, specific_cookie
+from shared import GlobalConfig, GlobalTime
 
 
 syslog.openlog(ident='constantina.token')
@@ -28,11 +28,11 @@ class ConstantinaKeypair:
     To not leak how much time it takes to generate multiple keypair objects,
     specify the time value as an input prior to creating multiples of these.
     """
-    def __init__(self, config_file, key_id, stamp="current", time=jwt.time.time()):
+    def __init__(self, config_file, key_id, stamp="current"):
         self.config_file = config_file
         self.key_id = key_id
         self.stamp = stamp   # Backdate key issue time, or make it current?
-        self.time = time     # The timestamp used if we set keys.
+        self.time = GlobalTime     # The timestamp used if we set keys.
 
         self.__read_config(config_file)
         self.__set_defaults(key_id)

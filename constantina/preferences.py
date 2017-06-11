@@ -4,8 +4,8 @@ import json
 import syslog
 from jwcrypto import jwk, jwt
 
-from shared import GlobalConfig, opaque_identifier, opaque_integer, opaque_mix, specific_cookie
-
+from shared import GlobalConfig, GlobalTime, opaque_identifier, opaque_integer, opaque_mix, specific_cookie
+from keypair import ConstantinaKeypair
 
 syslog.openlog(ident='constantina.preferences')
 
@@ -26,6 +26,7 @@ class ConstantinaPreferences:
     actively occuring.
     """
     def __init__(self, username, mode, **kwargs):
+        self.username = username
         self.__read_config()
         self.__default_preferences()
         
@@ -37,11 +38,13 @@ class ConstantinaPreferences:
 
     def __read_config(self):
         """Necessary config files for setting preferences."""
+        self.config_file = "preferences.ini"
         self.config_root = GlobalConfig.get('paths', 'config_root')
+        self.config_path = self.config_root + "/" + self.config_file
         self.zoo = ConfigParser.SafeConfigParser()
         self.zoo.read(self.config_root + "/zoo.ini")
         self.preferences = ConfigParser.SafeConfigParser()
-        self.preferences.read(self.config_root + "/preferences.ini")
+        self.preferences.read(self.config_path)
         self.shadow = ConfigParser.SafeConfigParser()
         self.shadow.read(self.config_root + "/shadow.ini")
 
@@ -63,15 +66,15 @@ class ConstantinaPreferences:
         self.gro = 0
         self.rev = self.zoo.get('zoo', 'edit_window')
 
-        self.encrypt = None
-        self.sign = None
-
         self.instance_id = GlobalConfig.get("server", "instance_id")
         self.preference_id = self.preferences.get(username, "preference_id")
         self.cookie_id = create_cookie_id(self.instance_id, self.preference_id)
         self.cookie_name = ("__Secure-" +
                             GlobalConfig.get('server', 'hostname') + "-" +
                             self.cookie_id)
+
+        # Given the preference_id, load the keypair
+        self.keypair = ConstantinaKeypair(self.config_file, self.cookie_id)
 
     def set_preference_claims(self, pref_dict):
         """
@@ -93,6 +96,8 @@ class ConstantinaPreferences:
         account is made, but it calls here to set it.
         """
         self.preferences.set(username, "preference_id", preference_id)
+
+        self.preferences.set
         key_format = self.shadow.get("defaults", "key_format")
         key_size = self.shadow.getint("defaults", "key_size")
         self.sign = jwk.JWK.generate(kty=key_format, size=key_size)

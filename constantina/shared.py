@@ -1,11 +1,13 @@
 from datetime import datetime
 import os
 import sys
+import time
+from urllib import unquote_plus
 import syslog
 import ConfigParser
 from math import floor
-from random import randint, seed, shuffle
-from urllib import unquote_plus
+from random import randint, shuffle
+
 
 syslog.openlog(ident='constantina.shared')
 
@@ -19,6 +21,10 @@ ConfigOptions = [
     os.path.expanduser("~") + "/constantina/etc/constantina/default/constantina.ini"
 ]
 GlobalConfig.read(ConfigOptions)
+
+# The timestamp that all Constantina software pretends events happened on,
+# to restrict against timing analysis attacks in configuration
+GlobalTime = int(time.time())
 
 # An alphabet used for opaque instance IDs that is BASE62 minus homomorph
 # characters that could easily be mistaken for each other.
