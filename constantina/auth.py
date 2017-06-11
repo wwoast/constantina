@@ -1,5 +1,3 @@
-import os
-from sys import stdin
 from uuid import uuid4
 import ConfigParser
 import json
@@ -64,6 +62,7 @@ class ConstantinaAuth:
 
     def __regen_all_jwk(self):
         """
+        TODO: Keep this, since the logic is goofy
         Regenerate any expired JWK shared secret keys in the config file. If a key
         doesn't exist, create it.
         """
@@ -101,6 +100,7 @@ class ConstantinaAuth:
 
     def __write_key(self, name, mode="current"):
         """
+        TODO: REMOVE/USE ConstantinaKeypair
         Given a keyname, generate the key and write it to the config file.
         Persist the JWK key itself by "name" into the self.jwk{} dict.
 
@@ -128,6 +128,7 @@ class ConstantinaAuth:
 
     def __read_key(self, name):
         """
+        TODO: REMOVE/USE ConstantinaKeypair
         Read the desired key from the configuration file, and load it as
         a JWK for purpose of signing or encryption. This tries to load the
         exact parameters from the config file into their equivalent places
@@ -149,6 +150,7 @@ class ConstantinaAuth:
 
     def __create_jwt(self):
         """
+        TODO: Rename, since this is just AUTH JWTs
         Create a signed JWT with the key_current, and define any of the
         signed claims that are of interest.
         """
@@ -179,6 +181,7 @@ class ConstantinaAuth:
 
     def __read_jwt_claims(self):
         """
+        TODO: Rename, since this is just AUTH JWT claims
         Once a JWE and JWT have been validated, read in all of their
         claims data into the auth object.
         """
@@ -191,6 +194,7 @@ class ConstantinaAuth:
 
     def __create_jwe(self):
         """
+        TODO: Rename, since this is just an AUTH JWE
         Create a JWE token whose "claims" set (payload) is a signed JWT.
         """
         self.jwt = self.__create_jwt()
@@ -205,6 +209,7 @@ class ConstantinaAuth:
 
     def __decrypt_jwe(self, token, keyname):
         """
+        TODO: this disappears when using keypair methods
         Try decrpyting a JWE with a key. If successful, return true.
         """
         try:
@@ -215,6 +220,7 @@ class ConstantinaAuth:
 
     def __check_jwe(self, token):
         """
+        TODO: REMOVE/USE ConstantinaKeypair
         Given a serialized blob, parse it as a JWE token. If it fails, return
         false. If it succeeds, return true, and set self.jwe to be the
         serialized JWT inside the JWE.
@@ -226,6 +232,7 @@ class ConstantinaAuth:
 
     def __validate_jwt(self, serial, keyname):
         """
+        TODO: this disappears when using keypair methods
         Try validating the signature of a JWT and its claims.
         If successful, return true.
         """
@@ -241,6 +248,7 @@ class ConstantinaAuth:
 
     def __check_jwt(self, serial):
         """
+        TODO: this disappears when using keypair methods
         Given a serialized blob, parse it as a JWT token. If it fails, return
         false. If it succeeds, return true, and set self.jwt to be the JWT.
         """
@@ -253,6 +261,7 @@ class ConstantinaAuth:
 
     def check_token(self, cookie):
         """
+        TODO: rewrite from keypair check_token, rename check_auth?
         Process a JWE token. In Constantina these come from the users' cookie.
         If all the validation works, self.jwt becomes a valid JWT, read in the
         JWT's claims, and return True.
@@ -379,8 +388,8 @@ def check_authorization():
     The file list will have individual files in it, as well as a list of users
     or * that are allowed to see the file. If a file isn't in the list, a folder
     can be specified instead that sets permissions valid for all files in the
-    sub-folders.abs
-    
+    sub-folders.
+
     The details of authorization will likely be different for each subapp in
     Constantina, so maybe this lives elsewhere eventually.
     """

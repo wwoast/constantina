@@ -26,7 +26,6 @@ class ConstantinaPreferences:
     actively occuring.
     """
     def __init__(self, username, mode, **kwargs):
-        # TODO: read in the cookie name
         self.__read_config()
         self.__default_preferences()
         
@@ -128,27 +127,16 @@ class ConstantinaPreferences:
         return opaque_mix(instance_id, preference_id)
 
     def read_cookie_preferences(self, cookie):
-        """Given a cookie, read the preferences so the settings screen can be populated."""
+        """
+        Given a cookie, read the preferences so the settings screen can be populated.
+        If the cookie doesn't exist, return False.
+        """
         preference_id = self.get_cookie_preference_id(self.instance_id, self.cookie_id)
+        # TODO: factor out specific JWE/JWT/JWK processing into a single module
+        # Then have both auth and preferences use the same read_key / write_key stuff
         # TODO: use keys to decrypt cookie and read deets from preferences.
 
     def write_cookie_preferences(self, cookie_id):
         """Set new preferences, and then write a new cookie."""
         pass
 
-    def check_token(self, cookie):
-        """
-        Process a JWE settings token from a user cookie. If all the validation works,
-        self.In Constantina these come from the users' cookie.
-        If all the validation works, self.jwt becomes a valid JWT, read in the
-        JWT's claims, and return True.
-        If any part of this fails, do not set a cookie and return False.
-        TODO: Greatly simplify the cookie checking functions in auth.py!
-        """
-        token = specific_cookie(self.cookie_name, cookie)
-        try:
-            decrypted = jwt.JWT(key=self.encrypt, jwt=token)
-            validated = jwt.JWT(key=self.sign, jwt=decrypted.claims)
-            return True
-        except:
-            return False
