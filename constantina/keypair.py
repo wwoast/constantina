@@ -28,8 +28,13 @@ class ConstantinaKeypair:
     Auth keys will do an "age-mode" check where keys hop frm the current to the
     last slot if the current key is past the sunset time. Preferences will do
     a simple "regen if too old" check.
+
+    For keypairs being newly generated, we may wish to backdate their create
+    time so they get aged at the correct rate later. stamp="backdate" will
+    give you that behavior, but only when generating a key into a slot where
+    no previous timestamp was specified.
     """
-    def __init__(self, config_file, key_id, mode="regen", stamp="current"):
+    def __init__(self, config_file, key_id, mode="regen", stamp="now"):
         self.config_file = config_file
         self.key_id = key_id
         self.mode = mode
@@ -60,9 +65,11 @@ class ConstantinaKeypair:
         self.encrypt = None
         self.sign = None
         if self.mode == "age":
+            # Auth keys should be aged
             self.age_keypair("current", "last")
         else:
-            self.regen_keypair(key_id)   # Check if any keys need to be regenerated
+            # Other keys can just be regenerated
+            self.regen_keypair(key_id) 
         self.read_keypair(key_id)    # Read keys after they've been updated
 
     def __read_key(self, key_type, section):

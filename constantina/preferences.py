@@ -73,18 +73,25 @@ class ConstantinaPreferences:
                             GlobalConfig.get('server', 'hostname') + "-" +
                             self.cookie_id)
 
-        # Given the preference_id, create/load the keypair
-        self.key = ConstantinaKeypair(self.config_file, self.cookie_id)
+        # Given a preference_id, create/load the keypair
+        self.key = ConstantinaKeypair(self.config_file, self.preference_id)
+        self.jwe = None
+        self.jwt = None
+        self.serial = None
 
-    def set_preference_claims(self, pref_dict):
+    def set_preference_claims(self):
         """
         Given a settings token was read correctly, sanity check its settings here.
-        TODO: value-domain checks etc.
+        TODO: better sanity checking.
         """
-        self.thm = pref_dict['thm']
-        self.top = pref_dict['top']
-        self.gro = pref_dict['gro']
-        self.rev = pref_dict['rev']
+        claims = json.loads(self.jwt.claims)
+        self.iat = int(claims["iat"])
+        self.nbf = int(claims["nbf"])
+        self.exp = int(claims["exp"])
+        self.thm = claims["thm"]
+        self.top = claims["top"]
+        self.gro = int(claims["gro"])
+        self.rev = int(claims["rev"])
     
     def set_user_preference(self, username, preference_id):
         """
@@ -120,11 +127,21 @@ class ConstantinaPreferences:
         If the cookie doesn't exist, return False.
         """
         preference_id = self.get_cookie_preference_id(self.instance_id, self.cookie_id)
+        token = specific_cookie(self.cookie_name, cookie)
         # TODO: use keys to decrypt cookie and read deets from preferences.
-        
-
+        valid = self.key.check_token(token)
+        if valid is not False:
+            self.jwe = valid['decrypted']
+            self.jwt = valid['validated']
+            self.set_preference_claims()
+            return True
+        else:
+            return False
 
     def write_cookie_preferences(self, cookie_id):
-        """Set new preferences, and then write a new cookie."""
+        """
+        Set new preferences, and then write a new cookie.
+        TODO: how does expiry work?
+        """
         pass
 
