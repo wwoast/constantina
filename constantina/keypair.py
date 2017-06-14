@@ -25,12 +25,14 @@ class ConstantinaKeypair:
     key_id might be "current" or "last" when dealing with auth keypairs, or
     a preference_id, when dealing with settings keys.
 
-    To not leak how much time it takes to generate multiple keypair objects,
-    specify the time value as an input prior to creating multiples of these.
+    Auth keys will do an "age-mode" check where keys hop frm the current to the
+    last slot if the current key is past the sunset time. Preferences will do
+    a simple "regen if too old" check.
     """
-    def __init__(self, config_file, key_id, stamp="current"):
+    def __init__(self, config_file, key_id, mode="regen", stamp="current"):
         self.config_file = config_file
         self.key_id = key_id
+        self.mode = mode
         self.stamp = stamp   # Backdate key issue time, or make it current?
         self.time = GlobalTime     # The timestamp used if we set keys.
 
@@ -57,7 +59,10 @@ class ConstantinaKeypair:
         self.iat = {}
         self.encrypt = None
         self.sign = None
-        self.regen_keypair(key_id)   # Check if any keys need to be regenerated
+        if self.mode == "age":
+            self.age_keypair("current", "last")
+        else:
+            self.regen_keypair(key_id)   # Check if any keys need to be regenerated
         self.read_keypair(key_id)    # Read keys after they've been updated
 
     def __read_key(self, key_type, section):
@@ -128,25 +133,64 @@ class ConstantinaKeypair:
         with open(self.config_path, 'wb') as sfh:
             self.config.write(sfh)
 
+    def __age_key(self, key_type, source_id, dest_id):
+        """
+        When the source_id key has hit the sunset timer, migrate it to the
+        dest_id key.
+
+        Used for the authentication keys (current and last) which have logic
+        involving a sunset timer, after which the current key moves into the
+        "last key" slot.
+        """
+        section_dest = key_type + "_" + dest_id       # Ex: encrypt_last
+        section_source = key_type + "_" + source_id   # Ex: encrypt_current
+        self.__read_key(source_id, section_source)    # self.current
+        data = getattr(self, source_id).__dict__
+
+        # Write the contents of self.current into self.last
+        for dict_key in data['_key'].keys():
+            self.config.set(section_dest, dict_key, data['_key'][dict_key])
+        for dict_key in data['_params'].keys():
+            self.config.set(section_dest, dict_key, data['_params'][dict_key])
+        self.config.set(section_dest, "date", str(self.iat[source_id]))
+
+        # Finally, write a new key into the current/source slot
+        self.__write_key(key_type, section_source)
+
+    def age_keypair(self, source_id, dest_id):
+        """
+        Migrate a signing key and an encryption key from the source_id slot
+        into the dest_id slot. Afterwards, the source slot gets a new keypair.
+        """
+        for key_type in ["sign", "encrypt"]:
+            section = key_type + "_" + source_id
+            # If keypair is malformed, just make a new one
+            # Then there will be no need to age it
+            if self.config.get(section, "date") == '':
+                self.regen_keypair(source_id)
+                break
+            else:
+                keydate = self.config.getint(section, "date")
+                if self.time > (keydate + self.sunset):
+                    self.__age_key(key_type, source_id, dest_id)
+                    break
+
     def regen_keypair(self, key_id):
         """
         If the datestamps on either member of a keypair have expired, or if the
         date parameter in the slot is un-set for either of the pair, generate
         new keys for both slots.
         """
-        regen_pair = False
         for key_type in ["sign", "encrypt"]:
             section = key_type + "_" + key_id
             if self.config.get(section, "date") == '':
-                regen_pair = True
+                self.write_keypair(key_id)
                 break
             else:
                 keydate = self.config.getint(section, "date")
                 if self.time > (keydate + self.lifetime):
-                    regen_pair = True
+                    self.write_keypair(key_id)
                     break
-        if regen_pair is True:
-            self.write_keypair(key_id)
 
     def check_token(self, token):
         """

@@ -57,10 +57,16 @@ class ConstantinaAuth:
     def __read_auth_keypair(self):
         """
         Read and regenerate the signing and encyption keys that manage
-        Constantina's auth cookies as necessary.
+        Constantina's auth cookies as necessary. If the last keypair is too old,
+        regenerate a new one. If the current keypair has hit its sunset period,
+        migrate it to the last slot.
+        
+        The 'last' and 'current' logic is currently hard-coded in the
+        ConstantinaKeypair object, until I think of what a sensible convention
+        for specifying source and dest slots is.
         """
         self.keypair['last'] = ConstantinaKeypair('shadow.ini', 'last', 'backdate')
-        self.keypair['current'] = ConstantinaKeypair('shadow.ini', 'current', 'current')
+        self.keypair['current'] = ConstantinaKeypair('shadow.ini', 'current', 'age', 'current')
 
     def __create_jwt(self):
         """

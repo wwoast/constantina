@@ -74,7 +74,7 @@ class ConstantinaPreferences:
                             self.cookie_id)
 
         # Given the preference_id, create/load the keypair
-        self.keypair = ConstantinaKeypair(self.config_file, self.cookie_id)
+        self.key = ConstantinaKeypair(self.config_file, self.cookie_id)
 
     def set_preference_claims(self, pref_dict):
         """
@@ -121,6 +121,8 @@ class ConstantinaPreferences:
         """
         preference_id = self.get_cookie_preference_id(self.instance_id, self.cookie_id)
         # TODO: use keys to decrypt cookie and read deets from preferences.
+        
+
 
     def write_cookie_preferences(self, cookie_id):
         """Set new preferences, and then write a new cookie."""
