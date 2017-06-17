@@ -91,8 +91,8 @@ Enabling authentication in Constantina is a matter of setting `authentication`
 to `forum` in your instance's `constantina.ini`.
 
 
-### How Authentication and Sessions Work
-If Authentication is enabled, relevant settings for users and session cookies
+### How Authentication Works
+If Authentication is enabled, relevant settings for users' *session cookies*
 will appear in your instance's `/etc/constantina/<instance>/shadow.ini` file.
 
 On the backend, Constantina uses *Argon2* password hashing for modern and 
@@ -110,12 +110,28 @@ The `shadow.ini` file, after a user first loads Constantina in a browser, contai
 two encryption keys and two signing keys using the HMAC-SHA256 algorithm. One key
 is labelled "current" and the other is labelled "last".
 
-Each signing and encryption key has a two-day validity period by default, and is 
+Each signing and encryption key has a *two-day validity period* by default, and is 
 sunsetted after one day. Sunsetting is where existing older tokens are still valid,
 but the key is no longer used for encrypting or signing new tokens. The validity
 and sunsetting timeframes are configurable in the `key_settings` section of `shadow.ini`.
 
-Each instance of Constantina has an opaque ID that it addes to its JWE tokens. A
-given instance will only validate the cookie that contains the correct opaque ID in
-its cookie name. The opaque instance ID is stored in `constantina.ini` along with 
-the other `hostname` and `port` information.
+Each instance of Constantina has an opaque *instance ID* that it adds to the name of the 
+cookie. A given Constantina instance will only validate the cookie that contains the
+correct instance ID in its cookie name. The opaque instance ID is stored in 
+`constantina.ini` along with other instance information, like `hostname` and `port`.
+
+
+### How Session Preferences Work (TODO!!)
+If Authentication is enabled, users will also get a *preferences cookie* describing
+relevant settings for Constantina applications. The preferences cookie is a JWE-format
+token, but managed entirely separate from the session cookie.
+
+On the Constantina server, each user is assigned a *preferences keypair* containing one 
+signing key and one encryption key, along with a *preferences id* for that keypair. None
+of this preference data is sent to users, and this information is the only user preference
+data stored on the server.
+
+To prevent leaking what this cookie is used for, preference cookies names are given an
+opaque *cookie id* that is the XOR of the Constantina instance id and the preferences id
+of the keypair. While the preferences id is easily reclaimable if you have the instance id
+from the 
