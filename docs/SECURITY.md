@@ -111,8 +111,8 @@ two encryption keys and two signing keys using the HMAC-SHA256 algorithm. One ke
 is labelled "current" and the other is labelled "last".
 
 Each signing and encryption key has a *two-day validity period* by default, and is 
-sunsetted after one day. Sunsetting is where existing older tokens are still valid,
-but the key is no longer used for encrypting or signing new tokens. The validity
+*sunsetted* after one day. Sunsetting is where existing older tokens are still valid,
+but their key is no longer used for encrypting or signing new tokens. The validity
 and sunsetting timeframes are configurable in the `key_settings` section of `shadow.ini`.
 
 Each instance of Constantina has an opaque *instance ID* that it adds to the name of the 
@@ -121,10 +121,12 @@ correct instance ID in its cookie name. The opaque instance ID is stored in
 `constantina.ini` along with other instance information, like `hostname` and `port`.
 
 
-### How Session Preferences Work (TODO!!)
+### How Session Preferences Work
 If Authentication is enabled, users will also get a *preferences cookie* describing
 relevant settings for Constantina applications. The preferences cookie is a JWE-format
-token, but managed entirely separate from the session cookie.
+token, but managed separately from the session cookie. Although preferences details are
+not sensitive themselves, the existence of plaintext preferences can give an
+attacker context on whether the other application cookies are worth reviewing.
 
 On the Constantina server, each user is assigned a *preferences keypair* containing one 
 signing key and one encryption key, along with a *preferences id* for that keypair. None
@@ -133,5 +135,23 @@ data stored on the server.
 
 To prevent leaking what this cookie is used for, preference cookies names are given an
 opaque *cookie id* that is the XOR of the Constantina instance id and the preferences id
-of the keypair. While the preferences id is easily reclaimable if you have the instance id
-from the 
+of the keypair. This ties the preferences cookie to a specific instance of Constantina.
+Unfortunately this also makes the preferences id easily reclaimable using the instance
+id from the client's authorization cookie. However, the preferences id is just an opaque 
+string, no client-accessible APIs take it as input, and the preferences id has no purpose
+beyond identifying keyslots for validation and decryption of the user's preferences cookie.
+
+Any time the user changes their preferences, the server reads the existing preferences
+cookie details. Next, it generates a fresh preferences keypair, which invalidates any
+unexpired old cookies from being useful. Lastly, the server writes the updated preferences
+cookie, signed and encrypted by the fresh keypair.
+
+Since preference cookies are intended to be persistent, they have no expiry setting in the
+cookie. However, the preferences configuration defaults to refreshing the preferences 
+keypair every four months. This means that if more than four months proceed between logins,
+on the next successful login, the server will refresh the preferences keypair and cookie.
+
+TODO: an improvement on this strategy that would prevent leaking users' login frequency
+as context in the preferences file, would be random-backdating of keypair creation times.
+This effectively makes preference regeneration occur at random intervals per-user, which
+could be utilized as a feature to make timing analysis of Constantina's server difficult.

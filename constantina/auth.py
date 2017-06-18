@@ -70,7 +70,6 @@ class ConstantinaAuth:
 
     def __create_jwt(self):
         """
-        TODO: Rename, since this is just AUTH JWTs
         Create a signed JWT with the key_current, and define any of the
         signed claims that are of interest.
         """

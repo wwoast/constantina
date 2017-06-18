@@ -141,7 +141,23 @@ class ConstantinaPreferences:
     def write_cookie_preferences(self, cookie_id):
         """
         Set new preferences, and then write a new cookie.
-        TODO: how does expiry work?
+        TODO: other claims
         """
+        signing_algorithm = self.shadow.get("defaults", "signing_algorithm")
+        instance_id = GlobalConfig.get("server", "instance_id")
+        self.iat = GlobalTime    # Don't leak how long operations take
+        self.nbf = self.iat - 60
+        jti = uuid4().int
+        jwt_claims = {
+            "nbf": self.nbf,
+            "iat": self.iat,
+            "jti": str(jti),
+        }
+        jwt_header = {
+            "alg": signing_algorithm
+        }
+        self.jwt = jwt.JWT(header=jwt_header, claims=jwt_claims)
+        self.jwt.make_signed_token(self.key.sign)
+        return self.jwt
         pass
 
