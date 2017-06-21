@@ -31,10 +31,10 @@ class ConstantinaPreferences:
         self.__default_preferences()
 
         if mode == "set":
+            # TODO: read form kwargs
             pass
         if mode == "cookie":
-            # Cookie name things go here
-            pass
+            self.read_cookie_preferences(cookie=cookie)
 
     def __read_config(self):
         """Necessary config files for setting preferences."""
@@ -82,7 +82,6 @@ class ConstantinaPreferences:
     def set_preference_claims(self):
         """
         Given a settings token was read correctly, sanity check its settings here.
-        TODO: better sanity checking.
         """
         claims = json.loads(self.jwt.claims)
         self.iat = int(claims["iat"])
@@ -128,7 +127,6 @@ class ConstantinaPreferences:
         """
         preference_id = self.get_cookie_preference_id(self.instance_id, self.cookie_id)
         token = specific_cookie(self.cookie_name, cookie)
-        # TODO: use keys to decrypt cookie and read deets from preferences.
         valid = self.key.check_token(token)
         if valid is not False:
             self.jwe = valid['decrypted']
@@ -141,7 +139,6 @@ class ConstantinaPreferences:
     def write_cookie_preferences(self, cookie_id):
         """
         Set new preferences, and then write a new cookie.
-        TODO: other claims
         """
         signing_algorithm = self.shadow.get("defaults", "signing_algorithm")
         instance_id = GlobalConfig.get("server", "instance_id")
@@ -152,12 +149,21 @@ class ConstantinaPreferences:
             "nbf": self.nbf,
             "iat": self.iat,
             "jti": str(jti),
+            "thm": self.thm,
+            "top": self.top,
+            "gro": self.gro,
+            "rev": self.rev
         }
         jwt_header = {
             "alg": signing_algorithm
         }
         self.jwt = jwt.JWT(header=jwt_header, claims=jwt_claims)
         self.jwt.make_signed_token(self.key.sign)
-        return self.jwt
-        pass
 
+        encryption_parameters = {
+            "alg": self.shadow.get("defaults", "encryption_algorithm"),
+            "enc": self.shadow.get("defaults", "encryption_mode")
+        }
+        payload = self.jwt.serialize()
+        self.jwe = jwt.JWT(header=encryption_parameters, claims=payload)
+        self.jwe.make_encrypted_token(self.key.encrypt)
