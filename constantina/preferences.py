@@ -24,6 +24,10 @@ class ConstantinaPreferences:
     cookie's purpose may remain opaque on the client, and the settings cannot be
     changed or sniffed on the server without an active session from the user
     actively occuring.
+
+    Eventually settings verification per Constantina Application should happen
+    in their own classes where preferences are checked and validated, but for
+    now there aren't enough preferences to justify this approach.
     """
     def __init__(self, username, mode, **kwargs):
         self.username = username
@@ -31,10 +35,11 @@ class ConstantinaPreferences:
         self.__default_preferences()
 
         if mode == "set":
-            # TODO: read form kwargs
+            # TODO: read the form as kwargs
             pass
         if mode == "cookie":
-            self.read_cookie_preferences(cookie=cookie)
+            # Read in an existing preferences cookie
+            self.read_preferences(**kwargs)
 
     def __read_config(self):
         """Necessary config files for setting preferences."""
@@ -79,7 +84,18 @@ class ConstantinaPreferences:
         self.jwt = None
         self.serial = None
 
-    def set_preference_claims(self):
+    def __validate_claims(self):
+        """
+        Check the domain of values for each claim, and pin to a sensible default
+        if wacky inputs are received. TODO
+        """
+        # Is theme a number, and not outside the range of configured themes?
+        # Is topic a string? Just check #general for now
+        # Is the expand setting a positive integer less than MAX_PAGING?
+        # Is revision timer a positive integer smaller than the 
+        pass
+
+    def __read_claims(self):
         """
         Given a settings token was read correctly, sanity check its settings here.
         """
@@ -91,7 +107,18 @@ class ConstantinaPreferences:
         self.top = claims["top"]
         self.gro = int(claims["gro"])
         self.rev = int(claims["rev"])
-    
+        self.__validate_claims()
+
+    def __write_claims(self, thm, top, gro, rev):
+        """
+        Given a form input for preferences, validate the incoming settings
+        """
+        self.thm = thm
+        self.top = top
+        self.gro = gro
+        self.rev = rev
+        self.__validate_claims()
+
     def set_user_preference(self, username, preference_id):
         """
         Create new keys and preference ID for this user, regardless of what
@@ -120,23 +147,22 @@ class ConstantinaPreferences:
         """
         return opaque_mix(instance_id, preference_id)
 
-    def read_cookie_preferences(self, cookie):
+    def read_preferences(self, cookie):
         """
         Given a cookie, read the preferences so the settings screen can be populated.
         If the cookie doesn't exist, return False.
         """
-        preference_id = self.get_cookie_preference_id(self.instance_id, self.cookie_id)
         token = specific_cookie(self.cookie_name, cookie)
         valid = self.key.check_token(token)
         if valid is not False:
             self.jwe = valid['decrypted']
             self.jwt = valid['validated']
-            self.set_preference_claims()
+            self.__read_claims()
             return True
         else:
             return False
 
-    def write_cookie_preferences(self, cookie_id):
+    def write_preferences(self, cookie_id):
         """
         Set new preferences, and then write a new cookie.
         """
