@@ -37,12 +37,10 @@ class ConstantinaKeypair:
     def __init__(self, config_file, key_id, **kwargs):
         self.config_file = config_file
         self.key_id = key_id
-        self.mode = kwargs['mode']
-        self.stamp = kwargs['stamp']   # Backdate key issue time, or make it current?
         self.time = GlobalTime     # The timestamp used if we set keys.
 
         self.__read_config(config_file)
-        self.__set_defaults(key_id)
+        self.__set_defaults(key_id, **kwargs)
 
     def __read_config(self, config_file):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
@@ -52,11 +50,13 @@ class ConstantinaKeypair:
         self.shadow = ConfigParser.SafeConfigParser()
         self.shadow.read(self.config_root + "/shadow.ini")
 
-    def __set_defaults(self, key_id):
+    def __set_defaults(self, key_id, **kwargs):
         """
         Default settings from config, and empty values for the encrypt/sign keys
         and the read-in iat (issued-at) times
         """
+        self.mode = kwargs.get('mode', 'regen')       # Regen keys, or age-swap?
+        self.stamp = kwargs.get('stamp', 'current')   # Backdate key issue time, or make it current?
         self.key_format = self.shadow.get("defaults", "key_format")
         self.key_size = self.shadow.getint("defaults", "key_size")
         self.lifetime = self.shadow.getint("key_settings", "lifetime")
@@ -66,10 +66,12 @@ class ConstantinaKeypair:
         self.sign = None
         if self.mode == "age":
             # Auth keys should be aged
-            self.age_keypair("current", "last")
+            source_id = kwargs.get('source', 'current')   # Default to "current" for source_id
+            dest_id = kwargs.get('dest', 'last')          # and "last" for dest_id
+            self.age_keypair(source_id, dest_id)
         else:
             # Other keys can just be regenerated
-            self.regen_keypair(key_id) 
+            self.regen_keypair(key_id)
         self.read_keypair(key_id)    # Read keys after they've been updated
 
     def __read_key(self, key_type, section):

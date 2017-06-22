@@ -65,8 +65,11 @@ class ConstantinaAuth:
         ConstantinaKeypair object, until I think of what a sensible convention
         for specifying source and dest slots is.
         """
-        self.keypair['last'] = ConstantinaKeypair('shadow.ini', 'last', mode='regen', stamp='backdate')
-        self.keypair['current'] = ConstantinaKeypair('shadow.ini', 'current', mode='age', stamp='current')
+        self.keypair['last'] = ConstantinaKeypair(
+            'shadow.ini', 'last', stamp='backdate', mode='regen')
+        self.keypair['current'] = ConstantinaKeypair(
+            'shadow.ini', 'current', stamp='current', mode='age',
+            source="current", dest="last")
 
     def __create_jwt(self):
         """
