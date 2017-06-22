@@ -68,11 +68,11 @@ class ConstantinaKeypair:
             # Auth keys should be aged
             source_id = kwargs.get('source', 'current')   # Default to "current" for source_id
             dest_id = kwargs.get('dest', 'last')          # and "last" for dest_id
-            self.age_keypair(source_id, dest_id)
+            self.__age_keypair(source_id, dest_id)
         else:
             # Other keys can just be regenerated
-            self.regen_keypair(key_id)
-        self.read_keypair(key_id)    # Read keys after they've been updated
+            self.__regen_keypair(key_id)
+        self.__read_keypair(key_id)    # Read keys after they've been updated
 
     def __read_key(self, key_type, section):
         """
@@ -95,7 +95,7 @@ class ConstantinaKeypair:
         self.iat[key_type] = self.config.get(section, "date")
         return getattr(self, key_type)   # Read into the object, but also return it
 
-    def read_keypair(self, key_id):
+    def __read_keypair(self, key_id):
         """Read in the keypair for this key_id"""
         for key_type in ["sign", "encrypt"]:
             section = key_type + "_" + key_id
@@ -128,8 +128,11 @@ class ConstantinaKeypair:
             self.config.set(section, "date", str(self.iat[key_type] - self.sunset))
         else:
             self.config.set(section, "date", str(self.iat[key_type]))
+        # Done with key adjustments. Now write the config file
+        with open(self.config_path, 'wb') as sfh:
+            self.config.write(sfh)
 
-    def write_keypair(self, key_id):
+    def __write_keypair(self, key_id):
         """
         Write new keypairs for the given key_id.
         Backdate the issued-at time if necessary, like when we issue new
@@ -138,9 +141,6 @@ class ConstantinaKeypair:
         for key_type in ["sign", "encrypt"]:
             section = key_type + "_" + key_id
             self.__write_key(key_type, section)
-        # All settings created. Now write the config file
-        with open(self.config_path, 'wb') as sfh:
-            self.config.write(sfh)
 
     def __age_key(self, key_type, source_id, dest_id):
         """
@@ -151,10 +151,11 @@ class ConstantinaKeypair:
         involving a sunset timer, after which the current key moves into the
         "last key" slot.
         """
-        section_dest = key_type + "_" + dest_id       # Ex: encrypt_last
         section_source = key_type + "_" + source_id   # Ex: encrypt_current
+        section_dest = key_type + "_" + dest_id       # Ex: encrypt_last
         self.__read_key(source_id, section_source)    # self.current
         data = getattr(self, source_id).__dict__
+        syslog.syslog("data._key: " + data['_key']['k'] )
 
         # Write the contents of self.current into self.last
         for dict_key in data['_key'].keys():
@@ -162,11 +163,14 @@ class ConstantinaKeypair:
         for dict_key in data['_params'].keys():
             self.config.set(section_dest, dict_key, data['_params'][dict_key])
         self.config.set(section_dest, "date", str(self.iat[source_id]))
+        # Aging key adjustments are complete, so write to the config file
+        with open(self.config_path, 'wb') as sfh:
+            self.config.write(sfh)
 
         # Finally, write a new key into the current/source slot
         self.__write_key(key_type, section_source)
 
-    def age_keypair(self, source_id, dest_id):
+    def __age_keypair(self, source_id, dest_id):
         """
         Migrate a signing key and an encryption key from the source_id slot
         into the dest_id slot. Afterwards, the source slot gets a new keypair.
@@ -176,15 +180,18 @@ class ConstantinaKeypair:
             # If keypair is malformed, just make a new one
             # Then there will be no need to age it
             if self.config.get(section, "date") == '':
-                self.regen_keypair(source_id)
+                self.__regen_keypair(source_id)
                 break
             else:
                 keydate = self.config.getint(section, "date")
+                syslog.syslog("age keyid " + source_id + " keydate: " + str(keydate))
+                syslog.syslog("age keyid " + source_id + " keydate expiry: " + str(keydate + self.lifetime))
                 if self.time > (keydate + self.sunset):
+                    syslog.syslog("aging keyid " + source_id + " into " + dest_id)
                     self.__age_key(key_type, source_id, dest_id)
                     break
 
-    def regen_keypair(self, key_id):
+    def __regen_keypair(self, key_id):
         """
         If the datestamps on either member of a keypair have expired, or if the
         date parameter in the slot is un-set for either of the pair, generate
@@ -193,12 +200,15 @@ class ConstantinaKeypair:
         for key_type in ["sign", "encrypt"]:
             section = key_type + "_" + key_id
             if self.config.get(section, "date") == '':
-                self.write_keypair(key_id)
+                self.__write_keypair(key_id)
                 break
             else:
                 keydate = self.config.getint(section, "date")
+                syslog.syslog("regen keyid " + key_id + " keydate: " + str(keydate))
+                syslog.syslog("regen keyid " + key_id + " keydate expiry: " + str(keydate + self.lifetime))
                 if self.time > (keydate + self.lifetime):
-                    self.write_keypair(key_id)
+                    syslog.syslog("regen keyid " + key_id)
+                    self.__write_keypair(key_id)
                     break
 
     def check_token(self, token):
