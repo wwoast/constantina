@@ -90,10 +90,22 @@ class ConstantinaPreferences:
         if wacky inputs are received. TODO
         """
         # Is theme a number, and not outside the range of configured themes?
+        theme_count = len(GlobalConfig.items("themes")) - 1
+        if int(self.thm) > theme_count:
+            self.thm = '0'
         # Is topic a string? Just check #general for now
+        self.top = "general"
         # Is the expand setting a positive integer less than MAX_PAGING?
-        # Is revision timer a positive integer smaller than the 
-        pass
+        max_paging = GlobalConfig.getint("miscellaneous", "max_items_per_page")
+        if self.gro * 10 > max_paging:
+            self.gro = max_paging/10
+        # Is revision timer a positive integer smaller than the max_edit_window?
+        max_edit_window = self.zoo.getint("zoo", "max_edit_window")
+        default_edit_window = self.zoo.getint("zoo", "edit_window")
+        if self.rev > max_edit_window:
+            self.rev = max_edit_window
+        if self.rev < 0:
+            self.rev = default_edit_window
 
     def __read_claims(self):
         """
