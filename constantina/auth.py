@@ -60,7 +60,7 @@ class ConstantinaAuth:
         Constantina's auth cookies as necessary. If the last keypair is too old,
         regenerate a new one. If the current keypair has hit its sunset period,
         migrate it to the last slot.
-        
+
         The 'last' and 'current' logic is currently hard-coded in the
         ConstantinaKeypair object, until I think of what a sensible convention
         for specifying source and dest slots is.
@@ -100,7 +100,6 @@ class ConstantinaAuth:
 
     def __read_jwt_claims(self):
         """
-        TODO: Rename, since this is just AUTH JWT claims
         Once a JWE and JWT have been validated, read in all of their
         claims data into the auth object.
         """

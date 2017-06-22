@@ -35,8 +35,8 @@ class ConstantinaPreferences:
         self.__default_preferences()
 
         if mode == "set":
-            # TODO: read the form as kwargs
-            pass
+            self.__write_claims(**kwargs)
+            self.write_preferences()
         if mode == "cookie":
             # Read in an existing preferences cookie
             self.read_preferences(**kwargs)
@@ -77,6 +77,7 @@ class ConstantinaPreferences:
         self.cookie_name = ("__Secure-" +
                             GlobalConfig.get('server', 'hostname') + "-" +
                             self.cookie_id)
+        self.headers = []
 
         # Given a preference_id, create/load the keypair
         self.key = ConstantinaKeypair(self.config_file, self.preference_id)
@@ -121,9 +122,11 @@ class ConstantinaPreferences:
         self.rev = int(claims["rev"])
         self.__validate_claims()
 
-    def __write_claims(self, thm, top, gro, rev):
+    def __write_claims(self, thm=self.thm, top=self.top, gro=self.gro, rev=self.rev):
         """
-        Given a form input for preferences, validate the incoming settings
+        Given a form input for preferences, validate the incoming settings. If the
+        form wasn't filled out and this is a default preferences cookie, just set the
+        default settings and call it a day.
         """
         self.thm = thm
         self.top = top
@@ -174,12 +177,11 @@ class ConstantinaPreferences:
         else:
             return False
 
-    def write_preferences(self, cookie_id):
+    def write_preferences(self, cookie_id=self.cookie_id):
         """
         Set new preferences, and then write a new cookie.
         """
         signing_algorithm = self.shadow.get("defaults", "signing_algorithm")
-        instance_id = GlobalConfig.get("server", "instance_id")
         self.iat = GlobalTime    # Don't leak how long operations take
         self.nbf = self.iat - 60
         jti = uuid4().int
@@ -205,3 +207,12 @@ class ConstantinaPreferences:
         payload = self.jwt.serialize()
         self.jwe = jwt.JWT(header=encryption_parameters, claims=payload)
         self.jwe.make_encrypted_token(self.key.encrypt)
+        self.serial = self.jwe.serialize()
+        cookie_values = [
+            self.cookie_name + "=" + self.serial,
+            "Secure",
+            "HttpOnly",
+            "SameSite=strict"
+        ]
+        # Cookies must be Python byte-string types -- encode "fixes" this
+        self.headers.append(("Set-Cookie", '; '.join(cookie_values).encode('utf-8')))
