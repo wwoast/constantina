@@ -25,7 +25,7 @@ class ConstantinaKeypair:
     key_id might be "current" or "last" when dealing with auth keypairs, or
     a preference_id, when dealing with settings keys.
 
-    Auth keys will do an "age-mode" check where keys hop frm the current to the
+    Auth keys will do an "age-mode" check where keys hop from the current to the
     last slot if the current key is past the sunset time. Preferences will do
     a simple "regen if too old" check.
 
@@ -34,11 +34,11 @@ class ConstantinaKeypair:
     give you that behavior, but only when generating a key into a slot where
     no previous timestamp was specified.
     """
-    def __init__(self, config_file, key_id, mode="regen", stamp="now"):
+    def __init__(self, config_file, key_id, **kwargs):
         self.config_file = config_file
         self.key_id = key_id
-        self.mode = mode
-        self.stamp = stamp   # Backdate key issue time, or make it current?
+        self.mode = kwargs['mode']
+        self.stamp = kwargs['stamp']   # Backdate key issue time, or make it current?
         self.time = GlobalTime     # The timestamp used if we set keys.
 
         self.__read_config(config_file)
