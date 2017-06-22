@@ -5,6 +5,7 @@ from random import randint, seed
 import syslog
 
 from auth import authentication, authentication_page
+# from preferences import ConstantinaPreferences
 from shared import GlobalConfig, BaseFiles, opendir, safe_path, urldecode
 from state import ConstantinaState
 from medusa.cards import *

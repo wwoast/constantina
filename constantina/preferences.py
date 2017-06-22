@@ -216,3 +216,35 @@ class ConstantinaPreferences:
         ]
         # Cookies must be Python byte-string types -- encode "fixes" this
         self.headers.append(("Set-Cookie", '; '.join(cookie_values).encode('utf-8')))
+
+
+def default_preferences():
+    """No cookie, but valid authentication. Write a new preferences cookie."""
+    pass
+
+
+def get_preferences():
+    """
+    Cookie already exists for preferences. Read it, and if invalid, write a new
+    default cookie.
+    """
+    pass
+
+
+def set_preferences():
+    """
+    Filled out the form to update preferences. Pass them along and create a
+    new cookie and keypair for reading the cookie.
+    """
+    pass
+
+
+def preferences():
+    """
+    Determine what the valid preferences action should be. Options include:
+    - Valid auth, no preferences cookie: create a cookie with default preferences
+    - Valid auth, POST, form values: write a cookie with the given preferences
+    - Valid auth, valid preferences cookie: read cookie in, don't create a new one
+    - Invalid auth: don't do anything
+    """
+    pass

@@ -291,14 +291,19 @@ def set_authentication(env):
         [key, value] = vals.split('=')
         post[key] = value
 
-    auth = ConstantinaAuth("password", username=post["username"], password=post["password"])
-    auth.set_token()
-    return auth
+    syslog.syslog(post["action"])
+    if post["action"] == "login":
+        auth = ConstantinaAuth("password", username=post["username"], password=post["password"])
+        auth.set_token()
+        return auth
+    else:
+        auth = ConstantinaAuth("fail")
+        return auth
 
 
 def show_authentication(env):
     """
-    TODO: Received a GET with a cookie.
+    Received a GET with a cookie. See if there's an auth cookie in there.
     """
     if 'HTTP_COOKIE' in env:
         raw_cookie = env['HTTP_COOKIE']
@@ -315,7 +320,10 @@ def authentication(env):
     If a POST comes in, check the given username and password before
     handing out a new cookie with a JWE value.
     """
-    if env.get('REQUEST_METHOD') == 'POST':
+    method = env.get('REQUEST_METHOD')
+    uri = env.get('REQUEST_URI')
+
+    if (method == 'POST'):
         auth = set_authentication(env)
         return auth
     else:
