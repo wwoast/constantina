@@ -1,10 +1,11 @@
 import ConfigParser
 import json
+from os import rename
 import syslog
+from random import randint
 from jwcrypto import jwk, jwt
 
 from shared import GlobalConfig, GlobalTime
-from atomicwrites import atomic_write
 
 syslog.openlog(ident='constantina.token')
 
@@ -133,9 +134,11 @@ class ConstantinaKeypair:
             self.config.set(section, "date", str(self.iat[key_type] - self.sunset))
         else:
             self.config.set(section, "date", str(self.iat[key_type]))
-        # Done with key adjustments. Now write the config file
-        with open(self.config_path, 'wb') as sfh:
+        # Done with key adjustments. Now write the config file atomically.
+        # Would use NamedTemporaryFile, but rename requires both files to be on same filesystem
+        with open(self.config_path + "_" + str(randint(0, 2**32-1)), 'wb') as sfh:
             self.config.write(sfh)
+            rename(sfh.name, self.config_path)
 
     def __write_keypair(self, key_id):
         """
