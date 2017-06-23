@@ -70,15 +70,15 @@ class ConstantinaAuth:
         ConstantinaKeypair object, until I think of what a sensible convention
         for specifying source and dest slots is.
         """
-        self.keypair['last'] = ConstantinaKeypair(
-            'shadow.ini', 'last', stamp='backdate', mode='regen')
         self.keypair['current'] = ConstantinaKeypair(
             'shadow.ini', 'current', stamp='current', mode='age',
             source="current", dest="last")
         # Aging may require both keys to be re-read. Without a registry of all
         # keys and slots, it's just best to sync, or re-read from files.
-        self.keypair['last'].sync()
         self.keypair['current'].sync()
+        self.keypair['last'] = ConstantinaKeypair(
+            'shadow.ini', 'last', stamp='backdate', mode='regen')
+        self.keypair['last'].sync()
 
     def __create_jwt(self):
         """
