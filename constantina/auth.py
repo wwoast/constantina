@@ -41,6 +41,11 @@ class ConstantinaAuth:
         # if either one is expired.
         self.__read_auth_keypair()
 
+        # TODO: testing
+        self.uri = kwargs.get('uri', 'None')
+        if self.uri != 'None':
+            del kwargs['uri']
+
         if mode == "password":
             # Check username and password, and if the login was valid, the
             # set_token logic will go through
@@ -144,7 +149,11 @@ class ConstantinaAuth:
         for key_id in ["current", "last"]:
             valid = self.keypair[key_id].check_token(token)
             key = getattr(self.keypair[key_id], "encrypt").__dict__
-            syslog.syslog("decrypt token with %s:%s@%s %s" % (key_id, key['_key']['k'], str(self.keypair[key_id].iat["encrypt"]), str(bool(valid))))
+            syslog.syslog("%s: decrypt token with %s:%s@%s %s"
+                          % (self.uri,
+                             key_id, key['_key']['k'],
+                             str(self.keypair[key_id].iat["encrypt"]),
+                             str(bool(valid))))
             if valid is not False:
                 self.jwe = valid['decrypted']
                 self.jwt = valid['validated']
@@ -316,7 +325,7 @@ def show_authentication(env):
     """
     if 'HTTP_COOKIE' in env:
         raw_cookie = env['HTTP_COOKIE']
-        auth = ConstantinaAuth("cookie", cookie=raw_cookie)
+        auth = ConstantinaAuth("cookie", cookie=raw_cookie, uri=env['REQUEST_URI'])
         return auth
     else:
         auth = ConstantinaAuth("fail")

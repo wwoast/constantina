@@ -64,7 +64,6 @@ class ConstantinaKeypair:
         self.iat = {}
         self.encrypt = None
         self.sign = None
-        self.__read_keypair(key_id)    # Read keys prior to getting updates
 
         if self.mode == "age":
             # Auth keys should be aged
@@ -74,6 +73,7 @@ class ConstantinaKeypair:
         else:
             # Other keys can just be regenerated
             self.__regen_keypair(key_id)
+        self.__read_keypair(key_id)    # Read keys after guaranteeing the slots are full
 
     def __read_key(self, key_type, section):
         """
