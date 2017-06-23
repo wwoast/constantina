@@ -70,6 +70,10 @@ class ConstantinaAuth:
         self.keypair['current'] = ConstantinaKeypair(
             'shadow.ini', 'current', stamp='current', mode='age',
             source="current", dest="last")
+        # Aging may require both keys to be re-read. Without a registry of all
+        # keys and slots, it's just best to sync, or re-read from files.
+        self.keypair['last'].sync()
+        self.keypair['current'].sync()
 
     def __create_jwt(self):
         """
@@ -139,11 +143,12 @@ class ConstantinaAuth:
             return False
         for key_id in ["current", "last"]:
             valid = self.keypair[key_id].check_token(token)
+            key = getattr(self.keypair[key_id], "encrypt").__dict__
+            syslog.syslog("decrypt token with %s:%s@%s %s" % (key_id, key['_key']['k'], str(self.keypair[key_id].iat["encrypt"]), str(bool(valid))))
             if valid is not False:
                 self.jwe = valid['decrypted']
                 self.jwt = valid['validated']
                 self.serial = self.jwe.serialize()
-                # syslog.syslog("serial: " + self.serial)
                 self.__read_jwt_claims()
                 return True
         return False
@@ -280,7 +285,9 @@ def authentication_page(start_response, state):
 
 def set_authentication(env):
     """
-    Received a POST trying to set a username and password.
+    Received a POST trying to set a username and password. There must be a
+    hidden form field "action" with value "login" for this to be processed
+    as a POST login.
     """
     read_size = int(env.get('CONTENT_LENGTH'))
     max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
@@ -294,7 +301,6 @@ def set_authentication(env):
         [key, value] = vals.split('=')
         post[key] = value
 
-    syslog.syslog(post["action"])
     if post["action"] == "login":
         auth = ConstantinaAuth("password", username=post["username"], password=post["password"])
         auth.set_token()
@@ -324,9 +330,8 @@ def authentication(env):
     handing out a new cookie with a JWE value.
     """
     method = env.get('REQUEST_METHOD')
-    uri = env.get('REQUEST_URI')
 
-    if (method == 'POST'):
+    if method == 'POST':
         auth = set_authentication(env)
         return auth
     else:

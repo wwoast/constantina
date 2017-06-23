@@ -4,7 +4,7 @@ import syslog
 from jwcrypto import jwk, jwt
 
 from shared import GlobalConfig, GlobalTime
-
+from atomicwrites import atomic_write
 
 syslog.openlog(ident='constantina.token')
 
@@ -39,10 +39,10 @@ class ConstantinaKeypair:
         self.key_id = key_id
         self.time = GlobalTime     # The timestamp used if we set keys.
 
-        self.__read_config(config_file)
+        self.__read_config()
         self.__set_defaults(key_id, **kwargs)
 
-    def __read_config(self, config_file):
+    def __read_config(self):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config_root = GlobalConfig.get('paths', 'config_root')
         self.config_path = self.config_root + "/" + self.config_file
@@ -64,6 +64,8 @@ class ConstantinaKeypair:
         self.iat = {}
         self.encrypt = None
         self.sign = None
+        self.__read_keypair(key_id)    # Read keys prior to getting updates
+
         if self.mode == "age":
             # Auth keys should be aged
             source_id = kwargs.get('source', 'current')   # Default to "current" for source_id
@@ -72,7 +74,6 @@ class ConstantinaKeypair:
         else:
             # Other keys can just be regenerated
             self.__regen_keypair(key_id)
-        self.__read_keypair(key_id)    # Read keys after they've been updated
 
     def __read_key(self, key_type, section):
         """
@@ -100,6 +101,10 @@ class ConstantinaKeypair:
         for key_type in ["sign", "encrypt"]:
             section = key_type + "_" + key_id
             self.__read_key(key_type, section)
+
+    def sync(self):
+        """Update the key from the config. May be needed if a key was aged"""
+        self.__read_keypair(self.key_id)
 
     def __write_key(self, key_type, section):
         """
@@ -155,7 +160,6 @@ class ConstantinaKeypair:
         section_dest = key_type + "_" + dest_id       # Ex: encrypt_last
         self.__read_key(source_id, section_source)    # self.current
         data = getattr(self, source_id).__dict__
-        syslog.syslog("data._key: " + data['_key']['k'] )
 
         # Write the contents of self.current into self.last
         for dict_key in data['_key'].keys():
@@ -163,11 +167,9 @@ class ConstantinaKeypair:
         for dict_key in data['_params'].keys():
             self.config.set(section_dest, dict_key, data['_params'][dict_key])
         self.config.set(section_dest, "date", str(self.iat[source_id]))
-        # Aging key adjustments are complete, so write to the config file
-        with open(self.config_path, 'wb') as sfh:
-            self.config.write(sfh)
 
-        # Finally, write a new key into the current/source slot
+        # Write a new key into the current/source slot. Additionally, persist
+        # the aged key to the config settings in one single write.
         self.__write_key(key_type, section_source)
 
     def __age_keypair(self, source_id, dest_id):
@@ -184,8 +186,8 @@ class ConstantinaKeypair:
                 break
             else:
                 keydate = self.config.getint(section, "date")
-                syslog.syslog("age keyid " + source_id + " keydate: " + str(keydate))
-                syslog.syslog("age keyid " + source_id + " keydate expiry: " + str(keydate + self.lifetime))
+                # syslog.syslog("age id %s keydate: %s expiry: %s"
+                #              % (source_id, str(keydate), str(keydate + self.lifetime)))
                 if self.time > (keydate + self.sunset):
                     syslog.syslog("aging keyid " + source_id + " into " + dest_id)
                     self.__age_key(key_type, source_id, dest_id)
@@ -204,8 +206,8 @@ class ConstantinaKeypair:
                 break
             else:
                 keydate = self.config.getint(section, "date")
-                syslog.syslog("regen keyid " + key_id + " keydate: " + str(keydate))
-                syslog.syslog("regen keyid " + key_id + " keydate expiry: " + str(keydate + self.lifetime))
+                # syslog.syslog("regen id %s keydate: %s expiry: %s"
+                #              % (key_id, str(keydate), str(keydate + self.lifetime)))
                 if self.time > (keydate + self.lifetime):
                     syslog.syslog("regen keyid " + key_id)
                     self.__write_keypair(key_id)
