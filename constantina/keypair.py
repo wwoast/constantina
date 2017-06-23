@@ -103,10 +103,6 @@ class ConstantinaKeypair:
             section = key_type + "_" + key_id
             self.__read_key(key_type, section)
 
-    def sync(self):
-        """Update the key from the config. May be needed if a key was aged"""
-        self.__read_keypair(self.key_id)
-
     def __write_key(self, key_type, section):
         """
         Given a keyname, generate the key and write it to the config file.
