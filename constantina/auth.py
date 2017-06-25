@@ -139,12 +139,6 @@ class ConstantinaAuth:
             return False
         for key_id in ["current", "last"]:
             valid = self.keypair[key_id].check_token(token)
-            key = getattr(self.keypair[key_id], "encrypt").__dict__
-            syslog.syslog("%s: decrypt token with %s:%s@%s %s"
-                          % (self.uri,
-                             key_id, key['_key']['k'],
-                             str(self.keypair[key_id].iat["encrypt"]),
-                             str(bool(valid))))
             if valid is not False:
                 self.jwe = valid['decrypted']
                 self.jwt = valid['validated']
@@ -316,7 +310,7 @@ def show_authentication(env):
     """
     if 'HTTP_COOKIE' in env:
         raw_cookie = env['HTTP_COOKIE']
-        auth = ConstantinaAuth("cookie", cookie=raw_cookie, uri=env['REQUEST_URI'])
+        auth = ConstantinaAuth("cookie", cookie=raw_cookie)
         return auth
     else:
         auth = ConstantinaAuth("fail")
