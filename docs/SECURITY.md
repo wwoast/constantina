@@ -145,13 +145,3 @@ Any time the user changes their preferences, the server reads the existing prefe
 cookie details. Next, it generates a fresh preferences keypair, which invalidates any
 unexpired old cookies from being useful. Lastly, the server writes the updated preferences
 cookie, signed and encrypted by the fresh keypair.
-
-Since preference cookies are intended to be persistent, they have no expiry setting in the
-cookie. However, the preferences configuration defaults to refreshing the preferences 
-keypair every four months. This means that if more than four months proceed between logins,
-on the next successful login, the server will refresh the preferences keypair and cookie.
-
-TODO: an improvement on this strategy that would prevent leaking users' login frequency
-as context in the preferences file, would be random-backdating of keypair creation times.
-This effectively makes preference regeneration occur at random intervals per-user, which
-could be utilized as a feature to make timing analysis of Constantina's server difficult.
