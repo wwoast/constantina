@@ -6,7 +6,7 @@ import syslog
 
 from auth import authentication, authentication_page
 # from preferences import ConstantinaPreferences
-from shared import GlobalConfig, BaseFiles, opendir, safe_path, urldecode
+from shared import GlobalConfig, GlobalTime, BaseFiles, opendir, safe_path, urldecode
 from state import ConstantinaState
 from medusa.cards import *
 from medusa.search import MedusaSearch
@@ -597,6 +597,7 @@ def application(env, start_response, instance="default"):
     in_uri = env.get('REQUEST_URI')
     in_cookie = env.get('HTTP_COOKIE')
     auth_mode = GlobalConfig.get("authentication", "mode")
+    GlobalTime.update()   # Set timer value throughout the request
 
     # Normalize the state and truncate if the query string is
     # longer than 512 characters. 4096 characters is the upper limit

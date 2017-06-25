@@ -38,7 +38,7 @@ class ConstantinaKeypair:
     def __init__(self, config_file, key_id, **kwargs):
         self.config_file = config_file
         self.key_id = key_id
-        self.time = GlobalTime     # The timestamp used if we set keys.
+        self.time = GlobalTime.time     # The timestamp used if we set keys.
 
         self.__read_config()
         self.__set_defaults(key_id, **kwargs)

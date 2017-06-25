@@ -22,10 +22,6 @@ ConfigOptions = [
 ]
 GlobalConfig.read(ConfigOptions)
 
-# The timestamp that all Constantina software pretends events happened on,
-# to restrict against timing analysis attacks in configuration
-GlobalTime = int(time.time())
-
 # An alphabet used for opaque instance IDs that is BASE62 minus homomorph
 # characters that could easily be mistaken for each other.
 OpaqueBase = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
@@ -33,6 +29,23 @@ OpaqueBase = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
 # Only do opendir once per directory, and store results here
 # The other Constantina modules need access to this "globally".
 BaseFiles = {}
+
+
+class GlobalClock:
+    """
+    Global clock that can be updated. Designed to help Constantina use
+    consistent timestamps through a single request, and not leak data about
+    how long components of Constantina take.
+    """
+    def __init__(self):
+        self.time = int(time.time())
+
+    def update(self):
+        """Set new time based on the current system time."""
+        self.time = int(time.time())
+
+
+GlobalTime = GlobalClock()
 
 
 class BaseCardType:

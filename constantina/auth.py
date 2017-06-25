@@ -25,7 +25,7 @@ class ConstantinaAuth:
                             GlobalConfig.get('server', 'instance_id'))
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")
-        self.time = GlobalTime    # Don't leak multiple timestamps
+        self.time = GlobalTime.time    # Don't leak multiple timestamps
         self.headers = []    # Auth headers we add later
         self.keypair = {}        # One of N keys for signing/encryption
         self.jwe = None      # The encrypted token
@@ -324,6 +324,7 @@ def authentication(env):
     handing out a new cookie with a JWE value.
     """
     method = env.get('REQUEST_METHOD')
+    syslog.syslog(str(GlobalTime.time))
 
     if method == 'POST':
         auth = set_authentication(env)

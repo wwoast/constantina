@@ -182,7 +182,7 @@ class ConstantinaPreferences:
         Set new preferences, and then write a new cookie.
         """
         signing_algorithm = self.shadow.get("defaults", "signing_algorithm")
-        self.iat = GlobalTime    # Don't leak how long operations take
+        self.iat = GlobalTime.time    # Don't leak how long operations take
         self.nbf = self.iat - 60
         jti = uuid4().int
         jwt_claims = {
