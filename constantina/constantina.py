@@ -547,7 +547,7 @@ def get_file(in_uri, start_response, headers, auth_mode, auth=None):
     http_response = '200 OK'
     for file_dir in file_dirs:
         os.chdir(file_dir)
-        syslog.syslog("static file:" + file_dir + "/" + in_uri)
+        # syslog.syslog("static file:" + file_dir + "/" + in_uri)
         try:
             with open(in_uri, 'r') as handle:
                 # w/o content-type headers, things like MP3s won't play

@@ -41,11 +41,6 @@ class ConstantinaAuth:
         # if either one is expired.
         self.__read_auth_keypair()
 
-        # TODO: testing
-        self.uri = kwargs.get('uri', 'None')
-        if self.uri != 'None':
-            del kwargs['uri']
-
         if mode == "password":
             # Check username and password, and if the login was valid, the
             # set_token logic will go through

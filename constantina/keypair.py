@@ -190,7 +190,6 @@ class ConstantinaKeypair:
                 if self.time > (keydate + self.sunset):
                     syslog.syslog("aging keyid " + source_id + " into " + dest_id)
                     self.__age_key(key_type, source_id, dest_id)
-                    break
 
     def __regen_keypair(self, key_id):
         """
@@ -225,6 +224,6 @@ class ConstantinaKeypair:
             validated = jwt.JWT(key=self.sign, jwt=decrypted.claims)
             return {'decrypted': decrypted, 'validated': validated}
         except Exception as err:
-            syslog.syslog("Token validation error: " + err.message)
+            # syslog.syslog("Token validation error: " + err.message)
             return False
             
