@@ -4,6 +4,7 @@ import ConfigParser
 import json
 import syslog
 from jwcrypto import jwk, jwt
+from random import randint
 
 from shared import GlobalConfig, GlobalTime, opaque_identifier, opaque_integer, opaque_mix, specific_cookie
 from keypair import ConstantinaKeypair
@@ -68,7 +69,13 @@ class ConstantinaPreferences:
         Based on the username, set the expected cookie name and id.
         TODO: refactor auth settings to use similar default strategy.
         """
-        self.thm = GlobalConfig.get("themes", "default")
+        default_theme = GlobalConfig.get("themes", "default")
+        # Find the integer index of the default theme in the list
+        if default_theme == "random":
+            self.thm = -1
+        else:
+            self.thm = [int(x[0]) for x in GlobalConfig.items("themes")[1:]
+                        if x[1] == default_theme]
         self.top = "general"
         self.gro = 0
         self.rev = self.zoo.get('zoo', 'edit_window')
@@ -97,7 +104,7 @@ class ConstantinaPreferences:
         # Is theme a number, and not outside the range of configured themes?
         theme_count = len(GlobalConfig.items("themes")) - 1
         if int(self.thm) > theme_count:
-            self.thm = '0'
+            self.thm = 0
         # Is topic a string? Just check #general for now
         self.top = "general"
         # Is the expand setting a positive integer less than MAX_PAGING?
@@ -119,8 +126,7 @@ class ConstantinaPreferences:
         claims = json.loads(self.jwt.claims)
         self.iat = int(claims["iat"])
         self.nbf = int(claims["nbf"])
-        self.exp = int(claims["exp"])
-        self.thm = claims["thm"]
+        self.thm = int(claims["thm"])
         self.top = claims["top"]
         self.gro = int(claims["gro"])
         self.rev = int(claims["rev"])
@@ -193,7 +199,7 @@ class ConstantinaPreferences:
             "nbf": self.nbf,
             "iat": self.iat,
             "jti": str(jti),
-            "thm": self.thm,
+            "thm": str(self.thm),
             "top": self.top,
             "gro": self.gro,
             "rev": self.rev
