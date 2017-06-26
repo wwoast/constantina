@@ -80,7 +80,7 @@ class ConstantinaPreferences:
                             self.cookie_id)
         self.headers = []
 
-        # Given a preference_id, create/load the keypair
+        # Given a preference_id, create/load the keypair (regen mode)
         self.key = ConstantinaKeypair(self.config_file, self.preference_id)
         self.jwe = None
         self.jwt = None
@@ -141,7 +141,11 @@ class ConstantinaPreferences:
         already exists in the preferences file. Don't track when settings keys
         were made or regenerated, as this info isn't as crucial as session keys.
         """
+        # Create section if it doesn't exist
+        if not self.preferences.has_section(username):
+            self.preferences.add_section(username)
         self.preferences.set(username, "preference_id", preference_id)
+
 
     def get_cookie_preference_id(self, instance_id, cookie_id):
         """

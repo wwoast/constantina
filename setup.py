@@ -154,6 +154,7 @@ class InstallPyCommand(install):
               'config/medusa.ini',
               'config/uwsgi.ini',
               'config/zoo.ini',
+              'config/preferences.ini',
               'config/shadow.ini']))
         # Initial config files for your chosen instance
         if self.upgrade is False and self.scriptonly is False:
@@ -163,6 +164,7 @@ class InstallPyCommand(install):
                   'config/medusa.ini',
                   'config/uwsgi.ini',
                   'config/zoo.ini',
+                  'config/preferences.ini',
                   'config/shadow.ini']))
         # The CGI script
         Package['data_files'].append(
