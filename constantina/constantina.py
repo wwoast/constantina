@@ -5,7 +5,7 @@ from random import randint, seed
 import syslog
 
 from auth import authentication, authentication_page
-# from preferences import ConstantinaPreferences
+from preferences import preferences
 from shared import GlobalConfig, GlobalTime, BaseFiles, opendir, safe_path, urldecode
 from state import ConstantinaState
 from medusa.cards import *
@@ -635,7 +635,8 @@ def application(env, start_response, instance="default"):
         return contents_page(start_response, state, auth.headers)
     else:
         if auth.account.valid is True:
-            return contents_page(start_response, state, auth.headers)
+            pref_header = preferences(env, auth.account.username)
+            return contents_page(start_response, state, auth.headers + pref_headers)
         else:
             return authentication_page(start_response, state)
 

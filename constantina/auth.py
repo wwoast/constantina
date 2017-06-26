@@ -2,11 +2,12 @@ from uuid import uuid4
 import ConfigParser
 import json
 import syslog
-from jwcrypto import jwk, jwt
+from jwcrypto import jwt
 from passlib.hash import argon2
 
 from shared import GlobalConfig, GlobalTime, specific_cookie
 from keypair import ConstantinaKeypair
+from preferences import ConstantinaPreferences
 
 syslog.openlog(ident='constantina.auth')
 
@@ -292,10 +293,12 @@ def set_authentication(env):
     inbuf = env['wsgi.input'].read(read_size)
     # TODO: equals-sign in form will break this!
     for vals in inbuf.split('&'):
+        if vals.find("=") == -1:
+            continue
         [key, value] = vals.split('=')
         post[key] = value
 
-    if post["action"] == "login":
+    if post.get("action") == "login":
         auth = ConstantinaAuth("password", username=post["username"], password=post["password"])
         auth.set_token()
         return auth
@@ -309,7 +312,7 @@ def show_authentication(env):
     Received a GET with a cookie. See if there's an auth cookie in there.
     """
     if 'HTTP_COOKIE' in env:
-        raw_cookie = env['HTTP_COOKIE']
+        raw_cookie = env.get('HTTP_COOKIE')
         auth = ConstantinaAuth("cookie", cookie=raw_cookie)
         return auth
     else:
@@ -324,7 +327,6 @@ def authentication(env):
     handing out a new cookie with a JWE value.
     """
     method = env.get('REQUEST_METHOD')
-    syslog.syslog(str(GlobalTime.time))
 
     if method == 'POST':
         auth = set_authentication(env)
