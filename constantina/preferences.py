@@ -1,3 +1,4 @@
+from uuid import uuid4
 import os
 import ConfigParser
 import json
@@ -73,6 +74,8 @@ class ConstantinaPreferences:
         self.rev = self.zoo.get('zoo', 'edit_window')
 
         self.instance_id = GlobalConfig.get("server", "instance_id")
+        if not self.preferences.has_option(self.username, "preference_id"):
+            self.__set_user_preference(self.username, opaque_identifier())
         self.preference_id = self.preferences.get(self.username, "preference_id")
         self.cookie_id = self.create_cookie_id(self.instance_id, self.preference_id)
         self.cookie_name = ("__Secure-" +
@@ -135,7 +138,7 @@ class ConstantinaPreferences:
         self.rev = rev
         self.__validate_claims()
 
-    def set_user_preference(self, username, preference_id):
+    def __set_user_preference(self, username, preference_id):
         """
         Create new keys and preference ID for this user, regardless of what
         already exists in the preferences file. Don't track when settings keys
@@ -145,7 +148,6 @@ class ConstantinaPreferences:
         if not self.preferences.has_section(username):
             self.preferences.add_section(username)
         self.preferences.set(username, "preference_id", preference_id)
-
 
     def get_cookie_preference_id(self, instance_id, cookie_id):
         """
@@ -267,7 +269,7 @@ def preferences(env, username):
     # create a new one in subsequent steps.
     prefs = ConstantinaPreferences("cookie", username, cookie=raw_cookie)
 
-    if prefs.valid is False and method == "GET":
+    if prefs.valid is False:
         # No cookie but correct authentication. Write a default preferences cookie
         prefs.write_preferences()
         return prefs.headers

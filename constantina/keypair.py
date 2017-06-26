@@ -76,6 +76,16 @@ class ConstantinaKeypair:
             self.__regen_keypair(key_id)
         self.__read_keypair(key_id)    # Read keys after guaranteeing the slots are full
 
+    def __create_slotpair(self, key_id):
+        """
+        Create a keyslot in a config file, with a section header, and a blank
+        entry for the 'date' that the key was written.
+        """
+        for key_type in ["sign", "encrypt"]:
+            section = key_type + "_" + key_id
+            self.config.add_section(section)
+            self.config.set(section, 'date', '')
+
     def __read_key(self, key_type, section):
         """
         Read the desired key from the configuration file, and load it as
@@ -178,6 +188,8 @@ class ConstantinaKeypair:
         """
         for key_type in ["sign", "encrypt"]:
             section = key_type + "_" + source_id
+            if not self.config.has_section(section):
+                self.__create_slotpair(source_id)
             # If keypair is malformed, just make a new one
             # Then there will be no need to age it
             if self.config.get(section, "date") == '':
@@ -199,6 +211,8 @@ class ConstantinaKeypair:
         """
         for key_type in ["sign", "encrypt"]:
             section = key_type + "_" + key_id
+            if not self.config.has_section(section):
+                self.__create_slotpair(key_id)
             if self.config.get(section, "date") == '':
                 self.__write_keypair(key_id)
                 break

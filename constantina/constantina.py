@@ -635,7 +635,7 @@ def application(env, start_response, instance="default"):
         return contents_page(start_response, state, auth.headers)
     else:
         if auth.account.valid is True:
-            pref_header = preferences(env, auth.account.username)
+            pref_headers = preferences(env, auth.account.username)
             return contents_page(start_response, state, auth.headers + pref_headers)
         else:
             return authentication_page(start_response, state)

@@ -564,6 +564,8 @@ def specific_cookie(check_name, raw_cookies):
     we also need to take off leading spaces (lstrip) that browsers tend to
     print after semicolon-delimited lists of cookies.
     """
+    if raw_cookies is None:
+        return None
     for raw_data in raw_cookies.split(';'):
         raw_cookie = raw_data.lstrip()
         cookie_name = raw_cookie.split('=')[0]
