@@ -216,6 +216,7 @@ class ConstantinaPreferences:
             self.cookie_name + "=" + self.serial,
             "Secure",
             "HttpOnly",
+            "Max-Age=" + str(GlobalTime.time / 10),
             "SameSite=strict"
         ]
         # Cookies must be Python byte-string types -- encode "fixes" this
