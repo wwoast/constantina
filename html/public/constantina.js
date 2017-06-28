@@ -127,10 +127,10 @@ $(function() {
 
 function searchPlaceholderText() { 
    if (window.location.href.indexOf("?xs") != -1) {
-       var placeholder = window.location.href.split("?")[1].slice(2)
+       var placeholder = window.location.href.split("?")[1].slice(2);
        return unescape(placeholder);
    } else {
-       return "";
+       return unescape("Search...");
    }
 }
 
