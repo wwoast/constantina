@@ -1,4 +1,4 @@
-html {
+hhtml {
     -webkit-text-size-adjust: 100%; /* Prevent font scaling in landscape */
 }
 
@@ -103,21 +103,6 @@ form {
    width: 90%;
    margin: auto 0 auto 0;
    padding: 0 0 0 0;
-}
-
-input#searchSubmit {
-   width: 30px;
-   height: 30px;
-   background-image: url("./search.png");
-   border: solid 0px #000000; 
-   cursor: pointer;
-   z-index: 1;
-}
-
-input#searchEntry {
-   width: 139px;
-   z-index: 2;
-   line-height: 1.2;
 }
 
 div.logo {
@@ -474,6 +459,18 @@ ul.quiet {
    font-size: 12pt;
 }
 
+input#searchEntry::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+  color: navy;
+}
+input#searchEntry::-moz-placeholder { /* Firefox 19+ */
+  color: navy;
+}
+input#searchEntry:-ms-input-placeholder { /* IE 10+ */
+  color: navy;
+}
+input#searchEntry:-moz-placeholder { /* Firefox 18- */
+  color: navy;
+}
 
 /* Forum styles */
 div.card.forumMenu {
@@ -487,7 +484,7 @@ div.card.forumMenu p {
    padding: 0 0 2px 0;
 }
 
-input#searchMenuText {
+input#searchEntry {
    font-size: 14pt;
    text-align: center;
    max-width: 280px;

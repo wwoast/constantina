@@ -105,21 +105,6 @@ form {
    padding: 0 0 0 0;
 }
 
-input#searchSubmit {
-   width: 30px;
-   height: 30px;
-   background-image: url("./search.png");
-   border: solid 0px #000000; 
-   cursor: pointer;
-   z-index: 1;
-}
-
-input#searchEntry {
-   width: 139px;
-   z-index: 2;
-   line-height: 1.2;
-}
-
 div.logo {
    margin-left: auto;
    margin-right: auto;
@@ -473,6 +458,18 @@ ul.quiet {
    font-size: 12pt;
 }
 
+input#searchEntry::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+  color: forestgreen;
+}
+input#searchEntry::-moz-placeholder { /* Firefox 19+ */
+  color: forestgreen;
+}
+input#searchEntry:-ms-input-placeholder { /* IE 10+ */
+  color: forestgreen;
+}
+input#searchEntry:-moz-placeholder { /* Firefox 18- */
+  color: forestgreen;
+}
 
 /* Forum styles */
 div.card.forumMenu {
@@ -486,7 +483,7 @@ div.card.forumMenu p {
    padding: 0 0 2px 0;
 }
 
-input#searchMenuText {
+input#searchEntry {
    font-size: 14pt;
    text-align: center;
    max-width: 280px;
