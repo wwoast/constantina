@@ -471,6 +471,16 @@ input#searchEntry:-moz-placeholder { /* Firefox 18- */
   color: forestgreen;
 }
 
+/* <div class="mag">&#9906;</div> */
+div.mag {
+    display: inline-block;
+    color: forestgreen;
+    z-index: 2;
+    -webkit-transform: rotate(45deg);
+    -moz-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
 /* Forum styles */
 div.card.forumMenu {
    padding: 5px 20px 5px 20px;
@@ -623,6 +633,10 @@ img.settingsThemePreview {
    height: 80px;
    border: 1px solid white;
    margin-right: 8px;
+}
+
+img.settingsThemePreview.selected {
+   box-shadow: 0px 0px 3px 3px pink;
 }
 
 div.card.newPost {

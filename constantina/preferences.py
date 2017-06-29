@@ -75,7 +75,7 @@ class ConstantinaPreferences:
             self.thm = -1
         else:
             self.thm = [int(x[0]) for x in GlobalConfig.items("themes")[1:]
-                        if x[1] == default_theme]
+                        if x[1] == default_theme][0]
         self.top = "general"
         self.gro = 0
         self.rev = self.zoo.get('zoo', 'edit_window')
