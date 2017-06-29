@@ -488,9 +488,10 @@ div.card.forumMenu p {
 
 input#searchEntry {
    font-size: 14pt;
-   text-align: center;
+   text-align: left;
    max-width: 280px;
    min-width: 140px;
+   padding-left: 1ex;
 }
 
 p.forumMenuHeading {

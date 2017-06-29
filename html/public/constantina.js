@@ -128,9 +128,9 @@ $(function() {
 function searchPlaceholderText() { 
    if (window.location.href.indexOf("?xs") != -1) {
        var placeholder = window.location.href.split("?")[1].slice(2);
-       return unescape(placeholder);
+       return unescape("\u27A4" + placeholder);
    } else {
-       return unescape("Search...");
+       return unescape("Search\u2026 \u27A4");
    }
 }
 
