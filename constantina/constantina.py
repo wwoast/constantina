@@ -3,6 +3,7 @@ import os
 from math import floor
 from random import randint, seed
 import syslog
+from string import Template
 
 from auth import authentication, authentication_page
 from preferences import preferences
@@ -463,7 +464,59 @@ def create_page(page):
     return output
 
 
-def contents_page(start_response, state, headers):
+def template_contents(template, prefs):
+    """
+    Given the values in the preferences form, adjust the contents page
+    to match the metadata relevant to the currently logged-in user.
+
+    If not in Forum mode, do replacements that would make sense as
+    defaults.
+    """
+    output = Template(template)
+    missing = {
+        'username': 'guest',
+        'post_count': 'yet to make',
+        'registration_date': 'any given moment',
+        'default_topic': 'general',
+        'default_expand': 'expandAll',
+        'default_revise': '120'
+    }
+    theme_range = len(GlobalConfig.items('themes')) - 1
+    theme_enabled = 'checked="checked"'
+    replacements = {}
+
+    if prefs is None:
+        # Replace page variables with defaults
+        for field in missing.keys():
+            replacements[field] = missing[field]
+        for theme in xrange(0, theme_range):
+            replacements['theme_state_' + str(theme)] = ''
+        replacements['theme_state_random'] = theme_enabled
+
+    else:
+        # Replace page variables with preferences
+        replacements = {
+            'username': prefs.username,
+            'post_count': missing['post_count'],   # TODO
+            'registration_date': missing['registration_date'],   # TODO
+            'default_topic': prefs.top,
+            'default_expand': str(prefs.exp),
+            'default_revise': str(prefs.rev)
+        }
+        if int(prefs.thm) == -1:
+            replacements['theme_state_random'] = theme_enabled
+        else:
+            for theme in xrange(0, theme_range):
+                if int(prefs.thm) == theme:
+                    replacements['theme_state_' + str(theme)] = theme_enabled
+                else:
+                    replacements['theme_state_' + str(theme)] = ''
+
+    # Returned output is the template transform
+    return output.safe_substitute(replacements)
+
+
+def contents_page(start_response, state, prefs, headers):
     """
     Three types of states:
     1) Normal page creation (randomized elements)
@@ -484,6 +537,7 @@ def contents_page(start_response, state, headers):
         page = ConstantinaPage(state)
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
+        html = template_contents(html, prefs)
         html = html.replace(substitute, create_page(page))
         start_response('200 OK', headers)
 
@@ -492,6 +546,7 @@ def contents_page(start_response, state, headers):
         page = ConstantinaPage(state)
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
+        html = template_contents(html, prefs)
         html = html.replace(substitute, create_page(page))
         start_response('200 OK', headers)
 
@@ -502,6 +557,7 @@ def contents_page(start_response, state, headers):
         page = ConstantinaPage(state)
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
+        html = template_contents(html, prefs)
         html = html.replace(substitute, create_page(page))
         start_response('200 OK', headers)
 
@@ -511,6 +567,7 @@ def contents_page(start_response, state, headers):
         page = ConstantinaPage(state)
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
+        html = template_contents(html, prefs)
         html = html.replace(substitute, create_page(page))
         start_response('200 OK', headers)
 
@@ -518,6 +575,7 @@ def contents_page(start_response, state, headers):
     else:
         page = ConstantinaPage(state)
         html = create_page(page)
+        html = template_contents(html, prefs)
         start_response('200 OK', headers)
 
     # Load html contents into the page with javascript
@@ -639,11 +697,11 @@ def application(env, start_response, instance="default"):
     if in_uri is not None:
         return get_file(in_uri, start_response, [], auth_mode, auth)
     elif (auth_mode == "blog") or (auth_mode == "combined"):
-        return contents_page(start_response, state, auth.headers)
+        return contents_page(start_response, state, None, auth.headers)
     else:
         if auth.account.valid is True:
             prefs = preferences(env, post, auth.account.username)
-            return contents_page(start_response, state, auth.headers + prefs.headers)
+            return contents_page(start_response, state, prefs, auth.headers + prefs.headers)
         else:
             return authentication_page(start_response, state)
 

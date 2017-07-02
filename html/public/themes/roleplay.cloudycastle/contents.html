@@ -24,7 +24,7 @@
    </div>
    <div class="cell">
       <p class="forumMenuHeading">Settings</p>
-      <p class="forumMenu">User: <i><u>@wumpwoast</u></i></p>
+      <p class="forumMenu">User: <i><u>@$username</u></i></p>
    </div>
    <div class="cell">
       <p class="forumMenuHeading">How to Use</p>
@@ -36,50 +36,50 @@
 <div class="card settings" style="display: block;">
 <form method="POST">
   <input type="hidden" name="action" value="preferences">
-  <p style="text-align: center">Logged in as <i>@wumpwoast</i>. <button name="logOut">Log out</button></p>
-  <p>You have 1945 posts since registering on <i>September&nbsp;16,&nbsp;2005.</i></p>
+  <p style="text-align: center">Logged in as <i>@$username</i>. <button name="logOut">Log out</button></p>
+  <p>You have $post_count posts since registering on <i>$registration_date</i></p>
   <p><img class="settingsAvatar" src="images/avatars/wumpwoast.png"><input type="file" name="updateAvatar"></input></p>
   <p>
   <label>
-     <input type="radio" name="thm" value="0" />
+     <input type="radio" name="thm" value="0" $theme_state_0 />
      <img src="themes/roleplay.ruinedcastle/theme.png" />
   </label>
   <label>
-     <input type="radio" name="thm" value="1" checked="checked" />
+     <input type="radio" name="thm" value="1" $theme_state_1 />
      <img src="themes/roleplay.cloudycastle/theme.png" />
   </label>
   <label>
-     <input type="radio" name="thm" value="2" />
+     <input type="radio" name="thm" value="2" $theme_state_2 />
      <img src="themes/roleplay.graveyard/theme.png" />
   </label>
   <label>
-     <input type="radio" name="thm" value="3" />  
+     <input type="radio" name="thm" value="3" $theme_state_3 />
      <img src="themes/winflat.evergreen/theme.png" />
   </label>
   <label>
-     <input type="radio" name="thm" value="4" />
+     <input type="radio" name="thm" value="4" $theme_state_4 />
      <img src="themes/winflat.rainbow/theme.png" />
   </label>
   <label>
-     <input type="radio" name="thm" value="5" />
+     <input type="radio" name="thm" value="5" $theme_state_5 />
      <img class="settingsThemePreview" src="themes/winflat.raindrops/theme.png" />
   </label>
   <label>
-     <input type="radio" name="thm" value="-1" />
+     <input type="radio" name="thm" value="-1" $theme_state_random />
      <img class="settingsThemePreview" src="themes/roleplay.ruinedcastle/random-theme.jpg" />
   </label>
   </p>
   <p>By default, posts land in the
-    <select id="defaultForum" name="top" default="General">
+    <select id="defaultForum" name="top" default="$default_topic">
       <option value="general">General</option>
       <option value="scrabble">Scrabble</option>
     </select> forum.</p>
   <p>When clicking a thread title,
-    <select id="defaultExpand" name="gro" default="Expand All Posts">
+    <select id="defaultExpand" name="gro" default="$default_expand">
       <option value="expandAll">Expand All Posts</option>
       <option value="showTen">Show Only the Latest 10 Posts</option>
     </select> by default.</p>
-  <p>Posts younger than <input id="defaultRevise" name="rev" type="number" min="5" max="300" placeholder="120"></input> minutes can be revised.</p>
+  <p>Posts younger than <input id="defaultRevise" name="rev" type="number" min="5" max="300" placeholder="$default_revise"></input> minutes can be revised.</p>
   <p style="text-align: center"><input id="saveSettings" type="Submit" value="Update"></input> settings or <input id="revertSettings" type="Submit" value="Revert"></input> changes.</p>
 </form>
 </div>
