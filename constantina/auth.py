@@ -278,33 +278,15 @@ def authentication_page(start_response, state):
     return html
 
 
-def set_authentication(env):
+def set_authentication(post):
     """
     Received a POST trying to set a username and password. There must be a
     hidden form field "action" with value "login" for this to be processed
     as a POST login.
     """
-    read_size = int(env.get('CONTENT_LENGTH'))
-    max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
-    if read_size >= max_size:
-        read_size = max_size
-
-    post = {}
-    inbuf = env['wsgi.input'].read(read_size)
-    # TODO: equals-sign in form will break this!
-    for vals in inbuf.split('&'):
-        if vals.find("=") == -1:
-            continue
-        [key, value] = vals.split('=')
-        post[key] = value
-
-    if post.get("action") == "login":
-        auth = ConstantinaAuth("password", username=post["username"], password=post["password"])
-        auth.set_token()
-        return auth
-    else:
-        auth = ConstantinaAuth("fail")
-        return auth
+    auth = ConstantinaAuth("password", username=post["username"], password=post["password"])
+    auth.set_token()
+    return auth
 
 
 def show_authentication(env):
@@ -320,16 +302,14 @@ def show_authentication(env):
         return auth
 
 
-def authentication(env):
+def authentication(env, post):
     """
     If a cookie is present, validate the JWE inside the cookie.
     If a POST comes in, check the given username and password before
     handing out a new cookie with a JWE value.
     """
-    method = env.get('REQUEST_METHOD')
-
-    if method == 'POST':
-        auth = set_authentication(env)
+    if post.get('action') == "login":
+        auth = set_authentication(post)
         return auth
     else:
         auth = show_authentication(env)

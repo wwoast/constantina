@@ -229,34 +229,7 @@ class ConstantinaPreferences:
         self.headers.append(("Set-Cookie", '; '.join(cookie_values).encode('utf-8')))
 
 
-def preferences_form(env):
-    """
-    Received a POST trying to set form properties. There must be a hidden
-    form field "action" with value "set_preferences" for this to be processed
-    as a new preferences cookie.
-    """
-    read_size = int(env.get('CONTENT_LENGTH'))
-    max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
-    if read_size >= max_size:
-        read_size = max_size
-
-    post = {}
-    inbuf = env['wsgi.input'].read(read_size)
-    # TODO: equals-sign in form will break this!
-    for vals in inbuf.split('&'):
-        if vals.find("=") == -1:
-            continue
-        [key, value] = vals.split('=')
-        post[key] = value
-
-    if post.get("action") == "preferences":
-        del post["action"]
-        return post
-    else:
-        return {}
-
-
-def preferences(env, username):
+def preferences(env, post, username):
     """
     Determine what the valid preferences action should be. Options include:
     - Valid auth, no preferences cookie: create a cookie with default preferences
@@ -264,13 +237,7 @@ def preferences(env, username):
     - Valid auth, valid preferences cookie: read cookie in, don't create a new one
     - Invalid auth: don't do anything
     """
-    method = env.get('REQUEST_METHOD')
     raw_cookie = env.get('HTTP_COOKIE')
-
-    # If this was a post, read in the form settings.
-    form = {}
-    if method == "POST":
-        form = preferences_form(env)
 
     # Assume a cookie is there if an authentication succeeded. If it wasn't we'll
     # create a new one in subsequent steps.
@@ -281,12 +248,13 @@ def preferences(env, username):
         prefs.write_preferences()
         return prefs.headers
 
-    elif form.get('thm') != None and method == "POST":
+    elif post.get('action') == "preferences":
         # Form data appears, so write a new preferences cookie.
         # TODO: all form data should be represented, so looking at the old cookie
         # shouldn't be necessary. Use the form's values, not the cookie.
         # TODO: change preferences key as well!
-        prefs = ConstantinaPreferences("set", username, **form)
+        del post['action']
+        prefs = ConstantinaPreferences("set", username, **post)
         return prefs.headers
 
     else:

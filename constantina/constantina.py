@@ -6,7 +6,7 @@ import syslog
 
 from auth import authentication, authentication_page
 from preferences import preferences
-from shared import GlobalConfig, GlobalTime, BaseFiles, opendir, safe_path, urldecode
+from shared import GlobalConfig, GlobalTime, BaseFiles, opendir, safe_path, urldecode, process_post
 from state import ConstantinaState
 from medusa.cards import *
 from medusa.search import MedusaSearch
@@ -595,6 +595,7 @@ def application(env, start_response, instance="default"):
     os.chdir(root_dir)
     in_state = env.get('QUERY_STRING')
     in_uri = env.get('REQUEST_URI')
+    in_method = env.get('REQUEST_METHOD')
     in_cookie = env.get('HTTP_COOKIE')
     auth_mode = GlobalConfig.get("authentication", "mode")
     GlobalTime.update()   # Set timer value throughout the request
@@ -625,8 +626,13 @@ def application(env, start_response, instance="default"):
     if (in_state is None) and (in_uri is not None) and (in_cookie is None):
         return get_file(in_uri, start_response, [], auth_mode, None)
 
+    # Get POST values for processing by other tools
+    post = {}
+    if in_method == "POST":
+        post = process_post(env)
+
     state = ConstantinaState(in_state)   # Create state object
-    auth = authentication(env)
+    auth = authentication(env, post)
 
     # based on auth_mode and in_uri, do a thing.
     if in_uri is not None:
@@ -635,7 +641,7 @@ def application(env, start_response, instance="default"):
         return contents_page(start_response, state, auth.headers)
     else:
         if auth.account.valid is True:
-            pref_headers = preferences(env, auth.account.username)
+            pref_headers = preferences(env, post, auth.account.username)
             return contents_page(start_response, state, auth.headers + pref_headers)
         else:
             return authentication_page(start_response, state)

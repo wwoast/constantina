@@ -532,16 +532,16 @@ def opaque_identifier(random_id=randint(0, 2**32-1)):
     return opaque
 
 
-def opaque_integer(id):
+def opaque_integer(given_id):
     """
     Convert an opaque identifier back into the random number it came from.
     """
     base = OpaqueBase
     length = len(base)
-    strlen = len(id)
+    strlen = len(given_id)
     num = 0
     idx = 0
-    for char in id:
+    for char in given_id:
         power = (strlen - (idx + 1))
         num += base.index(char) * (length ** power)
         idx += 1
@@ -573,6 +573,29 @@ def specific_cookie(check_name, raw_cookies):
         if cookie_name == check_name:
             return token
     return None
+
+
+def process_post(env):
+    """
+    Grab the relevant POST variables for processing by other code.
+
+    Constantina expects there to be an 'action' variable POSTed in a form that's
+    a hidden <input> field. This is how Constantina decides what other methods
+    will process the FORM data.
+    """
+    read_size = int(env.get('CONTENT_LENGTH'))
+    max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
+    if read_size >= max_size:
+        read_size = max_size
+    post = {}
+    inbuf = env['wsgi.input'].read(read_size)
+    # TODO: equals-sign in form will break this!
+    for vals in inbuf.split('&'):
+        if vals.find("=") == -1:
+            continue
+        [key, value] = vals.split('=')
+        post[key] = value
+    return post
 
 
 def escape_amp(in_str):
