@@ -132,16 +132,16 @@ class ConstantinaPreferences:
         self.rev = int(claims["rev"])
         self.__validate_claims()
 
-    def __write_claims(self, thm, top, gro, rev):
+    def __write_claims(self, **kwargs):
         """
         Given a form input for preferences, validate the incoming settings. If the
         form wasn't filled out and this is a default preferences cookie, just set the
         default settings and call it a day.
         """
-        self.thm = thm
-        self.top = top
-        self.gro = gro
-        self.rev = rev
+        self.thm = kwargs.get('thm')
+        self.top = kwargs.get('top')
+        self.gro = kwargs.get('gro')
+        self.rev = kwargs.get('rev')
         self.__validate_claims()
 
     def __set_user_preference(self, username, preference_id):
