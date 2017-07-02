@@ -500,7 +500,7 @@ def template_contents(template, prefs):
             'post_count': missing['post_count'],   # TODO
             'registration_date': missing['registration_date'],   # TODO
             'default_topic': prefs.top,
-            'default_expand': str(prefs.exp),
+            'default_expand': str(prefs.gro),
             'default_revise': str(prefs.rev)
         }
         if int(prefs.thm) == -1:

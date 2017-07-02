@@ -258,5 +258,5 @@ def preferences(env, post, username):
         return prefs
 
     else:
-        # Shouldn't ever return no preferences headers, but have a catchall
-        return []
+        # Not updating or rewriting preferences. Just return what we have.
+        return prefs
