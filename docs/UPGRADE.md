@@ -3,6 +3,13 @@
 
 ## Upgrade Notes
 
+### 0.5.3
+
+When upgrading, you may need to manually add settings or files to avoid runtime issues:
+
+ * `zoo.ini` into your local settings folder
+ * `max_items_per_page = 100` to `constantina.ini`
+
 ### 0.5.2
 
 The images directory has moved, since these files may be contextually sensitive to the text entries in the Medusa app, which can be protected by authentication.
