@@ -130,7 +130,7 @@ function searchPlaceholderText() {
        var placeholder = window.location.href.split("?")[1].slice(2);
        return unescape("\u27A4" + placeholder);
    } else {
-       return unescape("Search\u2026 \u27A4");
+       return unescape("Search \u27A4");
    }
 }
 
