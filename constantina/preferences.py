@@ -246,7 +246,7 @@ def preferences(env, post, username):
     if prefs.valid is False:
         # No cookie but correct authentication. Write a default preferences cookie
         prefs.write_preferences()
-        return prefs.headers
+        return prefs
 
     elif post.get('action') == "preferences":
         # Form data appears, so write a new preferences cookie.
@@ -255,7 +255,7 @@ def preferences(env, post, username):
         # TODO: change preferences key as well!
         del post['action']
         prefs = ConstantinaPreferences("set", username, **post)
-        return prefs.headers
+        return prefs
 
     else:
         # Shouldn't ever return no preferences headers, but have a catchall

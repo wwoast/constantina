@@ -472,6 +472,7 @@ def contents_page(start_response, state, headers):
     3) Easter eggs
     """
     # TODO: add cookies as part of the start_response headers
+    # TODO: templating support for both opened pages and the base page
     substitute = '<!-- Contents go here -->'
 
     # Read in headers from authentication if they exist
@@ -641,8 +642,8 @@ def application(env, start_response, instance="default"):
         return contents_page(start_response, state, auth.headers)
     else:
         if auth.account.valid is True:
-            pref_headers = preferences(env, post, auth.account.username)
-            return contents_page(start_response, state, auth.headers + pref_headers)
+            prefs = preferences(env, post, auth.account.username)
+            return contents_page(start_response, state, auth.headers + prefs.headers)
         else:
             return authentication_page(start_response, state)
 
