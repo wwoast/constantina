@@ -654,7 +654,7 @@ and (max-device-width : 1024px)  {
 /* Very large screen size. */
 @media screen and (min-width: 1440px) {
     body {
-        background-image: url("large-mushroom.png"), url("large-evergreen.png");
+        background-image: url("large-mushrooms.png"), url("large-evergreen.png");
         background-position: center bottom, center top;
         background-attachment: fixed;
         background-repeat: no-repeat, repeat-y;
