@@ -35,6 +35,7 @@
 
 <div class="card settings" style="display: block;">
 <form>
+  <input type="hidden" name="action" value="preferences">
   <p style="text-align: center">Logged in as <i>@wumpwoast</i>. <button name="logOut">Log out</button></p>
   <p>You have 1945 posts since registering on <i>September&nbsp;16,&nbsp;2005.</i></p>
   <p><img class="settingsAvatar" src="images/avatars/wumpwoast.png"><input type="file" name="updateAvatar"></input></p>
@@ -48,17 +49,17 @@
      <img class="settingsThemePreview" src="themes/roleplay.ruinedcastle/random-theme.jpg" />
   </p>
   <p>By default, posts land in the
-    <select default="General">
+    <select id="defaultForum" default="General">
       <option value="general">General</option>
       <option value="scrabble">Scrabble</option>
     </select> forum.</p>
   <p>When clicking a thread title,
-    <select default="Expand All Posts">
+    <select id="defaultExpand" default="Expand All Posts">
       <option value="expandAll">Expand All Posts</option>
       <option value="showTen">Show Only the Latest 10 Posts</option>
     </select> by default.</p>
-  <p>Posts younger than <input type="number" min="5" max="300" placeholder="120"></input> minutes can be revised.</p>
-  <p style="text-align: center"><input type="Submit"></input> these updated settings.</p>
+  <p>Posts younger than <input id="defaultRevise" type="number" min="5" max="300" placeholder="120"></input> minutes can be revised.</p>
+  <p style="text-align: center"><input id="saveSettings" type="Submit" value="Update"></input> settings or <input id="revertSettings" type="Submit" value="Revert"></input> changes.</p>
 </form>
 </div>
 

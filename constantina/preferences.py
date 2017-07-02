@@ -249,7 +249,7 @@ def preferences_form(env):
         [key, value] = vals.split('=')
         post[key] = value
 
-    if post.get("action") == "set_preferences":
+    if post.get("action") == "preferences":
         del post["action"]
         return post
     else:
