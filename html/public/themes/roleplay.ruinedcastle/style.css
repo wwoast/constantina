@@ -619,18 +619,6 @@ img.settingsAvatar {
    height: 36px;
 }
 
-img.settingsThemePreview {
-   display: inline;
-   width: 80px;
-   height: 80px;
-   border: 1px solid white;
-   margin-right: 8px;
-}
-
-img.settingsThemePreview.selected {
-   box-shadow: 0px 0px 3px 3px pink;
-}
-
 div.card.newPost {
    width: 96%;
    margin-left: auto;
@@ -699,6 +687,24 @@ div.card.settings {
      rgba(67, 40, 40, 1.0) 450px, rgba(67, 40, 40, 1.0) 480px, 
      rgba(60, 40, 40, 1.0) 480px
    );
+}
+
+/* Theme selection settings */
+label > input {
+   visibility: hidden;
+   position: absolute;
+}
+
+label > input + img {
+   display: inline;
+   width: 80px;
+   height: 80px;
+   border: 1px solid white;
+   margin-right: 8px;
+}
+
+label > input:checked + img {
+   box-shadow: 0px 0px 3px 3px pink;
 }
 
 div.card.help {

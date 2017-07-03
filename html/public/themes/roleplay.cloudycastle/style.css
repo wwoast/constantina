@@ -628,18 +628,6 @@ img.settingsAvatar {
    height: 36px;
 }
 
-img.settingsThemePreview {
-   display: inline;
-   width: 80px;
-   height: 80px;
-   border: 1px solid white;
-   margin-right: 8px;
-}
-
-img.settingsThemePreview.selected {
-   box-shadow: 0px 0px 3px 3px pink;
-}
-
 div.card.newPost {
    width: 96%;
    margin-left: auto;
@@ -727,7 +715,6 @@ label > input + img {
 label > input:checked + img {
    box-shadow: 0px 0px 3px 3px pink;
 }
-
 
 div.card.help {
    padding: 10px 20px 10px 20px;
