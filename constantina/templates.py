@@ -1,6 +1,11 @@
 from random import randint
 from string import Template
+import syslog
+
 from shared import GlobalConfig
+
+syslog.openlog(ident='constantina.templates')
+
 
 # Anything involving template generation on server-side for Constantina
 # is here, including the preferences form menu and things to do with
@@ -16,7 +21,7 @@ def template_themes(desired_theme):
     chosen_theme = desired_theme
     if valid_theme is False:
         # Account for random=-1, and out-of-range values
-        chosen_theme = randint(0, theme_range)
+        chosen_theme = randint(0, theme_range -1)
 
     menu = ""
     option = Template("""
@@ -54,6 +59,30 @@ def template_themes(desired_theme):
     return [menu, random['theme_directory']]
 
 
+def template_selectoptions(default_value, **kwargs):
+    """
+    Set the select attribute on the text entry box based on what's in the
+    preferences. Used for "Expand Posts" logic and TODO: the default topic
+    form (waiting on a topic registry)
+    """
+    output = ""
+    selected = 'selected="selected"'
+    options = Template("""
+    <option value="$key" $selected>$value</option>
+""")
+    for key in kwargs.keys():
+        replacements = {
+            'key': key,
+            'value': kwargs[key],
+            'selected': ''
+        }
+        if key == default_value:
+            replacements['selected'] = selected
+        output += options.safe_substitute(replacements)
+
+    return output
+
+
 def template_contents(raw, prefs):
     """
     Given the values in the preferences form, adjust the contents page
@@ -72,6 +101,11 @@ def template_contents(raw, prefs):
         'default_revise': '120'
     }
     replacements = {}
+
+    expand_options = {
+        '0': 'Expand All Posts',
+        '1': 'Show Only The Latest 10 Posts'
+    }
 
     if prefs is None:
         # Replace page variables with defaults
@@ -92,6 +126,9 @@ def template_contents(raw, prefs):
         }
         [replacements['theme_menu'],
          replacements['theme_directory']] = template_themes(int(prefs.thm))
+
+    # Expand Threads form
+    replacements['expand_options'] = template_selectoptions(str(prefs.gro), **expand_options)
 
     # Returned output is the template transform
     output = template.safe_substitute(replacements)

@@ -102,8 +102,8 @@ class ConstantinaPreferences:
         if wacky inputs are received. TODO
         """
         # Is theme a number, and not outside the range of configured themes?
-        theme_count = len(GlobalConfig.items("themes")) - 1
-        if self.thm > theme_count:
+        theme_range = len(GlobalConfig.items("themes")) - 2
+        if self.thm > theme_range:
             self.thm = 0
         # Is topic a string? Just check #general for now
         self.top = "general"
@@ -114,10 +114,14 @@ class ConstantinaPreferences:
         # Is revision timer a positive integer smaller than the max_edit_window?
         max_edit_window = self.zoo.getint("zoo", "max_edit_window")
         default_edit_window = self.zoo.getint("zoo", "edit_window")
-        if self.rev > max_edit_window:
-            self.rev = max_edit_window
-        if self.rev < 0:
+        if self.rev == '':
             self.rev = default_edit_window
+        elif int(self.rev) > max_edit_window:
+            self.rev = max_edit_window
+        elif int(self.rev) < 0:
+            self.rev = default_edit_window
+        else:
+            self.rev = self.rev
 
     def __read_claims(self):
         """
@@ -141,7 +145,7 @@ class ConstantinaPreferences:
         self.thm = int(kwargs.get('thm'))
         self.top = kwargs.get('top')
         self.gro = int(kwargs.get('gro'))
-        self.rev = int(kwargs.get('rev'))
+        self.rev = kwargs.get('rev')   # input field, wait to parse
         syslog.syslog("input claims: %s %s %s %s" % (self.thm, self.top, self.gro, self.rev))
         self.__validate_claims()
 
