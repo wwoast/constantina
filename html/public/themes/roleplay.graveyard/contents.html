@@ -33,6 +33,29 @@
    <span><form id="searchForm" action="javascript:"><input id="searchEntry" type="search"></input></form></span>
 </div>
 
+<div class="card settings" style="display: block;">
+<form method="POST">
+  <input type="hidden" name="action" value="preferences">
+  <p style="text-align: center">Logged in as <i>@$username</i>. <button name="logOut">Log out</button></p>
+  <p>You have $post_count posts since registering on <i>$registration_date</i></p>
+  <p><img class="settingsAvatar" src="images/avatars/wumpwoast.png"><input type="file" name="updateAvatar"></input></p>
+  <p>
+  $theme_menu
+  </p>
+  <p>By default, posts land in the 
+    <select id="defaultForum" name="top">
+      <option value="general">General</option>
+      <option value="scrabble">Scrabble</option>
+    </select> forum.</p>
+  <p>When clicking a thread title,
+    <select id="defaultExpand" name="gro">
+      $expand_options
+    </select> by default.</p>
+  <p>Posts younger than <input id="defaultRevise" name="rev" type="number" min="5" max="300" placeholder="$default_revise" value="$default_revise"></input> minutes can be revised.</p>
+  <p style="text-align: center"><input id="saveSettings" type="Submit" value="Update"></input> settings or <input id="revertSettings" type="Submit" value="Revert"></input> changes.</p>
+</form>
+</div>
+
 <div class="card newPost">
 <form>
   <textarea class="newThread" name="message" placeholder="Thread Title and Forum Name, one per line. Then, your message&hellip;"></textarea>
