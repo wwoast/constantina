@@ -41,34 +41,7 @@
   <p>You have $post_count posts since registering on <i>$registration_date</i></p>
   <p><img class="settingsAvatar" src="images/avatars/wumpwoast.png"><input type="file" name="updateAvatar"></input></p>
   <p>
-  <label>
-     <input type="radio" name="thm" value="0" $theme_state_0 />
-     <img src="themes/roleplay.ruinedcastle/theme.png" />
-  </label>
-  <label>
-     <input type="radio" name="thm" value="1" $theme_state_1 />
-     <img src="themes/roleplay.cloudycastle/theme.png" />
-  </label>
-  <label>
-     <input type="radio" name="thm" value="2" $theme_state_2 />
-     <img src="themes/roleplay.graveyard/theme.png" />
-  </label>
-  <label>
-     <input type="radio" name="thm" value="3" $theme_state_3 />
-     <img src="themes/winflat.evergreen/theme.png" />
-  </label>
-  <label>
-     <input type="radio" name="thm" value="4" $theme_state_4 />
-     <img src="themes/winflat.rainbow/theme.png" />
-  </label>
-  <label>
-     <input type="radio" name="thm" value="5" $theme_state_5 />
-     <img class="settingsThemePreview" src="themes/winflat.raindrops/theme.png" />
-  </label>
-  <label>
-     <input type="radio" name="thm" value="-1" $theme_state_random />
-     <img class="settingsThemePreview" src="themes/roleplay.ruinedcastle/random-theme.jpg" />
-  </label>
+  $theme_menu
   </p>
   <p>By default, posts land in the
     <select id="defaultForum" name="top" default="$default_topic">
