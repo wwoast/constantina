@@ -31,7 +31,7 @@ def template_themes(desired_theme):
         replacements['theme_index'] = str(theme)
         replacements['theme_directory'] = GlobalConfig.get('themes', str(theme))
         if theme == desired_theme and valid_theme is True:
-            replacements['theme_selected'] = 'chosen="chosen"'
+            replacements['theme_selected'] = 'checked="checked"'
         else:
             replacements['theme_selected'] = ''
         menu += option.safe_substitute(replacements)
@@ -46,7 +46,7 @@ def template_themes(desired_theme):
   </label>
 """)
     if valid_theme is False:
-        random['theme_selected'] = 'chosen="chosen"'
+        random['theme_selected'] = 'checked="checked"'
     else:
         random['theme_selected'] = ''
     menu += random_option.safe_substitute(random)
