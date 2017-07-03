@@ -73,7 +73,7 @@ class ConstantinaPreferences:
         self.theme = GlobalTheme.theme    # Existing theme settings from state
         self.thm = GlobalTheme.index
         self.top = "general"
-        self.gro = 0
+        self.gro = '0'
         self.rev = self.zoo.get('zoo', 'edit_window')
 
         self.instance_id = GlobalConfig.get("server", "instance_id")
@@ -200,7 +200,7 @@ class ConstantinaPreferences:
             "jti": str(jti),
             "thm": str(self.thm),
             "top": self.top,
-            "gro": self.gro,
+            "gro": str(self.gro),
             "rev": self.rev
         }
         jwt_header = {

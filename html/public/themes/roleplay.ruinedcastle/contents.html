@@ -43,14 +43,13 @@
   $theme_menu
   </p>
   <p>By default, posts land in the
-    <select id="defaultForum" name="top" placeholder="$default_topic">
+    <select id="defaultForum" name="top">
       <option value="general">General</option>
       <option value="scrabble">Scrabble</option>
     </select> forum.</p>
   <p>When clicking a thread title,
-    <select id="defaultExpand" name="gro" placeholder="$default_expand">
-      <option value="0">Expand All Posts</option>
-      <option value="1">Show Only the Latest 10 Posts</option>
+    <select id="defaultExpand" name="gro">
+      $expand_options
     </select> by default.</p>
   <p>Posts younger than <input id="defaultRevise" name="rev" type="number" min="5" max="300" placeholder="$default_revise" value="$default_revise"></input> minutes can be revised.</p>
   <p style="text-align: center"><input id="saveSettings" type="Submit" value="Update"></input> settings or <input id="revertSettings" type="Submit" value="Revert"></input> changes.</p>

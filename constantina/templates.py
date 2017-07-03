@@ -3,6 +3,7 @@ from string import Template
 import syslog
 
 from shared import GlobalConfig
+from themes import GlobalTheme
 
 syslog.openlog(ident='constantina.templates')
 
@@ -16,12 +17,11 @@ def template_themes(desired_theme):
     """
     Server side rendering of the theme selection menu.
     """
-    theme_range = len(GlobalConfig.items('themes')) - 1
-    valid_theme = (desired_theme in xrange(0, theme_range))
+    valid_theme = (desired_theme in xrange(0, GlobalTheme.count))
     chosen_theme = desired_theme
     if valid_theme is False:
         # Account for random=-1, and out-of-range values
-        chosen_theme = randint(0, theme_range -1)
+        chosen_theme = randint(0, GlobalTheme.count -1)
 
     menu = ""
     option = Template("""
@@ -31,7 +31,7 @@ def template_themes(desired_theme):
   </label>
 """)
 
-    for theme in xrange(0, theme_range):
+    for theme in xrange(0, GlobalTheme.count):
         replacements = {}
         replacements['theme_index'] = str(theme)
         replacements['theme_directory'] = GlobalConfig.get('themes', str(theme))
