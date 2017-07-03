@@ -103,7 +103,7 @@ class ConstantinaPreferences:
         """
         # Is theme a number, and not outside the range of configured themes?
         theme_count = len(GlobalConfig.items("themes")) - 1
-        if int(self.thm) > theme_count:
+        if self.thm > theme_count:
             self.thm = 0
         # Is topic a string? Just check #general for now
         self.top = "general"
@@ -138,10 +138,11 @@ class ConstantinaPreferences:
         form wasn't filled out and this is a default preferences cookie, just set the
         default settings and call it a day.
         """
-        self.thm = kwargs.get('thm')
+        self.thm = int(kwargs.get('thm'))
         self.top = kwargs.get('top')
-        self.gro = kwargs.get('gro')
-        self.rev = kwargs.get('rev')
+        self.gro = int(kwargs.get('gro'))
+        self.rev = int(kwargs.get('rev'))
+        syslog.syslog("input claims: %s %s %s %s" % (self.thm, self.top, self.gro, self.rev))
         self.__validate_claims()
 
     def __set_user_preference(self, username, preference_id):
