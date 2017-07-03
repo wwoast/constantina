@@ -464,7 +464,7 @@ def create_page(page):
     return output
 
 
-def template_contents(template, prefs):
+def template_contents(raw, prefs):
     """
     Given the values in the preferences form, adjust the contents page
     to match the metadata relevant to the currently logged-in user.
@@ -472,7 +472,7 @@ def template_contents(template, prefs):
     If not in Forum mode, do replacements that would make sense as
     defaults.
     """
-    output = Template(template)
+    template = Template(raw)
     missing = {
         'username': 'guest',
         'post_count': 'yet to make',
@@ -513,7 +513,8 @@ def template_contents(template, prefs):
                     replacements['theme_state_' + str(theme)] = ''
 
     # Returned output is the template transform
-    return output.safe_substitute(replacements)
+    output = template.safe_substitute(replacements)
+    return output
 
 
 def contents_page(start_response, state, prefs, headers):
@@ -530,10 +531,10 @@ def contents_page(start_response, state, prefs, headers):
 
     # Read in headers from authentication if they exist
     headers.append(('Content-Type', 'text/html'))
-    # syslog.syslog(str(headers))
 
     # Fresh new HTML, no previous state provided
     if state.fresh_mode() is True:
+        syslog.syslog("***** Fresh New HTML *****")
         page = ConstantinaPage(state)
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
@@ -543,6 +544,7 @@ def contents_page(start_response, state, prefs, headers):
 
     # Permalink page of some kind
     elif state.permalink_mode() is True:
+        syslog.syslog("***** Permalink Mode *****")
         page = ConstantinaPage(state)
         base = open(state.theme + '/contents.html', 'r')
         html = base.read()
@@ -573,6 +575,7 @@ def contents_page(start_response, state, prefs, headers):
 
     # Otherwise, there is state, but no special headers.
     else:
+        syslog.syslog("***** Follow-On HTML *****")
         page = ConstantinaPage(state)
         html = create_page(page)
         html = template_contents(html, prefs)
@@ -692,18 +695,21 @@ def application(env, start_response, instance="default"):
 
     state = ConstantinaState(in_state)   # Create state object
     auth = authentication(env, post)
+    html = ""
 
     # based on auth_mode and in_uri, do a thing.
     if in_uri is not None:
         return get_file(in_uri, start_response, [], auth_mode, auth)
     elif (auth_mode == "blog") or (auth_mode == "combined"):
-        return contents_page(start_response, state, None, auth.headers)
+        html = contents_page(start_response, state, None, auth.headers)
     else:
         if auth.account.valid is True:
             prefs = preferences(env, post, auth.account.username)
-            return contents_page(start_response, state, prefs, auth.headers + prefs.headers)
+            html = contents_page(start_response, state, prefs, auth.headers + prefs.headers)
         else:
-            return authentication_page(start_response, state)
+            html = authentication_page(start_response, state)
+
+    return [html.encode('utf8')]
 
 
 

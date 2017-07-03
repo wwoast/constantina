@@ -254,6 +254,7 @@ def preferences(env, post, username):
         # shouldn't be necessary. Use the form's values, not the cookie.
         # TODO: change preferences key as well!
         del post['action']
+        syslog.syslog("setting cookie. revision timer: " + str(post['rev']))
         prefs = ConstantinaPreferences("set", username, **post)
         return prefs
 
