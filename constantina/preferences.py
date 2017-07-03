@@ -6,8 +6,9 @@ import syslog
 from jwcrypto import jwk, jwt
 from random import randint
 
-from shared import GlobalConfig, GlobalTime, opaque_identifier, opaque_integer, opaque_mix, specific_cookie
 from keypair import ConstantinaKeypair
+from shared import GlobalConfig, GlobalTime, opaque_identifier, opaque_integer, opaque_mix, specific_cookie
+from themes import GlobalTheme
 
 syslog.openlog(ident='constantina.preferences')
 
@@ -69,13 +70,8 @@ class ConstantinaPreferences:
         Based on the username, set the expected cookie name and id.
         TODO: refactor auth settings to use similar default strategy.
         """
-        default_theme = GlobalConfig.get("themes", "default")
-        # Find the integer index of the default theme in the list
-        if default_theme == "random":
-            self.thm = -1
-        else:
-            self.thm = [int(x[0]) for x in GlobalConfig.items("themes")[1:]
-                        if x[1] == default_theme][0]
+        self.theme = GlobalTheme.theme    # Existing theme settings from state
+        self.thm = GlobalTheme.index
         self.top = "general"
         self.gro = 0
         self.rev = self.zoo.get('zoo', 'edit_window')
@@ -102,9 +98,8 @@ class ConstantinaPreferences:
         if wacky inputs are received. TODO
         """
         # Is theme a number, and not outside the range of configured themes?
-        theme_range = len(GlobalConfig.items("themes")) - 2
-        if self.thm > theme_range:
-            self.thm = 0
+        GlobalTheme.set(self.thm)
+        self.theme = GlobalTheme.theme
         # Is topic a string? Just check #general for now
         self.top = "general"
         # Is the expand setting a positive integer less than MAX_PAGING?
@@ -146,7 +141,6 @@ class ConstantinaPreferences:
         self.top = kwargs.get('top')
         self.gro = int(kwargs.get('gro'))
         self.rev = kwargs.get('rev')   # input field, wait to parse
-        syslog.syslog("input claims: %s %s %s %s" % (self.thm, self.top, self.gro, self.rev))
         self.__validate_claims()
 
     def __set_user_preference(self, username, preference_id):

@@ -7,6 +7,7 @@ import syslog
 import ConfigParser
 
 from shared import GlobalConfig, BaseFiles, BaseState
+from themes import GlobalTheme
 from medusa.state import MedusaState
 from zoo.state import ZooState
 
@@ -168,23 +169,13 @@ class ConstantinaState(BaseState):
             # Read in single char of theme state value
             self.appearance = BaseState._int_translate(self, appearance_state, 1, 0)
 
-        theme_count = len(self.config.items("themes")) - 1
-        self.theme = None
-        if self.appearance is None:
-            self.theme = self.config.get("themes", "default")
-        elif self.appearance >= theme_count:
-            self.theme = self.config.get("themes", str(self.appearance % theme_count))
-        else:
-            self.theme = self.config.get("themes", str(self.appearance))
-
         # If the configuration supports a random theme, and we didn't have a
         # theme provided in the initial state, let's choose one randomly
-        if (appearance_state is None) and (self.theme == "random"):
-            seed()   # Enable non-seeded choice
-            choice = randint(0, theme_count - 1)
-            self.theme = self.config.get("themes", str(choice))
-            if self.seed:   # Re-enable seeded nonrandom choice
-                seed(self.seed)
+        seed()   # Enable non-seeded choice
+        GlobalTheme.set(self.appearance)
+        if self.seed:   # Re-enable seeded nonrandom choice
+            seed(self.seed)
+        self.theme = GlobalTheme.theme
 
 
     def __import_state(self):

@@ -9,6 +9,7 @@ from preferences import preferences
 from shared import GlobalConfig, GlobalTime, BaseFiles, opendir, safe_path, urldecode, process_post
 from state import ConstantinaState
 from templates import template_contents
+from themes import GlobalTheme
 from medusa.cards import *
 from medusa.search import MedusaSearch
 # from zoo.state import ZooState
@@ -481,9 +482,8 @@ def contents_page(start_response, state, prefs, headers):
 
     # Fresh new HTML, no previous state provided
     if state.fresh_mode() is True:
-        syslog.syslog("***** Fresh New HTML *****")
         page = ConstantinaPage(state)
-        base = open(state.theme + '/contents.html', 'r')
+        base = open(GlobalTheme.theme + '/contents.html', 'r')
         html = base.read()
         html = template_contents(html, prefs)
         html = html.replace(substitute, create_page(page))
@@ -493,7 +493,7 @@ def contents_page(start_response, state, prefs, headers):
     elif state.permalink_mode() is True:
         syslog.syslog("***** Permalink Mode *****")
         page = ConstantinaPage(state)
-        base = open(state.theme + '/contents.html', 'r')
+        base = open(GlobalTheme.theme + '/contents.html', 'r')
         html = base.read()
         html = template_contents(html, prefs)
         html = html.replace(substitute, create_page(page))
@@ -504,7 +504,7 @@ def contents_page(start_response, state, prefs, headers):
         syslog.syslog("***** Empty Search / Reshuffle Mode *****")
         state = ConstantinaState(None)
         page = ConstantinaPage(state)
-        base = open(state.theme + '/contents.html', 'r')
+        base = open(GlobalTheme.theme + '/contents.html', 'r')
         html = base.read()
         html = template_contents(html, prefs)
         html = html.replace(substitute, create_page(page))
@@ -514,7 +514,7 @@ def contents_page(start_response, state, prefs, headers):
     elif state.search_mode() is True and state.page == 0:
         syslog.syslog("***** New Search Page Results *****")
         page = ConstantinaPage(state)
-        base = open(state.theme + '/contents.html', 'r')
+        base = open(GlobalTheme.theme + '/contents.html', 'r')
         html = base.read()
         html = template_contents(html, prefs)
         html = html.replace(substitute, create_page(page))
@@ -522,7 +522,6 @@ def contents_page(start_response, state, prefs, headers):
 
     # Otherwise, there is state, but no special headers.
     else:
-        syslog.syslog("***** Follow-On HTML *****")
         page = ConstantinaPage(state)
         html = create_page(page)
         html = template_contents(html, prefs)
