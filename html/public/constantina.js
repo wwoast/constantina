@@ -180,6 +180,21 @@ function revealToggle(id) {
    }
 }
 
+function revealMenu(id) {
+   var card = document.getElementById(id);
+   var menu_ids = ['zooSettings', 'zooDocs'];
+   var todo = card.style.display;
+   if ( todo !== "none" ) {
+      card.style.display = "none";
+   } else {
+      for ( var i = 0; i < menu_ids.length; i++ ) {
+          var menu = document.getElementById(menu_ids[i]);
+          menu.style.display = "none";
+      }
+      card.style.display = "block";
+   }
+}
+
 function modifyPostBox(card, nextCard, mode) {
     // Switching between quote and reply mode in the text areas.
     // If a reply was already typed, and quote is clicked, just change 

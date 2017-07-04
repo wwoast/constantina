@@ -22,18 +22,18 @@
       <p class="forumMenuHeading">Latest Updates</p>
       <p class="forumMenu">New: 4 posts, 2 threads</p>
    </div>
-   <div class="cell">
+   <div class="cell"><a href="javascript:" onclick="revealMenu('zooSettings');">
       <p class="forumMenuHeading">Settings</p>
       <p class="forumMenu">User: <i><u>@$username</u></i></p>
-   </div>
-   <div class="cell">
+   </a></div>
+   <div class="cell"><a href="javascript:" onclick="revealMenu('zooDocs');">
       <p class="forumMenuHeading">How to Use</p>
       <p class="forumMenu"><tt>:vrolijk_1:&nbsp;=&nbsp;<img style="display: inline; position: absolute; z-index: 2;" src="images/smilies/vrolijk_1.gif" /></tt></p>
-   </div>
+   </a></div>
    <span><form id="searchForm" action="javascript:"><input id="searchEntry" type="search"></input></form></span>
 </div>
 
-<div class="card settings" style="display: block;">
+<div class="card settings" id="zooSettings" style="display: none;">
 <form method="POST">
   <input type="hidden" name="action" value="preferences">
   <p style="text-align: center">Logged in as <i>@$username</i>. <button name="logOut">Log out</button></p>
@@ -56,7 +56,7 @@
 </form>
 </div>
 
-<div class="card help" style="display: none;">
+<div class="card help" id="zooDocs" style="display: none;">
 <p>The boil.afraid.org forum is for all of Justin's friends to be able to share life and experiences, in a private and protected way. This is a quick starter guide for how the forum works &mdash; please consult the broader *manual*
 for specifics.</p>
 
@@ -95,7 +95,6 @@ Who would you vote for class president?
 [/POLL]
 </pre>
 </div>
-
 
 <div class="card newPost">
 <form>
