@@ -143,6 +143,7 @@ class ConstantinaPreferences:
         self.rev = kwargs.get('rev')   # input field, wait to parse
         self.__validate_claims()
         # TODO: if claims are valid, it's time to write a new preferences keypair
+        #       for the current browser ID (can't erase others)
         # TODO: in writing new keypair, we need to delete old ones and expire their cookies
 
     def __set_user_preference(self, username, preference_id):

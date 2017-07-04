@@ -181,17 +181,25 @@ function revealToggle(id) {
 }
 
 function revealMenu(id) {
-   var card = document.getElementById(id);
+   // Logic for the Zoo menu buttons
+   var button_id = id.replace("zoo", "button");
+   var button_ids = ['buttonSettings', 'buttonDocs'];
    var menu_ids = ['zooSettings', 'zooDocs'];
+   var card = document.getElementById(id);
+   var button = document.getElementById(button_id);
    var todo = card.style.display;
    if ( todo !== "none" ) {
       card.style.display = "none";
+      button.style.background = "rgba(255, 255, 255, 0.0)";
    } else {
       for ( var i = 0; i < menu_ids.length; i++ ) {
           var menu = document.getElementById(menu_ids[i]);
+          var menu_button = document.getElementById(button_ids[i]);
           menu.style.display = "none";
+          menu_button.style.background = "rgba(255, 255, 255, 0.0)";
       }
       card.style.display = "block";
+      button.style.background = "rgba(255, 255, 255, 0.2)";
    }
 }
 
