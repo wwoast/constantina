@@ -153,6 +153,10 @@ class ConstantinaPreferences:
         if not self.preferences.has_section(username):
             self.preferences.add_section(username)
         self.preferences.set(username, "preference_id", preference_id)
+        # TODO: delete any keys associated with old preferences
+        # TODO: any keys deleted get a kill-cookie associated with them
+        with open(self.config_path, 'wb') as pfh:
+            self.preferences.write(pfh)
 
     def get_cookie_preference_id(self, instance_id, cookie_id):
         """
