@@ -17,12 +17,6 @@ def template_themes(desired_theme):
     """
     Server side rendering of the theme selection menu.
     """
-    valid_theme = (desired_theme in xrange(0, GlobalTheme.count))
-    chosen_theme = desired_theme
-    if valid_theme is False:
-        # Account for random=-1, and out-of-range values
-        chosen_theme = randint(0, GlobalTheme.count -1)
-
     menu = ""
     option = Template("""
   <label>
@@ -31,11 +25,11 @@ def template_themes(desired_theme):
   </label>
 """)
 
-    for theme in xrange(0, GlobalTheme.count):
+    for index in xrange(0, GlobalTheme.count):
         replacements = {}
-        replacements['theme_index'] = str(theme)
-        replacements['theme_directory'] = GlobalConfig.get('themes', str(theme))
-        if theme == desired_theme and valid_theme is True:
+        replacements['theme_index'] = str(index)
+        replacements['theme_directory'] = GlobalConfig.get('themes', str(index))
+        if index == desired_theme and GlobalTheme.random is False:
             replacements['theme_selected'] = 'checked="checked"'
         else:
             replacements['theme_selected'] = ''
@@ -43,14 +37,14 @@ def template_themes(desired_theme):
 
     random = {}
     random['theme_index'] = -1
-    random['theme_directory'] = GlobalConfig.get('themes', str(chosen_theme))
+    random['theme_directory'] = GlobalTheme.theme
     random_option = Template("""
   <label>
      <input type="radio" name="thm" value="$theme_index" $theme_selected />
      <img src="$theme_directory/random-theme.jpg" />
   </label>
 """)
-    if valid_theme is False:
+    if GlobalTheme.random is True:
         random['theme_selected'] = 'checked="checked"'
     else:
         random['theme_selected'] = ''
@@ -112,7 +106,7 @@ def template_contents(raw, prefs):
         for field in missing.keys():
             replacements[field] = missing[field]
         [replacements['theme_menu'],
-         replacements['theme_directory']] = template_themes(-1)
+         replacements['theme_directory']] = template_themes(GlobalTheme.index)
 
     else:
         # Replace page variables with preferences
