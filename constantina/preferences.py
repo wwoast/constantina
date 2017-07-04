@@ -142,6 +142,8 @@ class ConstantinaPreferences:
         self.gro = int(kwargs.get('gro'))
         self.rev = kwargs.get('rev')   # input field, wait to parse
         self.__validate_claims()
+        # TODO: if claims are valid, it's time to write a new preferences keypair
+        # TODO: in writing new keypair, we need to delete old ones and expire their cookies
 
     def __set_user_preference(self, username, preference_id):
         """
@@ -153,8 +155,6 @@ class ConstantinaPreferences:
         if not self.preferences.has_section(username):
             self.preferences.add_section(username)
         self.preferences.set(username, "preference_id", preference_id)
-        # TODO: delete any keys associated with old preferences
-        # TODO: any keys deleted get a kill-cookie associated with them
         with open(self.config_path, 'wb') as pfh:
             self.preferences.write(pfh)
 
@@ -174,6 +174,14 @@ class ConstantinaPreferences:
         cookie identifier. This ties setting cookies to a specific site instance.
         """
         return opaque_mix(instance_id, preference_id)
+
+    def __expire_old_preferences(self):
+        """
+        When the preferences id changes / a new keypair is made, we need to reap
+        the old ones for this user, as well as issue a kill-cookie that removes
+        any stray cookies that might be in the user's browser.
+        """
+        pass
 
     def read_preferences(self, cookie):
         """
