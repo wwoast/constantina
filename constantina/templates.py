@@ -91,7 +91,7 @@ def template_contents(raw, prefs):
         'post_count': 'yet to make',
         'registration_date': 'any given moment',
         'default_topic': 'general',
-        'default_expand': 'expandAll',
+        'default_expand': '0',
         'default_revise': '120'
     }
     replacements = {}
@@ -107,7 +107,6 @@ def template_contents(raw, prefs):
             replacements[field] = missing[field]
         [replacements['theme_menu'],
          replacements['theme_directory']] = template_themes(GlobalTheme.index)
-
     else:
         # Replace page variables with preferences
         replacements = {
@@ -122,7 +121,7 @@ def template_contents(raw, prefs):
          replacements['theme_directory']] = template_themes(int(prefs.thm))
 
     # Expand Threads form
-    replacements['expand_options'] = template_selectoptions(str(prefs.gro), **expand_options)
+    replacements['expand_options'] = template_selectoptions(replacements['default_expand'], **expand_options)
 
     # Returned output is the template transform
     output = template.safe_substitute(replacements)
