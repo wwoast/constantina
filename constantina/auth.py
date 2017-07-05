@@ -157,7 +157,7 @@ class ConstantinaAuth:
         """
         self.logout = True
         cookie_values = [
-            self.cookie_name = "=" + "deleted",
+            self.cookie_name + "=" + "deleted",
             "Secure",
             "HttpOnly",
             "Max-Age=0",
