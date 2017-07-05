@@ -171,6 +171,11 @@ div.card.error {
    display: none;
 }
 
+div.card.error.logout, div.card.error.logout > h3 {
+   display: block;
+   text-align: center;
+}
+
 div.card.news {
    /* background-color: rgba(101, 96, 128, 0.78); */
    background-color: rgba(121, 161, 118, 0.78);

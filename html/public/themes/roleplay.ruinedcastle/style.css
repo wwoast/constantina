@@ -170,6 +170,11 @@ div.card.error {
    display: none;
 }
 
+div.card.error.logout, div.card.error.logout > h3 {
+   display: block;
+   text-align: center;
+}
+
 div.card.news {
    background-color: rgba(55, 115, 135, 0.78); 
    padding: 10px 20px 10px 20px;

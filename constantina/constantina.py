@@ -649,7 +649,7 @@ def application(env, start_response, instance="default"):
     elif (auth_mode == "blog") or (auth_mode == "combined"):
         html = contents_page(start_response, state, None, auth.headers)
     else:
-        if auth.account.logout is True:
+        if auth.logout is True:
             html = logout_page(start_response, state, auth.headers)
         elif auth.account.valid is True:
             prefs = preferences(env, post, auth.account.username)
