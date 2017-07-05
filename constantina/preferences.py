@@ -32,8 +32,8 @@ class ConstantinaPreferences:
     in their own classes where preferences are checked and validated, but for
     now there aren't enough preferences to justify this approach.
     """
-    def __init__(self, mode, username, **kwargs):
-        self.username = username
+    def __init__(self, mode, auth, **kwargs):
+        self.username = auth.account.username
         self.__read_config()
         self.__default_preferences()
         self.valid = False
@@ -41,6 +41,7 @@ class ConstantinaPreferences:
         if mode == "set":
             self.__write_claims(**kwargs)
             self.write_preferences()
+            # self.update_
         if mode == "cookie":
             # Read in an existing preferences cookie
             self.valid = self.read_preferences(**kwargs)
@@ -71,6 +72,7 @@ class ConstantinaPreferences:
         TODO: refactor auth settings to use similar default strategy.
         """
         self.theme = GlobalTheme.theme    # Existing theme settings from state
+        self.avatar = 'images/avatars/%s.png' % self.username
         self.thm = GlobalTheme.index
         self.top = "general"
         self.gro = '0'
@@ -168,6 +170,15 @@ class ConstantinaPreferences:
         cookie_int = opaque_integer(cookie_id)
         return opaque_identifier(instance_int ^ cookie_int)
 
+    def upload_avatar(self, auth, upload):
+        """
+        If a valid token for a user is presented, upload a new avatar to:
+           private/images/avatars/{username.png}
+        Since the path is fixed per username, this is a detail managed in the
+        preferences form, but isn't tracked in the preferences token.
+        """
+        pass
+
     def create_cookie_id(self, instance_id, preference_id):
         """
         XOR the instance_id and preference_id binary representations together, and
@@ -182,7 +193,14 @@ class ConstantinaPreferences:
         the old ones for this user, as well as issue a kill-cookie that removes
         any stray cookies that might be in the user's browser.
         """
-        pass
+        cookie_values = [
+            self.cookie_name + "=" + "deleted",
+            "Secure",
+            "HttpOnly",
+            "Max-Age=0",
+            "SameSite=strict"
+        ]
+        self.headers.append(("Set-Cookie", '; '.join(cookie_values).encode('utf-8')))
 
     def read_preferences(self, cookie):
         """
@@ -241,7 +259,7 @@ class ConstantinaPreferences:
         self.headers.append(("Set-Cookie", '; '.join(cookie_values).encode('utf-8')))
 
 
-def preferences(env, post, username):
+def preferences(env, post, auth):
     """
     Determine what the valid preferences action should be. Options include:
     - Valid auth, no preferences cookie: create a cookie with default preferences
@@ -253,7 +271,7 @@ def preferences(env, post, username):
 
     # Assume a cookie is there if an authentication succeeded. If it wasn't we'll
     # create a new one in subsequent steps.
-    prefs = ConstantinaPreferences("cookie", username, cookie=raw_cookie)
+    prefs = ConstantinaPreferences("cookie", auth, cookie=raw_cookie)
 
     if prefs.valid is False:
         # No cookie but correct authentication. Write a default preferences cookie
@@ -267,7 +285,7 @@ def preferences(env, post, username):
         # TODO: change preferences key as well!
         del post['action']
         syslog.syslog("setting cookie. revision timer: " + str(post['rev']))
-        prefs = ConstantinaPreferences("set", username, **post)
+        prefs = ConstantinaPreferences("set", auth, **post)
         return prefs
 
     else:

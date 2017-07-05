@@ -16,6 +16,8 @@ class ConstantinaAuth:
     """
     Constantina Authentication object. Manages passwords, authentication tokens
     and anything related to users.
+
+    # TODO: Username sanitiation, once usernames can be enrolled!
     """
     def __init__(self, mode, **kwargs):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)

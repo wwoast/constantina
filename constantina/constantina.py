@@ -652,7 +652,7 @@ def application(env, start_response, instance="default"):
         if auth.logout is True:
             html = logout_page(start_response, state, auth.headers)
         elif auth.account.valid is True:
-            prefs = preferences(env, post, auth.account.username)
+            prefs = preferences(env, post, auth)
             html = contents_page(start_response, state, prefs, auth.headers + prefs.headers)
         else:
             html = authentication_page(start_response, state)
