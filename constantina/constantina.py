@@ -4,7 +4,7 @@ from math import floor
 from random import randint, seed
 import syslog
 
-from auth import authentication, authentication_page
+from auth import authentication, authentication_page, logout_page
 from preferences import preferences
 from shared import GlobalConfig, GlobalTime, BaseFiles, opendir, safe_path, urldecode, process_post
 from state import ConstantinaState
@@ -649,7 +649,9 @@ def application(env, start_response, instance="default"):
     elif (auth_mode == "blog") or (auth_mode == "combined"):
         html = contents_page(start_response, state, None, auth.headers)
     else:
-        if auth.account.valid is True:
+        if auth.account.logout is True:
+            html = logout_page(start_response, state, auth.headers)
+        elif auth.account.valid is True:
             prefs = preferences(env, post, auth.account.username)
             html = contents_page(start_response, state, prefs, auth.headers + prefs.headers)
         else:

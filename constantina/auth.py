@@ -24,6 +24,7 @@ class ConstantinaAuth:
         self.cookie_name = ("__Secure-" +
                             GlobalConfig.get('server', 'hostname') + "-" +
                             GlobalConfig.get('server', 'instance_id'))
+        self.logout = False
         self.lifetime = self.config.getint("key_settings", "lifetime")
         self.sunset = self.config.getint("key_settings", "sunset")
         self.time = GlobalTime.time    # Don't leak multiple timestamps
@@ -147,6 +148,22 @@ class ConstantinaAuth:
                 self.__read_jwt_claims()
                 return True
         return False
+
+    def expire_token(self):
+        """
+        If a user logs out, expire their authentication token immediately.
+        This is not guaranteed to delete an existing authentication cookie, but
+        backdating the cookie is apparently the best we can do.
+        """
+        self.logout = True
+        cookie_values = [
+            self.cookie_name = "=" + "deleted",
+            "Secure",
+            "HttpOnly",
+            "Max-Age=0",
+            "SameSite=strict"
+        ]
+        self.headers.append(("Set-Cookie", '; '.join(cookie_values).encode('utf-8')))
 
     def set_token(self):
         """
@@ -278,6 +295,17 @@ def authentication_page(start_response, state):
     return html
 
 
+def logout_page(start_response, state, headers):
+    """
+    If Constantina is in "forum" mode, you can get a logout
+    page by clicking the logout button in the settings menu.
+    """
+    base = open(state.theme + '/logout.html', 'r')
+    html = base.read()
+    start_response('200 OK', headers)
+    return html
+
+
 def set_authentication(post):
     """
     Received a POST trying to set a username and password. There must be a
@@ -310,6 +338,10 @@ def authentication(env, post):
     """
     if post.get('action') == "login":
         auth = set_authentication(post)
+        return auth
+    elif post.get('action') == "logout":
+        auth = show_authentication(env)
+        auth.expire_token()
         return auth
     else:
         auth = show_authentication(env)
