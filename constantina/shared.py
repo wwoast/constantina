@@ -575,6 +575,64 @@ def specific_cookie(check_name, raw_cookies):
     return None
 
 
+def multipart_section(buffer, cur_line, delimiter):
+    """
+    Given a multipart form delimiter, read in a single section.
+    """
+    section = {
+        'length': 1,
+        'name': None,
+        'value': None
+    }
+    if buffer[cur_line] != delimiter:
+        return section
+    cur_line = cur_line + 1   # Past the delimiter
+    section['length'] = section['length'] + 1
+    fields = buffer[cur_line].split(';')
+    # We only care about the name part here
+    for field in fields:
+        field = field.lstrip().rstrip()
+        if field.endswith(';'):
+            field = field[0:-1]
+        if field.find('name') == 0:
+            name_string = field.split("=")[1]
+            section['name'] = name_string
+            break
+    pass   # TODO: finish
+
+
+def process_multipart(env):
+    """
+    Grab the relevant POST variables for processing by other code.
+
+    Constantina expects there to be an 'action' variable POSTed in a form that's
+    a hidden <input> field. This is how Constantina decides what other methods
+    will process the FORM data.
+
+    For multipart (file-upload) forms, be very touchy on formats. The multipart
+    delimiter should not be too short or too long, and should be matched by hash.
+    If the data is too big, just cancel outright.
+    """
+    read_size = int(env.get('CONTENT_LENGTH'))
+    max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
+    if read_size >= max_size:
+        return {}
+    post = {}
+    inbuf = env['wsgi.input'].read(read_size).splitlines()
+    # First line is multipart delimiter. Be sensitive if the line is too long
+    delimiter = inbuf[0]
+    if len(delimiter) < 0 or len(delimiter) > 100:
+        return {}
+    for idx, line in enumerate(inbuf):
+        # First line is the multipart delimiter
+        # Next line is semicolon-delimited field=value pairs
+        # This is followed by a blank line
+        # Finally, the value appears. Read in value until the nex tdelimiter
+        mp = multipart_section(inbuf, idx, delimiter)
+
+    pass
+
+
 def process_post(env):
     """
     Grab the relevant POST variables for processing by other code.
@@ -583,7 +641,7 @@ def process_post(env):
     a hidden <input> field. This is how Constantina decides what other methods
     will process the FORM data.
 
-    # TODO: how to deal with multipart form data? Not just &/= delimited stuff.
+    This is just for standard FORM "option1=value1&option2=value2" POST data.
     """
     read_size = int(env.get('CONTENT_LENGTH'))
     max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
