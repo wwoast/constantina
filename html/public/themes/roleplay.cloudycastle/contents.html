@@ -38,7 +38,7 @@
   <input type="hidden" name="action" value="logout" />
   <p style="text-align: center">Logged in as <i>@$username</i>. <input id="logOut" type="Submit" value="Log Out"></input></p>
 </form>
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
   <input type="hidden" name="action" value="preferences" />
   <p>You have $post_count posts since registering on <i>$registration_date</i></p>
   <p><img class="settingsAvatar" src="images/avatars/wumpwoast.png"><input id="updateAvatar" type="file" name="updateAvatar"></input></p>

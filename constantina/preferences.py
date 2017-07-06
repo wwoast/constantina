@@ -1,7 +1,9 @@
 from uuid import uuid4
-import os
+from os import rename
 import ConfigParser
 import json
+from io import BytesIO
+from PIL import Image
 import syslog
 from jwcrypto import jwk, jwt
 from random import randint
@@ -41,8 +43,7 @@ class ConstantinaPreferences:
         if mode == "set":
             self.__write_claims(**kwargs)
             self.write_preferences()
-            if kwargs.get('updateAvatar') != None and auth.account.valid == True:
-                self.__upload_avatar(kwargs['updateAvatar'])
+            self.__upload_avatar(auth, kwargs['updateAvatar'])
         if mode == "cookie":
             # Read in an existing preferences cookie
             self.valid = self.read_preferences(**kwargs)
@@ -73,7 +74,7 @@ class ConstantinaPreferences:
         TODO: refactor auth settings to use similar default strategy.
         """
         self.theme = GlobalTheme.theme    # Existing theme settings from state
-        self.avatar = 'images/avatars/%s.png' % self.username
+        self.avatar = '../private/images/avatars/%s.png' % self.username
         self.thm = GlobalTheme.index
         self.top = "general"
         self.gro = '0'
@@ -178,12 +179,26 @@ class ConstantinaPreferences:
         Since the path is fixed per username, this is a detail managed in the
         preferences form, but isn't tracked in the preferences token.
         """
-        # Deserialize into a file
-        # Check if it's an 80x80 PNG
-            # If not, return an error response
-        # If it is a decent image, write to the image path.tmp
-        # Then atomic overwrite the existing image
-        pass
+        if upload == '' or upload == None or auth.account.valid == False:
+            return
+
+        try:
+            # Check if it's an 80x80 PNG
+                # If not, return an error response
+            # If it is a decent image, write to the image path.tmp
+            # Then atomic overwrite the existing image
+            syslog.syslog(str(upload))
+            tmp = self.avatar + "." + self.cookie_id
+            src = Image.open(BytesIO(upload))
+            if src.size[0] == 80 and src.size[1] == 80:
+                dst = src.convert('RGB').convert('P', palette=Image.ADAPTIVE, colors=128)
+                with open(tmp, 'wb') as ofh:
+                    ofh.write(dst)
+                    rename(tmp, self.avatar)
+        except OSError as e:
+            syslog.syslog(e)
+        except IOError as e:
+            syslog.syslog(e)
 
     def create_cookie_id(self, instance_id, preference_id):
         """
