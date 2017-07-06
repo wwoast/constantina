@@ -41,7 +41,8 @@ class ConstantinaPreferences:
         if mode == "set":
             self.__write_claims(**kwargs)
             self.write_preferences()
-            # self.update_
+            if kwargs.get('updateAvatar') != None and auth.account.valid == True:
+                self.__upload_avatar(kwargs['updateAvatar'])
         if mode == "cookie":
             # Read in an existing preferences cookie
             self.valid = self.read_preferences(**kwargs)
@@ -170,13 +171,18 @@ class ConstantinaPreferences:
         cookie_int = opaque_integer(cookie_id)
         return opaque_identifier(instance_int ^ cookie_int)
 
-    def upload_avatar(self, auth, upload):
+    def __upload_avatar(self, auth, upload):
         """
         If a valid token for a user is presented, upload a new avatar to:
            private/images/avatars/{username.png}
         Since the path is fixed per username, this is a detail managed in the
         preferences form, but isn't tracked in the preferences token.
         """
+        # Deserialize into a file
+        # Check if it's an 80x80 PNG
+            # If not, return an error response
+        # If it is a decent image, write to the image path.tmp
+        # Then atomic overwrite the existing image
         pass
 
     def create_cookie_id(self, instance_id, preference_id):
