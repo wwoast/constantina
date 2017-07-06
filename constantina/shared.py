@@ -582,6 +582,8 @@ def process_post(env):
     Constantina expects there to be an 'action' variable POSTed in a form that's
     a hidden <input> field. This is how Constantina decides what other methods
     will process the FORM data.
+
+    # TODO: how to deal with multipart form data? Not just &/= delimited stuff.
     """
     read_size = int(env.get('CONTENT_LENGTH'))
     max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
