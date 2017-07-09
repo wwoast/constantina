@@ -558,17 +558,17 @@ def get_file(in_uri, start_response, headers, auth_mode, auth=None):
         static_file = file_dir + "/" + in_uri
         # syslog.syslog("static file:" + file_dir + "/" + in_uri)
         try:
-            with open(in_uri, 'r') as handle:
-                # Return X-Sendfile/X-Accel-Redirect headers, along
-                # with Content-Size headers, to help your webserver
-                # fetch the file.
-                headers.append(("X-Sendfile", static_file))
-                headers.append(("X-Accel-Redirect", static_file))
-                headers.append(("Content-Size", os.path.getsize(static_file)) 
-                headers.append(("Cache-Control", "max-age=31536000"))
-                start_response(http_response, headers)
-                return
-        except IOError:
+            # Return X-Sendfile/X-Accel-Redirect headers, along
+            # with Content-Size headers, to help your webserver
+            # fetch the file.
+            static_size = os.path.getsize(static_file)
+            headers.append(("Content-Size", static_size)) 
+            headers.append(("X-Sendfile", static_file))
+            headers.append(("X-Accel-Redirect", static_file))
+            headers.append(("Cache-Control", "max-age=31536000"))
+            start_response(http_response, headers)
+            return
+        except Exception as e:
             continue
 
     # If no files available, return 404. This might be a lie
