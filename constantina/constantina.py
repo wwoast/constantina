@@ -556,12 +556,12 @@ def get_file(in_uri, start_response, headers, auth_mode, auth=None):
     for file_dir in file_dirs:
         os.chdir(file_dir)
         static_file = file_dir + "/" + in_uri
-        # syslog.syslog("static file:" + file_dir + "/" + in_uri)
+        syslog.syslog("static file:" + file_dir + "/" + in_uri)
         try:
             # Return X-Sendfile/X-Accel-Redirect headers, along
             # with Content-Size headers, to help your webserver
             # fetch the file.
-            static_size = os.path.getsize(static_file)
+            static_size = str(os.path.getsize(static_file))
             headers.append(("Content-Size", static_size)) 
             headers.append(("X-Sendfile", static_file))
             headers.append(("X-Accel-Redirect", static_file))
