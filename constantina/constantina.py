@@ -561,7 +561,7 @@ def get_file(in_uri, start_response, headers, auth_mode, auth=None):
         # headers.append(("Content-Size", static_size)) 
         headers.append(("X-Sendfile", output_file))
         headers.append(("X-Accel-Redirect", output_file))
-        # headers.append(("Cache-Control", "max-age=31536000"))
+        headers.append(("Cache-Control", "max-age=31536000"))
         start_response(http_response, headers)
         return
     except Exception as e:
