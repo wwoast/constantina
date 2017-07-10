@@ -540,28 +540,33 @@ def get_file(in_uri, start_response, headers, auth_mode, auth=None):
     it's found regardless if auth.account.valid is True or not. If the
     auth is True, try and find the file in /private as well.
     """
+    data_root = GlobalConfig.get("paths", "data_root")
+    in_uri = urldecode(in_uri)   # No url-encoded characters
+    # Use X-Sendfile/the private directory for files behind auth
+    static_file = "private" + in_uri
+    output_file = "/private" + in_uri
+    syslog.syslog(static_file)
+
     if auth_mode != "blog":
         if auth is None or auth.account.valid is False:
             return
-
-    in_uri = urldecode(in_uri)   # No url-encoded characters
-    # Use X-Sendfile/the private directory for files behind auth
-    static_file = "/private" + in_uri
+    
+    os.chdir(data_root)
     try:
         # Return X-Sendfile/X-Accel-Redirect headers, along
         # with Content-Size headers, to help your webserver
-        # fetch the file.
-        static_size = str(os.path.getsize(static_file))
+        # fetch the file. 
+        # static_size = str(os.path.getsize(static_file))
         http_response = '200 OK'
-        headers.append(("Content-Size", static_size)) 
-        headers.append(("X-Sendfile", static_file))
-        headers.append(("X-Accel-Redirect", static_file))
-        headers.append(("Cache-Control", "max-age=31536000"))
+        # headers.append(("Content-Size", static_size)) 
+        headers.append(("X-Sendfile", output_file))
+        headers.append(("X-Accel-Redirect", output_file))
+        # headers.append(("Cache-Control", "max-age=31536000"))
         start_response(http_response, headers)
         return
     except Exception as e:
         # If no files available, return 404. This might be a lie
-        http_response = '404 Not Found' + " " + static_file
+        http_response = '404 Not Found'
         start_response(http_response, headers)
         return
 
@@ -626,7 +631,6 @@ def application(env, start_response, instance="default"):
         # How to characterize application GETs from file GETs?
         #   file gets have no state.
         #   file gets are not for /
-        syslog.syslog(in_uri)
         return get_file(in_uri, start_response, [], auth_mode, auth)
     elif (auth_mode == "blog") or (auth_mode == "combined"):
         # Load basic blog contents.
