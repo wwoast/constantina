@@ -540,45 +540,35 @@ def get_file(in_uri, start_response, headers, auth_mode, auth=None):
     it's found regardless if auth.account.valid is True or not. If the
     auth is True, try and find the file in /private as well.
     """
-    file_dirs = [
-        GlobalConfig.get("paths", "data_root") + "/public",
-        GlobalConfig.get("paths", "data_root") + "/private"
-    ]
-    if auth_mode != "blog":
-        if auth is None:
-            file_dirs.pop()
-        elif auth.account.valid is False:
-            file_dirs.pop()
-
+    data_root = GlobalConfig.get("paths", "data_root")
     in_uri = urldecode(in_uri)   # No url-encoded characters
-    in_uri = in_uri[1:]   # No leading slash
-    http_response = '200 OK'
-    for file_dir in file_dirs:
-        os.chdir(file_dir)
-        # syslog.syslog("static file:" + file_dir + "/" + in_uri)
-        try:
-            with open(in_uri, 'r') as handle:
-                # w/o content-type headers, things like MP3s won't play
-                # within the browser, so add them.
-                if in_uri.find(".mp3") != -1:
-                    headers.append(("Content-Type", "audio/mpeg"))
-                elif in_uri.find(".png") != -1:
-                    headers.append(("Content-Type", "image/png"))
-                    headers.append(("Cache-Control", "private"))
-                    headers.append(("Cache-Control", "max-age=31536000"))
-                elif in_uri.find(".jpg") != -1:
-                    headers.append(("Content-Type", "image/jpeg"))
-                    headers.append(("Cache-Control", "private"))
-                    headers.append(("Cache-Control", "max-age=31536000"))
-                start_response(http_response, headers)
-                return handle.read()
-        except IOError:
-            continue
+    # Use X-Sendfile/the private directory for files behind auth
+    static_file = "private" + in_uri
+    output_file = "/private" + in_uri
+    syslog.syslog(static_file)
 
-    # If no files available, return 404. This might be a lie
-    http_response = '404 Not Found'
-    start_response(http_response, headers)
-    return ''
+    if auth_mode != "blog":
+        if auth is None or auth.account.valid is False:
+            return
+    
+    os.chdir(data_root)
+    try:
+        # Return X-Sendfile/X-Accel-Redirect headers, along
+        # with Content-Size headers, to help your webserver
+        # fetch the file. 
+        # static_size = str(os.path.getsize(static_file))
+        http_response = '200 OK'
+        # headers.append(("Content-Size", static_size)) 
+        headers.append(("X-Sendfile", output_file))
+        headers.append(("X-Accel-Redirect", output_file))
+        headers.append(("Cache-Control", "max-age=31536000"))
+        start_response(http_response, headers)
+        return
+    except Exception as e:
+        # If no files available, return 404. This might be a lie
+        http_response = '404 Not Found'
+        start_response(http_response, headers)
+        return
 
 
 def application(env, start_response, instance="default"):
@@ -627,13 +617,6 @@ def application(env, start_response, instance="default"):
     if in_cookie == '' or auth_mode == "blog":
         in_cookie = None
 
-    # How to characterize application GETs from file GETs?
-    #   file gets have no state.
-    #   file gets are not for /
-    #   also, if no HTTP_COOKIE, try the file get immediately
-    if (in_state is None) and (in_uri is not None) and (in_cookie is None):
-        return get_file(in_uri, start_response, [], auth_mode, None)
-
     # Get POST values for processing by other tools
     post = {}
     if in_method == "POST":
@@ -644,9 +627,13 @@ def application(env, start_response, instance="default"):
     html = ""
 
     # based on auth_mode and in_uri, do a thing.
-    if in_uri is not None:
+    if in_state is None and in_uri is not None:
+        # How to characterize application GETs from file GETs?
+        #   file gets have no state.
+        #   file gets are not for /
         return get_file(in_uri, start_response, [], auth_mode, auth)
     elif (auth_mode == "blog") or (auth_mode == "combined"):
+        # Load basic blog contents.
         html = contents_page(start_response, state, None, auth.headers)
     else:
         if auth.logout is True:
