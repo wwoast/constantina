@@ -581,9 +581,9 @@ def multipart_section(buffer, cur_line, delimiter):
     """
     start_line = cur_line
     section = {
-        'length': 0
+        'length': 0,
         'name': None,
-        'value': None
+        'value': None,
         'type': None
     }
     while buffer[cur_line].find(delimiter) != 0:
@@ -617,7 +617,7 @@ def multipart_section(buffer, cur_line, delimiter):
     return section
 
 
-def process_multipart_form(buffer):
+def process_multipart_form(buffer, read_size):
     """
     Grab the relevant POST variables for processing by other code.
 
@@ -686,10 +686,10 @@ def process_post(env):
     read_size = int(env.get('CONTENT_LENGTH'))
     max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
     if read_size >= max_size:
-        read_size = max_size
+        return {}   # Don't process overlarge form inputs
     inbuf = env['wsgi.input'].read(read_size)
-    if inbuf[0].find("-----") == 0:   # Delimiter heuristic
-        return process_multipart_form(inbuf)
+    if inbuf.find("-----") == 0:   # Delimiter heuristic
+        return process_multipart_form(inbuf, read_size)
     else:
         return process_simple_post(inbuf)
 
