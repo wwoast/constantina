@@ -589,6 +589,10 @@ def multipart_section(buffer, cur_line, delimiter):
     while buffer[cur_line].find(delimiter) != 0:
         cur_line = cur_line + 1
     cur_line = cur_line + 1   # Past the delimiter
+    if cur_line >= len(buffer):   # End of buffer, after terminating delim?
+        section['length'] = cur_line - start_line
+        return section
+
     fields = buffer[cur_line].split(';')
     # We only care about the name part here
     for field in fields:
@@ -617,7 +621,7 @@ def multipart_section(buffer, cur_line, delimiter):
     return section
 
 
-def process_multipart_form(buffer, read_size):
+def process_multipart_form(buffer):
     """
     Grab the relevant POST variables for processing by other code.
 
@@ -632,19 +636,20 @@ def process_multipart_form(buffer, read_size):
     inbuf = buffer.splitlines()
     # First line is multipart delimiter. Be sensitive if the line is too long
     delimiter = inbuf[0]
+    syslog.syslog(delimiter)
     if len(delimiter) < 0 or len(delimiter) > 100:
         return {}
     sections = []
     post = {}
     cur_line = 0 
-    while cur_line <= read_size:
+    while cur_line < len(inbuf):
         # First line is the multipart delimiter
         # Next line is semicolon-delimited field=value pairs
         # This is followed by a blank line
         # Finally, the value appears. Read in value until the next delimiter
         mp = multipart_section(inbuf, cur_line, delimiter)
-        cur_line = cur_line + mp['length']
         sections.append(mp)
+        cur_line = cur_line + mp['length']
 
     for section in sections:
         # Naive assume no duplicated form inputs. First form input is the correct one
@@ -689,7 +694,7 @@ def process_post(env):
         return {}   # Don't process overlarge form inputs
     inbuf = env['wsgi.input'].read(read_size)
     if inbuf.find("-----") == 0:   # Delimiter heuristic
-        return process_multipart_form(inbuf, read_size)
+        return process_multipart_form(inbuf)
     else:
         return process_simple_post(inbuf)
 
