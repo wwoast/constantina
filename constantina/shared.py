@@ -579,29 +579,45 @@ def multipart_section(buffer, cur_line, delimiter):
     """
     Given a multipart form delimiter, read in a single section.
     """
+    start_line = cur_line
     section = {
-        'length': 1,
+        'length': 0
         'name': None,
         'value': None
+        'type': None
     }
-    if buffer[cur_line] != delimiter:
-        return section
+    while buffer[cur_line].find(delimiter) != 0:
+        cur_line = cur_line + 1
     cur_line = cur_line + 1   # Past the delimiter
-    section['length'] = section['length'] + 1
     fields = buffer[cur_line].split(';')
     # We only care about the name part here
     for field in fields:
         field = field.lstrip().rstrip()
-        if field.endswith(';'):
-            field = field[0:-1]
-        if field.find('name') == 0:
+        if field.find('name') == 0:   # name=(someval)
             name_string = field.split("=")[1]
             section['name'] = name_string
             break
-    pass   # TODO: finish
+
+    cur_line = cur_line + 1   # Skip any empty lines
+    while buffer[cur_line] == '':
+        cur_line = cur_line + 1
+
+    if buffer[cur_line].find("Content-Type") == 0:
+        fields = buffer[cur_line].split(':')
+        section['type'] = fields[1].lstrip().rstrip()
+
+    cur_line = cur_line + 1   # Finally on to the content
+    content = []
+    while buffer[cur_line].find(delimiter) != 0:
+        content.append(buffer[cur_line])
+        cur_line = cur_line + 1
+    section['value'] = "\n".join(content)
+    section['length'] = cur_line - start_line
+
+    return section
 
 
-def process_multipart(env):
+def process_multipart_form(buffer):
     """
     Grab the relevant POST variables for processing by other code.
 
@@ -613,27 +629,36 @@ def process_multipart(env):
     delimiter should not be too short or too long, and should be matched by hash.
     If the data is too big, just cancel outright.
     """
-    read_size = int(env.get('CONTENT_LENGTH'))
-    max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
-    if read_size >= max_size:
-        return {}
-    post = {}
-    inbuf = env['wsgi.input'].read(read_size).splitlines()
+    inbuf = buffer.splitlines()
     # First line is multipart delimiter. Be sensitive if the line is too long
     delimiter = inbuf[0]
     if len(delimiter) < 0 or len(delimiter) > 100:
         return {}
-    for idx, line in enumerate(inbuf):
+    sections = []
+    post = {}
+    cur_line = 0 
+    while cur_line <= read_size:
         # First line is the multipart delimiter
         # Next line is semicolon-delimited field=value pairs
         # This is followed by a blank line
-        # Finally, the value appears. Read in value until the nex tdelimiter
-        mp = multipart_section(inbuf, idx, delimiter)
+        # Finally, the value appears. Read in value until the next delimiter
+        mp = multipart_section(inbuf, cur_line, delimiter)
+        cur_line = cur_line + mp['length']
+        sections.append(mp)
 
-    pass
+    for section in sections:
+        # Naive assume no duplicated form inputs. First form input is the correct one
+        if post.get(section['name']) is None and section.get('value') is not None:
+            post[section['name']] = section['value']
+        # Support single file uploads for now
+        if post.get('type') is None and section.get('type') is not None:
+            post['file'] = section['value']
+            post['type'] = section['type']
+
+    return post
 
 
-def process_post(env):
+def process_simple_post(inbuf):
     """
     Grab the relevant POST variables for processing by other code.
 
@@ -643,19 +668,30 @@ def process_post(env):
 
     This is just for standard FORM "option1=value1&option2=value2" POST data.
     """
-    read_size = int(env.get('CONTENT_LENGTH'))
-    max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
-    if read_size >= max_size:
-        read_size = max_size
-    post = {}
-    inbuf = env['wsgi.input'].read(read_size)
     # TODO: equals-sign in form will break this!
+    post = {}
     for vals in inbuf.split('&'):
         if vals.find("=") == -1:
             continue
         [key, value] = vals.split('=')
         post[key] = value
-    return post
+    return post   # TODO: unify output formats
+
+
+def process_post(env):
+    """
+    Grab the relevant length of bytes. Use a basic heuristic to determine whether
+    this is a multipart form or not.
+    """
+    read_size = int(env.get('CONTENT_LENGTH'))
+    max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
+    if read_size >= max_size:
+        read_size = max_size
+    inbuf = env['wsgi.input'].read(read_size)
+    if inbuf[0].find("-----") == 0:   # Delimiter heuristic
+        return process_multipart_form(inbuf)
+    else:
+        return process_simple_post(inbuf)
 
 
 def escape_amp(in_str):
