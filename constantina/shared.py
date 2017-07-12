@@ -599,7 +599,7 @@ def multipart_section(buffer, cur_line, delimiter):
         field = field.lstrip().rstrip()
         if field.find('name') == 0:   # name=(someval)
             name_string = field.split("=")[1]
-            section['name'] = name_string
+            section['name'] = name_string[1:-1]   # no double quotes
             break
 
     cur_line = cur_line + 1   # Skip any empty lines
@@ -610,8 +610,12 @@ def multipart_section(buffer, cur_line, delimiter):
         fields = buffer[cur_line].split(':')
         section['type'] = fields[1].lstrip().rstrip()
 
-    cur_line = cur_line + 1   # Finally on to the content
+    cur_line = cur_line + 1   # Skip any empty lines, and then content!
+    while buffer[cur_line] == '':
+        cur_line = cur_line + 1
+        
     content = []
+    syslog.syslog("content: %s" % buffer[cur_line][0:3])
     while buffer[cur_line].find(delimiter) != 0:
         content.append(buffer[cur_line])
         cur_line = cur_line + 1
@@ -655,10 +659,12 @@ def process_multipart_form(buffer):
         # Naive assume no duplicated form inputs. First form input is the correct one
         if post.get(section['name']) is None and section.get('value') is not None:
             post[section['name']] = section['value']
+            syslog.syslog("%s = %s" % (section['name'], post[section['name']][0:3]))
         # Support single file uploads for now
         if post.get('type') is None and section.get('type') is not None:
             post['file'] = section['value']
             post['type'] = section['type']
+            syslog.syslog("type = %s" % (post['type']))
 
     return post
 
