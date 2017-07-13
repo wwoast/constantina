@@ -619,7 +619,7 @@ def multipart_section(buffer, cur_line, delimiter):
     while buffer[cur_line].find(delimiter) != 0:
         content.append(buffer[cur_line])
         cur_line = cur_line + 1
-    section['value'] = "\n".join(content)
+    section['value'] = "\r\n".join(content)
     section['length'] = cur_line - start_line
 
     return section

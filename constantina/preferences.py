@@ -181,14 +181,17 @@ class ConstantinaPreferences:
         """
         if upload == '' or upload == None or auth.account.valid == False:
             return
-
         try:
             # Check if it's an 80x80 PNG
                 # If not, return an error response
             # If it is a decent image, write to the image path.tmp
             # Then atomic overwrite the existing image
             tmp = self.avatar + "." + self.cookie_id
-            src = Image.open(BytesIO(upload))
+            iotmp = BytesIO(upload)
+            syslog.syslog("test0")
+            with open('/tmp/img', 'w') as tfh:
+                tfh.write(upload)
+            src = Image.open(iotmp)
             syslog.syslog("test1")
             if src.size[0] == 80 and src.size[1] == 80:
                 dst = src.convert('RGB').convert('P', palette=Image.ADAPTIVE, colors=128)
@@ -200,9 +203,8 @@ class ConstantinaPreferences:
         except OSError as e:
             syslog.syslog("oserror")
             return
-
         except IOError as e:
-            syslog.syslog("ioerror, from the img-bytesio stream failing to open")
+            syslog.syslog("ioerror, likely from the image failing to open")
             return
 
     def create_cookie_id(self, instance_id, preference_id):
