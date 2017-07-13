@@ -615,11 +615,10 @@ def multipart_section(buffer, cur_line, delimiter):
         cur_line = cur_line + 1
         
     content = []
-    syslog.syslog("content: %s" % buffer[cur_line][0:3])
     while buffer[cur_line].find(delimiter) != 0:
         content.append(buffer[cur_line])
         cur_line = cur_line + 1
-    section['value'] = "\r\n".join(content)
+    section['value'] = '\r\n'.join(content)
     section['length'] = cur_line - start_line
 
     return section
@@ -637,7 +636,7 @@ def process_multipart_form(buffer):
     delimiter should not be too short or too long, and should be matched by hash.
     If the data is too big, just cancel outright.
     """
-    inbuf = buffer.splitlines()
+    inbuf = buffer.split('\r\n')
     # First line is multipart delimiter. Be sensitive if the line is too long
     delimiter = inbuf[0]
     syslog.syslog(delimiter)
