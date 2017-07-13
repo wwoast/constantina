@@ -602,16 +602,16 @@ def multipart_section(buffer, cur_line, delimiter):
             section['name'] = name_string[1:-1]   # no double quotes
             break
 
-    cur_line = cur_line + 1   # Skip any empty lines
-    while buffer[cur_line] == '':
+    cur_line = cur_line + 1
+    while buffer[cur_line] == '':   # Skip any empty lines
         cur_line = cur_line + 1
 
     if buffer[cur_line].find("Content-Type") == 0:
         fields = buffer[cur_line].split(':')
         section['type'] = fields[1].lstrip().rstrip()
+        cur_line = cur_line + 1
 
-    cur_line = cur_line + 1   # Skip any empty lines, and then content!
-    while buffer[cur_line] == '':
+    while buffer[cur_line] == '':   # Skip any empty lines, and then content!
         cur_line = cur_line + 1
         
     content = []
