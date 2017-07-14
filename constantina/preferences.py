@@ -187,16 +187,11 @@ class ConstantinaPreferences:
             # If it is a decent image, write to the image path.tmp
             # Then atomic overwrite the existing image
             tmp = self.avatar + "." + self.cookie_id
-            iotmp = BytesIO(upload)
-            syslog.syslog("test0")
-            with open('/tmp/img', 'w') as tfh:
-                tfh.write(upload)
-            src = Image.open(iotmp)
+            src = Image.open(BytesIO(upload))
             syslog.syslog("test1")
             if src.size[0] == 80 and src.size[1] == 80:
                 dst = src.convert('RGB').convert('P', palette=Image.ADAPTIVE, colors=128)
                 dst.save(tmp, "PNG")
-                syslog.syslog("test2")
                 rename(tmp, self.avatar)
         except OSError as e:
             syslog.syslog("oserror")
