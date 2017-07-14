@@ -195,11 +195,9 @@ class ConstantinaPreferences:
             syslog.syslog("test1")
             if src.size[0] == 80 and src.size[1] == 80:
                 dst = src.convert('RGB').convert('P', palette=Image.ADAPTIVE, colors=128)
+                dst.save(tmp, "PNG")
                 syslog.syslog("test2")
-                with open(tmp, 'wb') as ofh:
-                    ofh.write(dst)
-                    syslog.syslog("test3")
-                    rename(tmp, self.avatar)
+                rename(tmp, self.avatar)
         except OSError as e:
             syslog.syslog("oserror")
             return
