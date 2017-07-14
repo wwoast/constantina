@@ -601,8 +601,13 @@ def multipart_section(buffer, cur_line, delimiter):
             name_string = field.split("=")[1]
             section['name'] = name_string[1:-1]   # no double quotes
             break
-
+   
+    syslog.syslog("split-line:" + buffer[cur_line])
     cur_line = cur_line + 1
+    if cur_line >= len(buffer):   # End of buffer, after terminating delim?
+        section['length'] = cur_line - start_line
+        return section
+
     while buffer[cur_line] == '':   # Skip any empty lines
         cur_line = cur_line + 1
 
