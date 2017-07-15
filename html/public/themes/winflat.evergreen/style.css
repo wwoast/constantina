@@ -826,7 +826,7 @@ div.card.help pre {
       background-image: radial-gradient(top left, rgba(0,0,0,1.0) 0%, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.0) 70%);
    }
 
-   div.header, div.container, div.card.heading, div.card.quotes, div.card.news, div.card.features, div.card.store, div.card.image, div.card.song, div.card.topics, div.card.login, div.card.error { 
+   div.header, div.container, div.card.heading, div.card.quotes, div.card.news, div.card.features, div.card.store, div.card.image, div.card.song, div.card.topics, div.card.login, div.card.forumMenu, div.card.forum, div.card.settings, div.card.help, div.card.error, div.card.newPost {
       position: relative;
       max-width: 100%;
       width: 100%;
