@@ -602,15 +602,11 @@ div.card.forum.even {
 }
 
 div.card.fresh.odd {
-   background-image: -webkit-radial-gradient(circle, rgba(135, 62, 8, 0.38) 0px, rgba(255, 83, 0, 0.38) 700px);
-   background-image: -moz-radial-gradient(circle, rgba(135, 62, 8, 0.38) 0px, rgba(255, 83, 0, 0.38) 700px);
-   background-image: radial-gradient(circle, rgba(135, 62, 8, 0.38) 0px, rgba(255, 83, 0, 0.38) 700px);
+   background-color: rgba(135, 20, 20, 0.78);
 }
 
 div.card.fresh.even {
-   background-image: -webkit-radial-gradient(circle, rgba(135, 82, 16, 0.38) 0px, rgba(255, 130, 0, 0.38) 350px);
-   background-image: -moz-radial-gradient(circle, rgba(135, 82, 16, 0.38) 0px, rgba(255, 130, 0, 0.38) 350px);
-   background-image: radial-gradient(circle, rgba(135, 82, 16, 0.38) 0px, rgba(255, 130, 0, 0.38) 350px);
+   background-color: rgba(200, 60, 60, 0.78);
 }
 
 div.card.forum h2 img, div.card.settings h2 img {
