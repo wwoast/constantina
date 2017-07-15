@@ -117,16 +117,14 @@ img.searchBar {
    height: 30px;
 }
 
-input {
+input#searchSubmit, input#searchEntry {
    display: inline;
    position: absolute;
    border: none;
    margin: 0 0 0 0;
    padding: 0 0 0 0;
-   height: 30px;
    background-color: transparent;
    color: white;
-   z-index: 1;
    font-size: 16pt;
    font-family: "Palatino Linotype", sans-serif;
 }
@@ -142,6 +140,7 @@ input#searchSubmit {
 
 input#searchEntry {
    width: 139px;
+   height: 30px;
    z-index: 2;
    line-height: 1.2;
 }
@@ -542,8 +541,274 @@ input#searchEntry:-moz-placeholder { /* Firefox 18- */
   color: lightgreen;
 }
 
+/* Forum styles */
+div.card.forumMenu {
+   padding: 5px 20px 5px 20px;
+   text-align: center;
+   background-color: rgba(40, 40, 40, 0.78);
+}
 
+div.card.forumMenu p {
+   margin: 0 0 0 0;
+   padding: 0 0 2px 0;
+}
 
+p.forumMenuHeading {
+   font-size: 14pt;
+   font-weight: bold;
+   text-decoration: underline;
+}
+
+p.forumMenu {
+   font-size: 12pt;
+   font-weight: bold;
+}
+
+div.card.forumMenu span {
+   display: inline-block;
+   clear: both;
+   width: 100%;
+   font-weight: bold;
+   margin-top: 3px;
+   font-size: 12pt;
+}
+
+div.card.forumMenu div.cell {
+   display: inline-block;
+   vertical-align: middle;
+   border-right: solid 1px white;
+   border-bottom: solid 1px white;
+}
+
+div.card.forumMenu p {
+   text-align: center;
+}
+
+div.card.forum {
+   padding: 10px 20px 10px 20px;
+}
+
+div.card.forum h2, div.card.forum h5, div.card.settings h2, div.card.settings h5, div.card.help h2, div.card.help h3, div.card.help h5 {
+   display: inline;
+   overflow-x: hidden;
+}
+
+div.card.forum.odd {
+   background-color: rgba(70, 70, 114, 0.78); 
+}
+
+div.card.forum.even {
+   background-color: rgba(110, 110, 140, 0.78);
+}
+
+div.card.fresh.odd {
+   background-image: -webkit-radial-gradient(circle, rgba(135, 62, 8, 0.38) 0px, rgba(255, 83, 0, 0.38) 700px);
+   background-image: -moz-radial-gradient(circle, rgba(135, 62, 8, 0.38) 0px, rgba(255, 83, 0, 0.38) 700px);
+   background-image: radial-gradient(circle, rgba(135, 62, 8, 0.38) 0px, rgba(255, 83, 0, 0.38) 700px);
+}
+
+div.card.fresh.even {
+   background-image: -webkit-radial-gradient(circle, rgba(135, 82, 16, 0.38) 0px, rgba(255, 130, 0, 0.38) 350px);
+   background-image: -moz-radial-gradient(circle, rgba(135, 82, 16, 0.38) 0px, rgba(255, 130, 0, 0.38) 350px);
+   background-image: radial-gradient(circle, rgba(135, 82, 16, 0.38) 0px, rgba(255, 130, 0, 0.38) 350px);
+}
+
+div.card.forum h2 img, div.card.settings h2 img {
+   display: inline;
+   float: left;
+   width: 36px;
+   height: 36px;
+   margin-top: 2px;
+   margin-right: 8px;
+}
+
+div.card.forum h5 img, div.card.settings h5 img {
+   display: inline;
+   float: left;
+   margin-top: -2px;
+   margin-right: 6px;
+   width: 28px;
+   height: 28px;
+}
+
+div.card.forum p.attachment img.attachmentIcon {
+   display: inline;
+   float: left;
+   margin-top: 0.7ex;
+   margin-right: 6px;
+   width: 16px;
+   height: 16px;
+}
+
+div.cardQuote {
+   margin-top: 14px;
+   border-left: 1px solid #cccccc;
+   border-bottom: 1px solid #cccccc;
+   background-color: rgba(255, 255, 255, 0.12);
+   padding-left: 8px;
+   padding-bottom: 4px;
+}
+
+div.cardQuote p {
+   margin: 0 0 0 0;
+   padding: 0 0 0 0;
+   text-indent: 0px;
+}
+
+div.cardQuote p.quote {
+   display: inline;
+   font-style: italic;
+}
+
+div.cardQuote p.attribution {
+   display: block;
+   font-size: 10pt;
+}
+
+div.card.forum pre {
+   background-color: rgba(0, 0, 0, 0.25);
+   overflow-x: scroll;
+   padding-top: 8px;
+   padding-bottom: 8px;
+   padding-left: 8px;
+   border-top: 1px solid black;
+   border-bottom: 1px solid black;
+   border-left: 1px solid black;
+   border-right: 1px solid black;
+}
+
+img.attachmentImage {
+   width: 100%;
+   border: 1px solid white;
+}
+
+img.settingsAvatar {
+   display: inline;
+   float: left;
+   margin-top: -7px;
+   margin-right: 8px;
+   width: 36px;
+   height: 36px;
+}
+
+div.card.newPost {
+   width: 96%;
+   margin-left: auto;
+   margin-right: auto;
+   padding: 0 0 0 0;
+   border: none;
+   overflow-x: hidden;
+}
+
+textarea.newThread {
+   width: 100%;
+   font-size: 1em;
+   font-family: monospace;
+   height: 10.5em;
+   margin-left: auto;
+   margin-right: auto;
+   margin-top: 0px;
+   margin-bottom: 0px;
+   padding: 10px 10px 10px 10px;
+}
+
+div.rolldown {
+   margin-left: auto;
+   margin-right: auto;
+   overflow-y: hidden;
+   border: solid 3px #5C5C5C;
+   border-top: solid 0px;
+   vertical-align: middle;
+}
+
+div.rolldown.newThread {
+   padding: 5px 10px 5px 10px;
+   text-align: center;
+   background-color: rgba(40, 40, 40, 0.78);
+}
+
+div.rolldown input {
+   display: block;
+   margin-left: auto;
+   margin-right: auto;
+   margin-top: 2px;
+   margin-bottom: 2px;
+}
+
+div.rolldown input.threadFileInput {
+   float: left;
+   max-width: 200px;
+}
+
+div.rolldown input.threadSubmit {
+   float: right;
+}
+
+div.card.settings {
+   /* background-color: rgba(120, 40, 40, 0.78); */
+   padding: 10px 20px 10px 20px;
+   background: linear-gradient(
+     to bottom,
+     rgba(40, 170, 40, 0.68) 0px, rgba(40, 170, 40, 0.7) 30px,
+     rgba(40, 163, 40, 0.7) 30px, rgba(40, 163, 40, 0.72) 60px,
+     rgba(40, 156, 40, 0.72) 60px, rgba(40, 156, 40, 0.74) 90px,
+     rgba(40, 149, 40, 0.74) 90px, rgba(40, 149, 40, 0.76) 120px,
+     rgba(40, 142, 40, 0.76) 120px, rgba(40, 142, 40, 0.78) 150px,
+     rgba(40, 135, 40, 0.78) 150px, rgba(40, 135, 40, 0.8) 180px,
+     rgba(40, 128, 40, 0.8) 180px, rgba(40, 128, 40, 0.82) 210px,
+     rgba(40, 121, 40, 0.82) 210px, rgba(40, 121, 40, 0.84) 240px, 
+     rgba(40, 114, 40, 0.84) 240px, rgba(40, 114, 40, 0.86) 270px,
+     rgba(40, 107, 40, 0.86) 270px, rgba(40, 107, 40, 0.88) 300px,
+     rgba(40, 100, 40, 0.88) 300px, rgba(40, 100, 40, 0.9) 330px,
+     rgba(40, 93, 40, 0.9) 330px, rgba(40, 93, 40, 0.92) 360px,
+     rgba(40, 86, 40, 0.92) 360px, rgba(40, 86, 40, 0.94) 390px,
+     rgba(40, 81, 40, 0.94) 390px, rgba(40, 81, 40, 0.96) 420px,
+     rgba(40, 74, 40, 0.96) 420px, rgba(40, 74, 40, 0.98) 450px,
+     rgba(40, 67, 40, 0.98) 450px, rgba(40, 67, 40, 1.0) 480px, 
+     rgba(40, 60, 40, 1.0) 480px
+   );
+}
+
+/* Theme selection settings */
+label > input {
+   visibility: hidden;
+   position: absolute;
+}
+
+label > input + img {
+   display: inline;
+   width: 80px;
+   height: 80px;
+   border: 1px solid white;
+   margin-right: 8px;
+}
+
+label > input:checked + img {
+   box-shadow: 0px 0px 3px 3px pink;
+}
+
+div.card.help {
+   padding: 10px 20px 10px 20px;
+   background: rgba(60, 40, 60, 0.78);
+}
+
+div.card.help hr {
+   margin: 0 0 0 0;
+}
+
+div.card.help h2 {
+   display: block;
+   margin: 0 0 0 0;
+   padding-top: 16px;
+}
+
+div.card.help pre {
+   width: 90%;
+   border: 1px solid white;
+   white-space: pre-wrap;
+   word-wrap: break-word;
+   padding: 5px 10px 5px 10px;
+}
 
 /* Portrait mode, default for iPhones and for frames that are in a 
    similar layout / resolution */
