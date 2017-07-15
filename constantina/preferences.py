@@ -179,8 +179,16 @@ class ConstantinaPreferences:
         Since the path is fixed per username, this is a detail managed in the
         preferences form, but isn't tracked in the preferences token.
         """
+        pixel_width = 80
+        # 32 bits rgba per pixel, times number of pixels. File shouldn't be bigger
+        max_image_size = pixel_width * pixel_width * 4
+
         if upload == '' or upload == None or auth.account.valid == False:
             return
+        # If file is too large for its bytes-size, return.
+        if len(upload) > max_image_size:
+            return
+
         try:
             # Check if it's an 80x80 PNG
                 # If not, return an error response
