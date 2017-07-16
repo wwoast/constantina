@@ -30,7 +30,7 @@ div.header, div.container {
 /* Largest screen, with borders at screen edges */
 @media screen and (min-width: 630px) {
    div.header, div.container {
-      max-width: 780px;
+      max-width: 62.5%;
       min-width: 630px;
    }
 }
@@ -915,4 +915,12 @@ and (max-device-width : 1024px)  {
       background-repeat: repeat;
       background-position: center top;
    }
+}
+
+/* Very large screen size. */
+@media screen and (min-width: 1440px), 
+@media screen and (min-height: 1080px) {
+    div.header, div.container {
+        width: 730px;
+    }
 }
