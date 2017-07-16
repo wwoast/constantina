@@ -123,6 +123,11 @@ $(function() {
       // Load more data
       window.location.assign("/?xs" + query);
    });
+
+   // If the cancel button is clicked, close the settings window
+   $("#closeSettings").click(function(){
+      revealMenu('zooSettings');
+   })
 });
 
 function searchPlaceholderText() { 
