@@ -260,7 +260,7 @@ max-requests = 5
 master
 ```
 
-#### Running the Server
+##### Running the Server
 This will vary based on your OS packaging. The Debian/Ubuntu convention: your Nginx
 .conf file must be symlinked into `/etc/nginx/sites-enabled`, and your UWSGI
 configuration must be symlinked into `/etc/uwsgi/apps-enabled`. If these files
@@ -271,7 +271,7 @@ exist, then you can start the Constantina server with:
 Logs will appear in `/var/log/nginx/` and `/var/log/uwsgi/app/constantina-default.log`.
 
 
-#### Apache + mod_cgi on Shared Hosting
+#### Apache and mod_cgi, Shared Hosting
 For those of you still on shared hosting, Constantina will run behind `mod_cgi`
 with the included `constantina.cgi` helper script. In the folder where you want
 Constantina to treat as your web root folder (i.e. your `public_html` folder),
@@ -287,9 +287,16 @@ RewriteRule ^(.*)$ /cgi-bin/constantina.cgi
 SetEnv INSTANCE default
 ```
 
-Note that this is ''extremely slow performing''. CGI applications must run and reload
+This strategy is ''extremely slow performing''. CGI applications must run and reload
 all Python resources every time someone visits a site, and on embedded servers, this 
 can add many seconds of latency to the initial page load!
+
+Additionally, Apache doesn't support `X-Sendfile` lookup paths as configuration in a
+user-configurable `.htaccess` file. If your hosting provider won't configure the
+proper `X-Sendfile` settings, then effectively **you have no way to protect your private
+files behind authentication**. You can still use Constantina, but your forum's content
+will be vulnerable to filename guessing by an attacker (the _Insecure Direct-Object Reference_
+vulnerability).
 
 
 #### VirtualEnv setup
