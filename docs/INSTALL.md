@@ -116,44 +116,52 @@ Post-installation, files are installed in the following locations:
 
 
 ## Configuring the Web Server
-
 Constantina's web server configuration manages the security of files hosted by
 your site. By default, Constantina assumes that any dynamic content it serves
 will be protected by an authentication step. So if your site is a basic blog,
 and doesn't require authentication for viewers to see content, you'll need to
 configure the web server to route around Constantina's protection logic.
 
+
+### Filesystem Structure Overview
+Assuming the default path for where Constantina web files are stored, your
+web folders will look like this:
+
+ * `/var/www/constantina/default/`
+  * **`public/`** - _The web root folder_
+   * `constantina.js`
+   * `themes/`
+    * `winflat.evergreen/`
+    * __<...>__
+  * **`private/`** - _Content behind authentication_
+   * `images/` - _Resources and self-hosted images for your site_
+   * `medusa/`
+    * `news/` - _Blog entries_
+    * `pictures/` - _Randomly inserted pictures into the Blog feed_
+    * __<...>__
+   * `zoo/`
+    * __<...>__
+
+Constantina's webserver configuration is oriented around one major principle: As 
+an authenticated user on Constantina, or as a content-writer, _the `public` and 
+`private` directories should appear to be merged_. There are two strategies for 
+doing this.
+
+ 1. Requests for `private/` files get directed through Constantina
+  * Use this if you're setting up a private blog or forum
+ 2. The webserver redirects to `private/` files directly
+  * Use this if your site is public and has no user authentication
+
+
+### Webserver Configuration Strategies
 Constantina strongly recommends using Nginx as the forward-facing web server,
 and UWSGI for the application server. Apache and VirtualEnv configurations are
 included in the event your hosting situation has limitations or restrictions.
 
-### uwsgi+nginx on a private server, Blog mode
 
-### uwsgi+nginx on a private server, Forum mode
-The best performing way to install Constantina is with a dedicated
-application server such as `gunicorn` or `uwsgi`, with a more general
-web server like `nginx` sitting in front and serving static assets out
-of its root directory.
+#### uwsgi+nginx on a private server, Blog mode
 
-`/etc/nginx/sites-available/constantina.conf`:
-```
-server {
-        # Port, config, SSL, and other details here
-        listen  8080;
-        root  /var/www/constantina/default/public;
 
-        location / {
-                uwsgi_pass      localhost:9090;
-                include         /etc/nginx/uwsgi_params;
-
-                uwsgi_param   INSTANCE default;
-                uwsgi_param     Host $host;
-                uwsgi_param     X-Real-IP $remote_addr;
-                uwsgi_param     X-Forwarded-For $proxy_add_x_forwarded_for;
-                uwsgi_param     X-Forwarded-Proto $http_x_forwarded_proto;
-        }
-}
-```
 
 `uwsgi.constantina.ini`:
 ```
@@ -166,7 +174,6 @@ procname     = constantina-default
 chdir        = /var/www/constantina/default/public
 max-requests = 5
 master
-
 ```
 
 At the command line, you can test Constantina by running:
@@ -174,7 +181,47 @@ At the command line, you can test Constantina by running:
 uwsgi --ini /etc/constantina/default/uwsgi.ini --daemonize=/path/to/constantina.log
 ```
 
-### Apache + mod_cgi on Shared Hosting
+#### uwsgi+nginx on a private server, Forum mode
+
+This setup is shown in the `config/webservers/nginx-uwsgi-forum.conf` file.
+
+If a user has authenticated to Constantina, user requests for `images/file.jpg`
+will have an `X-Sendfile` and `X-Accel-Redirect` header as part of their
+response. This header is how Constantina instructs Nginx to fetch 
+`private/images/file.jpg`, in response to the original `images/file.jpg`
+request.
+
+The `/private` location being marked as `internal` guarantees that Nginx will not
+serve files out of this folder, without Constantina's `X-Accel-Redirect` header
+giving it permission to do so.
+
+`/etc/nginx/sites-available/constantina`:
+```
+server {
+	<...>
+	# Webserver root, for which all locations are underneath
+        # unless another location specifies a different one!
+        root    /var/www/constantina/default/public;
+
+	location ~ ^/(images/.*|medusa/.*|zoo/.*)?$ {
+                uwsgi_pass      localhost:9090;
+                uwsgi_param     INSTANCE default;
+                include         uwsgi_params;
+        }
+
+        location /private {
+                internal;
+                # /private is added to the end of this!
+                root /var/www/constantina/default;
+        }
+        <...>        
+}
+```
+
+The UWSGI file is no different from the _blog mode_ strategy.
+
+
+#### Apache + mod_cgi on Shared Hosting
 For those of you still on shared hosting, Constantina will run behind `mod_cgi`
 with the included `constantina.cgi` helper script. In the folder where you want
 Constantina to treat as your web root folder (i.e. your `public_html` folder),
@@ -195,7 +242,7 @@ all Python resources every time someone visits a site, and on embedded servers, 
 can add many seconds of latency to the initial page load!
 
 
-### VirtualEnv setup
+#### VirtualEnv setup
 Shared hosting environments may require you to bundle a bit of code together to support
 your Python application. The `make-venv.sh` script will create a directory of
 all the Python files and requirements that you need to run Constantina on another site.
