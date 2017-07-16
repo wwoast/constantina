@@ -918,7 +918,8 @@ and (max-device-width : 1024px)  {
 }
 
 /* Very large screen size. */
-@media screen and (min-width: 1440px) {
+@media screen and (min-width: 1440px), 
+@media screen and (min-height: 1080px) {
     body {
         background-image: url("large-mushrooms.png"), url("large-evergreen.png");
         background-position: center bottom, center top;
