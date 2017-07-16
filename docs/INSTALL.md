@@ -21,17 +21,18 @@ API than the version in `pip`.
 Install the Python dependencies manually or from `pip`:
 
  * `pip install -r requirements.txt`
-  * `argon2_cffi` and `argon2pure` for password hashing
-  * `jwcrypto` for managing JWT and JWE session token formats
-  * `defusedxml` for occasions where you need to parse HTML files
-  * `mutagen` for MP3 length parsing
-  * `passlib` as a wrapper for password hashing
-  * `pillow` for image operations. Successor to the older `PIL`
-  * `python-magic` for file type checks
-  * `whoosh` for reverse-index word searching
-  * `wsgiref` if you need to use Apache and `mod_cgi`
+   * `argon2_cffi` and `argon2pure` for password hashing
+   * `jwcrypto` for managing JWT and JWE session token formats
+   * `defusedxml` for occasions where you need to parse HTML files
+   * `mutagen` for MP3 length parsing
+   * `passlib` as a wrapper for password hashing
+   * `pillow` for image operations. Successor to the older `PIL`
+   * `python-magic` for file type checks
+   * `whoosh` for reverse-index word searching
+   * `wsgiref` if you need to use Apache and `mod_cgi`
  * Second-order dependencies for the above libraries include:
-  * `appdirs`, `pyparsing`, `idna`, `asn1crypto`, and `cryptography` 
+   * `appdirs`, `pyparsing`, `idna`, `asn1crypto`, and `cryptography` 
+
 
 ### Running the Installer
 `python setup.py install -h` describes the options for installing Constantina.
@@ -147,21 +148,55 @@ an authenticated user on Constantina, or as a content-writer, _the `public` and
 `private` directories should appear to be merged_. There are two strategies for 
 doing this.
 
- 1. Requests for `private/` files get directed through Constantina
-  * Use this if you're setting up a private blog or forum
- 2. The webserver redirects to `private/` files directly
-  * Use this if your site is public and has no user authentication
+ 1. **Private/Secure**: Requests for `private/` files get directed through Constantina
+  * Use this if you want a private blog or forum
+ 2. **Public/Open**: The webserver redirects to `private/` files directly
+  * Use this if you want a public site without user accounts or authentication
+
+Regardless of Constantina's application config, either of these strategies will
+work. However, **using strategy #2 leaves your files publicly accessible,
+regardless of the authentication mode used**.
 
 
 ### Webserver Configuration Strategies
+
+#### UWSGI and Nginx on a Private Server
 Constantina strongly recommends using Nginx as the forward-facing web server,
-and UWSGI for the application server. Apache and VirtualEnv configurations are
-included in the event your hosting situation has limitations or restrictions.
+and UWSGI for the application server. It has the best performance and
+flexibility of all the configuration strategies presented.
 
 
-#### uwsgi+nginx on a private server, Blog mode
+##### Blog mode (no authentication)
+This setup is shown in the `config/webservers/nginx-uwsgi-blog.conf` file.
 
+If Constantina is a public blog, then chances are you don't want users to
+authenticate. By configuring `images/` to use the private path as its root,
+you "pretend" the private directory exists inside the public one. In
+actuality, the basic public/private split is preserved, should you wish to 
+enable authentication later on.
 
+Constantina itself will only respond to requests without _any_ provided URI
+path (`location = /`). All other requests are assumed to be for static files.
+
+`/etc/nginx/sites-available/constantina`:
+```
+server {
+	<...>
+	# Webserver root, for which all locations are underneath
+        # unless another location specifies a different one!
+        root    /var/www/constantina/default/public;
+
+        location = / {
+                uwsgi_pass      localhost:9090;
+                uwsgi_param     INSTANCE default;         
+                include         uwsgi_params;             
+        }                    
+        
+        location ~ ^/(images/.*|medusa/.*|zoo/.*)?$ {                                                               
+                root /var/www/constantina/default/private;                                                          
+        }
+	<...>
+```
 
 `uwsgi.constantina.ini`:
 ```
@@ -176,13 +211,7 @@ max-requests = 5
 master
 ```
 
-At the command line, you can test Constantina by running:
-```
-uwsgi --ini /etc/constantina/default/uwsgi.ini --daemonize=/path/to/constantina.log
-```
-
-#### uwsgi+nginx on a private server, Forum mode
-
+##### Forum mode (authentication)
 This setup is shown in the `config/webservers/nginx-uwsgi-forum.conf` file.
 
 If a user has authenticated to Constantina, user requests for `images/file.jpg`
@@ -218,7 +247,28 @@ server {
 }
 ```
 
-The UWSGI file is no different from the _blog mode_ strategy.
+`uwsgi.constantina.ini`:
+```
+[uwsgi]
+socket       = localhost:9090
+plugin       = python
+module       = constantina.constantina
+processes    = 3
+procname     = constantina-default
+chdir        = /var/www/constantina/default/public
+max-requests = 5
+master
+```
+
+#### Running the Server
+This will vary based on your OS packaging. The Debian/Ubuntu convention: your Nginx
+.conf file must be symlinked into `/etc/nginx/sites-enabled`, and your UWSGI
+configuration must be symlinked into `/etc/uwsgi/apps-enabled`. If these files
+exist, then you can start the Constantina server with:
+
+`systemctl start uwsgi nginx`
+
+Logs will appear in `/var/log/nginx/` and `/var/log/uwsgi/app/constantina-default.log`.
 
 
 #### Apache + mod_cgi on Shared Hosting

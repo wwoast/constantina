@@ -626,6 +626,8 @@ def application(env, start_response, instance="default"):
     auth = authentication(env, post)
     html = ""
 
+    syslog.syslog("auth-mode: " + auth_mode)
+
     # based on auth_mode and in_uri, do a thing.
     if in_state is None and in_uri is not None:
         # How to characterize application GETs from file GETs?
