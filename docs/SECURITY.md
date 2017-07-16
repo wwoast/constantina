@@ -45,10 +45,6 @@ using standard e-mail protocols.
 
 ## Security Hardening
 
-### 0.5.5: Authorization Models
-Prior to *Zoo*'s release, a mechanism for files being accessible by a single user will
-become necessary. User settings should remain private and unmodifiable by other users.
-
 ### 0.5.0: Authentication, IDOR Folder Shadowing, Directory Traversal Prevention
 Constantina authentication appears in a testing configuration in 0.5.0. When converting
 Constantina to using authentication, many supporting adjustments were necessary, as it
