@@ -312,3 +312,9 @@ that Constantina knows where to find its own `constantina.ini` file. This is a c
 detail in shared hosting environments that don't allow you to specify an `INSTANCE` environment 
 variable in configuration. Rather than fight your hosting provider, just use the default
 virtualenv and instance settings.
+
+
+#### Other Notes
+Both the `blog` and `forum` webserver configs have special strategies to show a default
+forum avatar if a user hasn't yet uploaded one. The ordering of paths in the Nginx configs
+is important for that logic to function.
