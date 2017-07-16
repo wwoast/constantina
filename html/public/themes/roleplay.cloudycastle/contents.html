@@ -13,7 +13,7 @@
 
 <div id="container" class="container">
 
-<div class="logo">
+<div id="menu_focus" class="logo">
    <img class="logo" src="$theme_directory/logo.png" />
 </div>
 
@@ -22,11 +22,11 @@
       <p class="forumMenuHeading">Latest Updates</p>
       <p class="forumMenu">New: 4 posts, 2 threads</p>
    </div>
-   <div id='buttonSettings' class="cell"><a href="#top_page" onclick="revealMenu('zooSettings');">
+   <div id='buttonSettings' class="cell"><a href="#menu_focus" onclick="revealMenu('zooSettings');">
       <p class="forumMenuHeading">Settings</p>
       <p class="forumMenu">User: <i><u>@$username</u></i></p>
    </a></div>
-   <div id='buttonDocs' class="cell"><a href="#top_page" onclick="revealMenu('zooDocs');">
+   <div id='buttonDocs' class="cell"><a href="#menu_focus" onclick="revealMenu('zooDocs');">
       <p class="forumMenuHeading">How to Use</p>
       <p class="forumMenu"><tt>:vrolijk_1:&nbsp;=&nbsp;<img style="display: inline; position: absolute; z-index: 2;" src="images/smilies/vrolijk_1.gif" /></tt></p>
    </a></div>
@@ -38,7 +38,7 @@
   <input type="hidden" name="action" value="logout" />
   <p style="text-align: center">Logged in as <i>@$username</i>. <input id="logOut" type="Submit" value="Log Out"></input></p>
 </form>
-<form method="POST" enctype="multipart/form-data">
+<form method="POST"  action="#top_page" enctype="multipart/form-data">
   <input type="hidden" name="action" value="preferences" />
   <p>You have $post_count posts since registering on <i>$registration_date</i></p>
   <p><img class="settingsAvatar" src="images/avatars/$username.png"><input id="updateAvatar" type="file" name="updateAvatar"></input></p>
