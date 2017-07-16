@@ -33,7 +33,7 @@ Install the Python dependencies manually or from `pip`:
  * Second-order dependencies for the above libraries include:
   * `appdirs`, `pyparsing`, `idna`, `asn1crypto`, and `cryptography` 
 
-### Installing Constantina
+### Running the Installer
 `python setup.py install -h` describes the options for installing Constantina.
 The setup script attempts to install all files necessary for running the 
 application, aside from the webserver configuration.
@@ -77,7 +77,7 @@ python ./setup.py install --scriptonly
 ```
 
 
-#### Instances
+### Instances
 Constantina uses an idea of *instances*, in case you want to run a staging
 copy of the application on the same server as the production copy. This is
 a good way to test configuration changes prior to making them on your live
@@ -105,7 +105,7 @@ The `INSTANCE` value fills out the `/etc/constantina/$INSTANCE/` path that
 holds this copy of Constantina's configuration settings.
 
 
-#### File Locations
+### File Locations
 Post-installation, files are installed in the following locations:
  * the data root directory: `/var/www/constantina/default`
   * static HTML (open to the world): `/var/www/constantina/default/public`
@@ -115,7 +115,21 @@ Post-installation, files are installed in the following locations:
  * CGI scripts: `/var/cgi-bin/constantina/default`
 
 
-### uwsgi+nginx on a private server
+## Configuring the Web Server
+
+Constantina's web server configuration manages the security of files hosted by
+your site. By default, Constantina assumes that any dynamic content it serves
+will be protected by an authentication step. So if your site is a basic blog,
+and doesn't require authentication for viewers to see content, you'll need to
+configure the web server to route around Constantina's protection logic.
+
+Constantina strongly recommends using Nginx as the forward-facing web server,
+and UWSGI for the application server. Apache and VirtualEnv configurations are
+included in the event your hosting situation has limitations or restrictions.
+
+### uwsgi+nginx on a private server, Blog mode
+
+### uwsgi+nginx on a private server, Forum mode
 The best performing way to install Constantina is with a dedicated
 application server such as `gunicorn` or `uwsgi`, with a more general
 web server like `nginx` sitting in front and serving static assets out
