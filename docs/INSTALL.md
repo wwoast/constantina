@@ -148,14 +148,14 @@ an authenticated user on Constantina, or as a content-writer, _the `public` and
 `private` directories should appear to be merged_. There are two strategies for 
 doing this.
 
- 1. **Private/Secure**: Requests for `private/` files get directed through Constantina
-   i. Use this if you want a private blog or forum
- 2. **Public/Open**: The webserver redirects to `private/` files directly
-   i. Use this if you want a public site without user accounts or authentication
+ * **Private/Secure**: Requests for `private/` files get directed through Constantina
+   * Use this if you want a private blog or forum
+ * **Public/Open**: The webserver redirects to `private/` files directly
+   * Use this if you want a public site without user accounts or authentication
 
-Regardless of Constantina's application config, either of these strategies will
-work. However, **using strategy #2 leaves your files publicly accessible,
-regardless of the authentication mode used**.
+Regardless of Constantina's application config, either of these solutions will
+work. Be aware that **using the Public/Open config makes your files
+accessible to unauthenticated users, regardless of your Constantina settings**!
 
 
 ### Webserver Configuration Strategies
