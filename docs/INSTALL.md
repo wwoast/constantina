@@ -145,13 +145,13 @@ web folders will look like this:
 
 Constantina's webserver configuration is oriented around one major principle: As 
 an authenticated user on Constantina, or as a content-writer, _the `public` and 
-`private` directories should appear to be merged_. There are two strategies for 
+`private` directories should appear to be merged_. There are two solutions for 
 doing this.
 
  * **Private/Secure**: Requests for `private/` files get directed through Constantina
-   * Use this if you want a private blog or forum
+   * Use this if you have a private blog or forum
  * **Public/Open**: The webserver redirects to `private/` files directly
-   * Use this if you want a public site without user accounts or authentication
+   * Use this if you have a public site without user accounts or authentication
 
 Regardless of Constantina's application config, either of these solutions will
 work. Be aware that **using the Public/Open config makes your files
@@ -188,12 +188,12 @@ server {
 
         location = / {
                 uwsgi_pass      localhost:9090;
-                uwsgi_param     INSTANCE default;         
-                include         uwsgi_params;             
-        }                    
+                uwsgi_param     INSTANCE default;
+                include         uwsgi_params;
+        }
         
-        location ~ ^/(images/.*|medusa/.*|zoo/.*)?$ {                                                               
-                root /var/www/constantina/default/private;                                                          
+        location ~ ^/(images/.*|medusa/.*|zoo/.*)?$ { 
+                root /var/www/constantina/default/private;
         }
 	<...>
 ```
@@ -243,7 +243,7 @@ server {
                 # /private is added to the end of this!
                 root /var/www/constantina/default;
         }
-        <...>        
+        <...> 
 }
 ```
 
@@ -264,7 +264,7 @@ master
 This will vary based on your OS packaging. The Debian/Ubuntu convention: your Nginx
 .conf file must be symlinked into `/etc/nginx/sites-enabled`, and your UWSGI
 configuration must be symlinked into `/etc/uwsgi/apps-enabled`. If these files
-exist, then you can start the Constantina server with:
+exist, then you can start the Constantina web and app servers with:
 
 `systemctl start uwsgi nginx`
 
@@ -272,7 +272,7 @@ Logs will appear in `/var/log/nginx/` and `/var/log/uwsgi/app/constantina-defaul
 
 
 #### Apache and mod_cgi, Shared Hosting
-For those of you still on shared hosting, Constantina will run behind `mod_cgi`
+For those of you on shared hosting, Constantina will run behind `mod_cgi`
 with the included `constantina.cgi` helper script. In the folder where you want
 Constantina to treat as your web root folder (i.e. your `public_html` folder),
 add a brief Apache config snippet file named `.htaccess`:
