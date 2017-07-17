@@ -109,8 +109,8 @@ holds this copy of Constantina's configuration settings.
 ### File Locations
 Post-installation, files are installed in the following locations:
  * the data root directory: `/var/www/constantina/default`
-  * static HTML (open to the world): `/var/www/constantina/default/public`
-  * card data (private, if auth is configured): `/var/www/constantina/default/private`
+   * static HTML (open to the world): `/var/www/constantina/default/public`
+   * card data (private, if auth is configured): `/var/www/constantina/default/private`
  * config files: `/etc/constantina/default`
  * Python files: (your system or local Python directories)
  * CGI scripts: `/var/cgi-bin/constantina/default`
@@ -129,19 +129,19 @@ Assuming the default path for where Constantina web files are stored, your
 web folders will look like this:
 
  * `/var/www/constantina/default/`
-  * **`public/`** - _The web root folder_
-   * `constantina.js`
-   * `themes/`
-    * `winflat.evergreen/`
-    * __<...>__
+   * **`public/`** - _The web root folder_
+     * `constantina.js`
+     * `themes/`
+       * `winflat.evergreen/`
+       * __<...>__
   * **`private/`** - _Content behind authentication_
-   * `images/` - _Resources and self-hosted images for your site_
-   * `medusa/`
-    * `news/` - _Blog entries_
-    * `pictures/` - _Randomly inserted pictures into the Blog feed_
-    * __<...>__
-   * `zoo/`
-    * __<...>__
+    * `images/` - _Resources and self-hosted images for your site_
+    * `medusa/`
+      * `news/` - _Blog entries_
+      * `pictures/` - _Randomly inserted pictures into the Blog feed_
+      * __<...>__
+    * `zoo/`
+      * __<...>__
 
 Constantina's webserver configuration is oriented around one major principle: As 
 an authenticated user on Constantina, or as a content-writer, _the `public` and 
@@ -149,9 +149,9 @@ an authenticated user on Constantina, or as a content-writer, _the `public` and
 doing this.
 
  1. **Private/Secure**: Requests for `private/` files get directed through Constantina
-  * Use this if you want a private blog or forum
+   * Use this if you want a private blog or forum
  2. **Public/Open**: The webserver redirects to `private/` files directly
-  * Use this if you want a public site without user accounts or authentication
+   * Use this if you want a public site without user accounts or authentication
 
 Regardless of Constantina's application config, either of these strategies will
 work. However, **using strategy #2 leaves your files publicly accessible,

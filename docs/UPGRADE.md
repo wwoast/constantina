@@ -3,6 +3,10 @@
 
 ## Upgrade Notes
 
+### 0.5.5
+
+The `X-Sendfile` trampolining support involved overhauling the Nginx and Apache configurations for Constantina. `INSTALL.md` describes the current configuration setup that works for Constantina going forward. 
+
 ### 0.5.3
 
 When upgrading, you may need to manually add settings or files to avoid runtime issues:

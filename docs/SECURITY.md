@@ -14,7 +14,7 @@ security hardening, and known weaknesses.
 
 
 ## Known Weaknesses
-In Constantina version 0.5.0, authentication tokens do not utilize any browser
+In Constantina version 0.5.5, authentication tokens do not utilize any browser
 identification strategies. This means they can be stolen and used on other systems.
 This will be rectified prior to *Zoo*'s release.
 
