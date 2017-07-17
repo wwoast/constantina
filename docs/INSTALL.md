@@ -149,9 +149,9 @@ an authenticated user on Constantina, or as a content-writer, _the `public` and
 doing this.
 
  1. **Private/Secure**: Requests for `private/` files get directed through Constantina
-   * Use this if you want a private blog or forum
+   i. Use this if you want a private blog or forum
  2. **Public/Open**: The webserver redirects to `private/` files directly
-   * Use this if you want a public site without user accounts or authentication
+   i. Use this if you want a public site without user accounts or authentication
 
 Regardless of Constantina's application config, either of these strategies will
 work. However, **using strategy #2 leaves your files publicly accessible,
