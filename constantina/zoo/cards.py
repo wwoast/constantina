@@ -43,7 +43,7 @@ class ZooPost:
 
     def __openfile(self):
         """
-        asdf
+        Opens JSON, parses, and adds meta.
         """
         pass
 
@@ -52,6 +52,7 @@ class ZooPost:
         Validates that a single JSON file has all of the valid forum attributes.
         If it doesn't, close/ignore the file, and log the failure.
         """
+        # Add the permalink (POST) link details (TODO: Zoo-State)
         pass
 
     def __fresh_property(self):
