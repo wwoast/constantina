@@ -25,6 +25,10 @@ class ZooState(BaseState):
         # Process all state variables listed in zoo.ini
         self.__import_state()
 
+        # Now that we've imported, shuffle any card types we want to shuffle
+        for ctype in self.config.get("card_properties", "randomize").replace(" ", "").split(","):
+            getattr(self, ctype).shuffle()
+
 
     def __import_post_state(self):
         """ :zp
