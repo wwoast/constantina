@@ -30,24 +30,42 @@ class ZooState(BaseState):
             getattr(self, ctype).shuffle()
 
 
-    def __import_post_state(self):
-        """ :zp
-        Import the specified Zoo post data. This is used for permalink-style
-        single-post views. This should specify the equivalent of a single
-        post filename.
+    def __import_card_state(self):
         """
-        self.thread = BaseState._find_state_variable('zp')
-        pass
+        Zoo images, Zoo songs, and Thread card state is tracked here. Seed tracking
+        between page loads means we don't need to log which content cards were
+        shown on a previous page.
+
+        However, to preserve card spacing rules, we do need to track the distance
+        of each card type from the first element of the current page.
+
+        Output is an integer or None.
+        """
+        # For each content card type, populate the state variables
+        # as necessary.
+        for state_var in ["z" + s[0] for s in self.config.options('card_counts')]:
+            # NOTE: This ctype attribute naming requires each content card type to
+            # begin with a unique alphanumeric character.
+            ctype = [value for value in self.config.options("card_counts") if value[0] == state_var][0]
+            distance = BaseState._find_state_variable(self, state_var)
+            getattr(self, ctype).distance = distance
 
 
-    def __import_thread_state(self):
-        """ :zt
-        Import the specified zoo thread data. This is used for permalink-style
+    def __import_permalink_state(self):
+        """ :zp, :zt
+        Import the specified zoo post thread data. This is used for permalink-style
         single-thread views. This should specify the equivalent of a single
-        post file that starts a thread.
+        post or a single thread.
         """
-        self.thread = BaseState._find_state_variable('zt')
-        pass
+        # TODO: Migrate to shared or BaseSate.
+        permalink_states = [sv[0] for sv in self.config.items("special_states")
+                            if sv[1].find("permalink") != -1]
+        for state in permalink_states:
+            value = BaseState._find_state_variable(self, state)
+            if value != None:
+                attrib = self.config.get("special_states", state)
+                setattr(self, attrib, value)
+                return   # Only one permalink state per page. First one takes precedence
 
 
     def __import_filtered_card_count(self):
@@ -77,6 +95,7 @@ class ZooState(BaseState):
 
         Output is either strings of search/filter terms, or None
         """
+        # TODO: tie to a global search that can call the application-specific ones
         self.search = BaseState._find_state_variable('zs')
         self.channel_filter = BaseState._find_state_variable('zc')
         self.user_filter = BaseState._find_state_variable('zu')
