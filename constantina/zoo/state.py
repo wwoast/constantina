@@ -57,7 +57,8 @@ class ZooState(BaseState):
         self.filtered = BaseState._find_state_variable(self, 'zx')
         if ((self.filtered is not None) and
             (self.search is not None) and
-            (self.card_filter is not None)):
+            (self.channel_filter is not None) and
+            (self.user_filter is not None)):
             self.filtered = BaseState._int_translate(self, self.filtered, 1, 0)
         else:
             self.filtered = 0
@@ -139,14 +140,5 @@ class ZooState(BaseState):
         If this returns true, it means the user either wants cards of this type, or
         that no card filtering is currently in place.
         """
-        ctype = getattr(self, ctype)
-        if ctype == None:   # No app or ctype, so no cards of this type
-            return False
-
-        if ((getattr(self, "card_filter") is not None) and
-            (self.ctype.filtertype is False)):
-            return True
-        else:
-            return False
-
-    # TOWRITE: modes related to forum cards and checks
+        # TODO: rewrite for user or channel filtering
+        pass
