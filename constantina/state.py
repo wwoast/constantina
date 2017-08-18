@@ -68,6 +68,7 @@ class ConstantinaState(BaseState):
             # TODO: Testing -- No zoo code written yet
             # This needs to refer to ZooState when done (self.zoo.max_items, self.zoo...)
             self.medusa = MedusaState(self.in_state)
+            # self.zoo = ZooSate(self.in_state)
             self.max_items += self.medusa.max_items
             self.filtered += self.medusa.filtered
 
@@ -119,6 +120,10 @@ class ConstantinaState(BaseState):
             return all(items)   # Logical AND across the list
         else:
             return None
+
+
+    # TODO: search aggregation from other applications
+    # TODO: filter aggregation from other applications
 
 
     def __import_page_count_state(self):

@@ -12,9 +12,10 @@ from constantina.shared import BaseFiles, BaseCardType, opendir
 syslog.openlog(ident='constantina.zoo.cards')
 
 
-class ZooThread:
+class ZooThreadCardList:
     """
-    Linear series of ZooPost objects.
+    Linear series of ZooPost cards. Arranged as threads, but appended in order
+    as individual post cards prior to returning.
     """
     def __init__(self):
         pass
@@ -33,10 +34,13 @@ class ZooThread:
         pass
 
 
-class ZooPost:
+class ZooPostCard:
     """
     Since forum cards must track updatable state in each item, we don't load
     these as HTML fragments anymore, but as raw JSON documents.
+
+    Constantina Forum Posts are written in a BBCode variant, and may contain
+    a single attachment pointed at (images translated into attachments)
     """
     def __init__(self):
         pass
@@ -62,7 +66,7 @@ class ZooPost:
         """
         pass
 
-    def first_in_thread(self):
+    def __first_in_thread(self):
         """
         If the post has no indications it is in response to another post, add
         markup in the JSON that tells Constantina to draw this card in the base
@@ -81,5 +85,12 @@ class ZooPost:
     def __attachments(self):
         """
         Validate that the links to attachments hosted by the forum are stil valid.
+        """
+        pass
+
+    def get(self):
+        """
+        Based on user preferences, grab a post file, and return the JSON contents in
+        a card object.
         """
         pass

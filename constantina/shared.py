@@ -246,6 +246,7 @@ class BaseState:
 
     def _int_translate(self, checkval, width, default):
         """Take a string of digits and convert width chars into an integer"""
+        # TODO: need adjustable number of digits!?
         if checkval.isdigit():
             checkval = int(checkval[0:width])
         else:   # Invalid input gets a chosen default

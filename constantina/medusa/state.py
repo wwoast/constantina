@@ -79,6 +79,7 @@ class MedusaState(BaseState):
         Output is either strings of search/filter terms, or None
         """
         self.search = BaseState._find_state_variable(self, 'xs')
+        # TODO: Must check each application's search state before turning on shuffle mode.
         if self.search == '':
             self.reshuffle = True
         else:

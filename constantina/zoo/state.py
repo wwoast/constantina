@@ -10,7 +10,7 @@ class ZooState(BaseState):
     """
     Constantina Forum Page State Object.
 
-    ZooState needs the following details from a MedusaState object:
+    ZooState needs the following details from a GlobalState object:
         - Card Filters (which share syntax with #channels)
         - Search terms (which may include forum searches, i.e. @username)
         - in_state (which may leave items unprocessed)
@@ -25,25 +25,47 @@ class ZooState(BaseState):
         # Process all state variables listed in zoo.ini
         self.__import_state()
 
+        # Now that we've imported, shuffle any card types we want to shuffle
+        for ctype in self.config.get("card_properties", "randomize").replace(" ", "").split(","):
+            getattr(self, ctype).shuffle()
 
-    def __import_post_state(self):
-        """ :zp
-        Import the specified Zoo post data. This is used for permalink-style
-        single-post views. This should specify the equivalent of a single
-        post filename.
+
+    def __import_card_state(self):
         """
-        self.thread = BaseState._find_state_variable('zp')
-        pass
+        Zoo images, Zoo songs, and Thread card state is tracked here. Seed tracking
+        between page loads means we don't need to log which content cards were
+        shown on a previous page.
+
+        However, to preserve card spacing rules, we do need to track the distance
+        of each card type from the first element of the current page.
+
+        Output is an integer or None.
+        """
+        # For each content card type, populate the state variables
+        # as necessary.
+        for state_var in ["z" + s[0] for s in self.config.options('card_counts')]:
+            # NOTE: This ctype attribute naming requires each content card type to
+            # begin with a unique alphanumeric character.
+            ctype = [value for value in self.config.options("card_counts") if value[0] == state_var][0]
+            distance = BaseState._find_state_variable(self, state_var)
+            getattr(self, ctype).distance = distance
 
 
-    def __import_thread_state(self):
-        """ :zt
-        Import the specified zoo thread data. This is used for permalink-style
+    def __import_permalink_state(self):
+        """ :zp, :zt
+        Import the specified zoo post thread data. This is used for permalink-style
         single-thread views. This should specify the equivalent of a single
-        post file that starts a thread.
+        post or a single thread.
         """
-        self.thread = BaseState._find_state_variable('zt')
-        pass
+        # TODO: Migrate to shared or BaseSate.
+        permalink_states = [sv[0] for sv in self.config.items("special_states")
+                            if sv[1].find("permalink") != -1]
+        for state in permalink_states:
+            value = BaseState._find_state_variable(self, state)
+            if value != None:
+                attrib = self.config.get("special_states", state)
+                setattr(self, attrib, value)
+                return   # Only one permalink state per page. First one takes precedence
 
 
     def __import_filtered_card_count(self):
@@ -57,7 +79,8 @@ class ZooState(BaseState):
         self.filtered = BaseState._find_state_variable(self, 'zx')
         if ((self.filtered is not None) and
             (self.search is not None) and
-            (self.card_filter is not None)):
+            (self.channel_filter is not None) and
+            (self.user_filter is not None)):
             self.filtered = BaseState._int_translate(self, self.filtered, 1, 0)
         else:
             self.filtered = 0
@@ -72,6 +95,7 @@ class ZooState(BaseState):
 
         Output is either strings of search/filter terms, or None
         """
+        # TODO: tie to a global search that can call the application-specific ones
         self.search = BaseState._find_state_variable('zs')
         self.channel_filter = BaseState._find_state_variable('zc')
         self.user_filter = BaseState._find_state_variable('zu')
@@ -139,14 +163,5 @@ class ZooState(BaseState):
         If this returns true, it means the user either wants cards of this type, or
         that no card filtering is currently in place.
         """
-        ctype = getattr(self, ctype)
-        if ctype == None:   # No app or ctype, so no cards of this type
-            return False
-
-        if ((getattr(self, "card_filter") is not None) and
-            (self.ctype.filtertype is False)):
-            return True
-        else:
-            return False
-
-    # TOWRITE: modes related to forum cards and checks
+        # TODO: rewrite for user or channel filtering
+        pass
