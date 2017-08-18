@@ -10,7 +10,7 @@ class ZooState(BaseState):
     """
     Constantina Forum Page State Object.
 
-    ZooState needs the following details from a MedusaState object:
+    ZooState needs the following details from a GlobalState object:
         - Card Filters (which share syntax with #channels)
         - Search terms (which may include forum searches, i.e. @username)
         - in_state (which may leave items unprocessed)
