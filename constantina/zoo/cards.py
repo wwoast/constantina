@@ -45,6 +45,10 @@ class ZooPostCard:
     a single attachment pointed at (images translated into attachments)
     """
     def __init__(self):
+        # TODO: notional
+        self.mode = "page or permalink"
+        self.page = 0
+        
         pass
 
 
@@ -53,8 +57,8 @@ class ZooPostCard:
         Opens JSON, parses, and adds meta.
         """
         # TODO: opendir supports paging now, but where does the page info come from?
-        # Decide: figure out what page a post file would be on, and pass that into
-        # the opendir call, so you don't have a million files sitting there.
+        # The state of the page? Works, but not for permalinks.
+        # For permalinks, take a requested file and just open it, bypassing opendir
         type_files = opendir(self.config, self.ctype, self.hidden)
         pass
 
