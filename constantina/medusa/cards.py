@@ -24,7 +24,6 @@ class MedusaCard:
     link. We track whether the image or link may be duplicated within
     the card, as well as what its page index and type are.
     """
-
     def __init__(self, ctype, num, state, grab_body=True, permalink=False, search_result=False):
         self.config = state.config
 

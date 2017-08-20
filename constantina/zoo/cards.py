@@ -20,11 +20,13 @@ class ZooThreadCardList:
     def __init__(self):
         pass
 
+
     def get(self, strategy):
         """
         Based on user preferences, get either all posts, or only the last N*10.
         """
         pass
+
 
     def ordering(self):
         """
@@ -45,11 +47,17 @@ class ZooPostCard:
     def __init__(self):
         pass
 
+
     def __openfile(self):
         """
         Opens JSON, parses, and adds meta.
         """
+        # TODO: opendir supports paging now, but where does the page info come from?
+        # Decide: figure out what page a post file would be on, and pass that into
+        # the opendir call, so you don't have a million files sitting there.
+        type_files = opendir(self.config, self.ctype, self.hidden)
         pass
+
 
     def __interpretfile(self, thisfile):
         """
@@ -59,12 +67,14 @@ class ZooPostCard:
         # Add the permalink (POST) link details (TODO: Zoo-State)
         pass
 
+
     def __fresh_property(self):
         """
         If the post is less than a certain period old, add "fresh" attributes
         so that we can draw this card as a "freshly updated" card.
         """
         pass
+
 
     def __first_in_thread(self):
         """
@@ -75,6 +85,7 @@ class ZooPostCard:
         """
         pass
 
+
     def __revisions(self):
         """
         If this thread has been revised, include the list of revisions as part of
@@ -82,11 +93,13 @@ class ZooPostCard:
         """
         pass
 
+
     def __attachments(self):
         """
         Validate that the links to attachments hosted by the forum are stil valid.
         """
         pass
+
 
     def get(self):
         """

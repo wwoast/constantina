@@ -470,13 +470,21 @@ def remove_future(dirlisting):
     return dirlisting
 
 
-def opendir(config, ctype, hidden=False):
+def opendir(config, ctype, hidden=False, page=0):
     """
     Return either cached directory information or open a dir and
     list all the files therein. Used for both searching and for the
     card reading functions, so it's part of the shared module.
     """
     card_root = GlobalConfig.get("paths", "data_root") + "/private"
+
+    # Support paging on card types that we do have counts for.
+    card_count = 0
+    previous_items = 0
+    if ctype in [c[0] for c in config.items("card_counts")]:
+        card_count = config.getint("card_counts", ctype)
+        previous_items = card_count * page
+
     directory = card_root + "/" + config.get("paths", ctype)
     if hidden is True:
         directory += "/hidden"
@@ -495,10 +503,17 @@ def opendir(config, ctype, hidden=False):
         # so that subdirectories don't get fopen'ed later. Also
         # don't include any placeholder files that keep the dir
         # structure for packaging purposes.
-        for testpath in dirlisting:
+        for idx, testpath in enumerate(dirlisting):
             if os.path.isfile(os.path.join(directory, testpath)):
                 if testpath.find("placeholder") == -1:
-                    BaseFiles[ctype].append(testpath)
+                    if page == 0:
+                        BaseFiles[ctype].append(testpath)
+                    elif ((page > 0) and 
+                          (idx > previous_items) and
+                          (idx <= previous_items + card_count)):
+                        BaseFiles[ctype].append(testpath)
+                    else:
+                        pass
 
         # Sort the output. Most directories should use
         # utimes for their filenames, which sort nicely. Use
