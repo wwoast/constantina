@@ -96,9 +96,9 @@ class ZooState(BaseState):
         Output is either strings of search/filter terms, or None
         """
         # TODO: tie to a global search that can call the application-specific ones
-        self.search = BaseState._find_state_variable('zs')
-        self.channel_filter = BaseState._find_state_variable('zc')
-        self.user_filter = BaseState._find_state_variable('zu')
+        self.search = BaseState._find_state_variable(self, 'zs')
+        self.channel_filter = BaseState._find_state_variable(self, 'zc')
+        self.user_filter = BaseState._find_state_variable(self, 'zu')
         # Channel and topic can overlap. This is ok -- we don't care what was filtered
         # by cardtype for returning forum channel cards.
         # TODO: just look for #channels or @users
@@ -112,8 +112,7 @@ class ZooState(BaseState):
         loading. The order that state components are loaded is significant,
         as is the output type of each state import function.
         """
-        self.__import_post_state()           # Permalink info for a single post
-        self.__import_thread_state()         # Permalink info for a single thread
+        self.__import_permalink_state()      # Post and thread permalinks
         self.__import_search_state()         # Search strings and processing out filter strings
 
 
@@ -137,8 +136,19 @@ class ZooState(BaseState):
         """Export state related to Zoo @user-filtered cards"""
         user_string = None
         if user_terms != '':
-            user_String = "zu" + user_terms
+            user_string = "zu" + user_terms
         return user_string
+
+
+    def __export_filtered_card_count(self, filtered_count):
+        """
+        If any cards were excluded by filtering, and a search is in progress,
+        track the number of filtered cards in the state.
+        """
+        filtered_count_string = None
+        if self.filter_processed_mode() is True:
+            filtered_count_string = "zx" + str(filtered_count)
+        return filtered_count_string
 
 
     def export_state(self, cards, query_terms, channel_terms, user_terms, filtered_count):
