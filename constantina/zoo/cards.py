@@ -44,11 +44,21 @@ class ZooPostCard:
     Constantina Forum Posts are written in a BBCode variant, and may contain
     a single attachment pointed at (images translated into attachments)
     """
-    def __init__(self):
-        # TODO: notional
-        self.mode = "page or permalink"
-        self.page = 0
-        
+    def __init__(self, ctype, num, state, grab_body=True, permalink=False, search_result=False):
+        self.config = state.config
+
+        self.title = self.config.get("card_defaults", "title")
+        self.channel = self.config.get("card_defaults", "channel")
+        self.body = self.config.get("card_defaults", "body")
+        self.ctype = ctype
+        # Request either the Nth entry of this type, or a specific date/utime
+        self.num = num
+        # If we need to access data from the state object, for card shuffling
+        self.state = state
+        self.songs = []
+        self.cfile = self.config.get("card_defaults", "file")
+        self.cdate = self.config.get("card_defaults", "date")
+
         pass
 
 
@@ -58,8 +68,12 @@ class ZooPostCard:
         """
         # TODO: opendir supports paging now, but where does the page info come from?
         # The state of the page? Works, but not for permalinks.
-        # For permalinks, take a requested file and just open it, bypassing opendir
-        type_files = opendir(self.config, self.ctype, self.hidden)
+        # For permalinks, take a requested file and just open it, bypassing opendir.
+        # If the file doesn't exist, return a default/empty card.
+        if (self.permalink is False):
+            type_files = opendir(self.config, self.ctype, self.hidden)
+        else:
+            type_files = "the-input-file-TODO"
         pass
 
 
