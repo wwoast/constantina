@@ -58,23 +58,42 @@ class ZooPostCard:
         self.songs = []
         self.cfile = self.config.get("card_defaults", "file")
         self.cdate = self.config.get("card_defaults", "date")
-
-        pass
+        self.permalink = permalink
+        self.search_result = search_result
+        self.hidden = False
+        # Don't hit the filesystem if we're just tracking which cards have
+        # been previously opened (MedusaPage.__get_previous_cards)
+        if grab_body is True:
+            self.cfile = self.__openfile()
 
 
     def __openfile(self):
         """
-        Opens JSON, parses, and adds meta.
+        Opens JSON file based on being Nth in the directory, parses, and adds meta.
         """
         # TODO: opendir supports paging now, but where does the page info come from?
         # The state of the page? Works, but not for permalinks.
         # For permalinks, take a requested file and just open it, bypassing opendir.
         # If the file doesn't exist, return a default/empty card.
         if (self.permalink is False):
-            type_files = opendir(self.config, self.ctype, self.hidden)
+            type_files = opendir(self.config, self.ctype, self.hidden)   # TODO: paging info
         else:
-            type_files = "the-input-file-TODO"
-        pass
+            type_files = [self.num]   # TODO: validate directory
+
+        # TODO: copy medusa's logic for shuffle/hidden cards
+
+        # News posts are utimes. Forum threads can be utime.revision.utime...
+        # For permalink files, self.num should always be 0.
+        which_file = self.num
+        if which_file >= len(type_files):
+            if self.num in type_files:
+                which_file = type_files.index(self.num)
+                self.num = which_file
+            else:
+                return "nofile"
+        
+        # syslog.syslog(str(type_files[which_file]))
+        return self.__interpretfile(type_files[which_file])
 
 
     def __interpretfile(self, thisfile):
@@ -83,6 +102,18 @@ class ZooPostCard:
         If it doesn't, close/ignore the file, and log the failure.
         """
         # Add the permalink (POST) link details (TODO: Zoo-State)
+
+        card_root = GlobalConfig.get("paths", "data_root") + "/private"
+        # TODO: where are these cards coming from?
+        base_path = card_root + "/" + self.config.get("paths", self.ctype)
+
+        fpath = base_path + "/" + thisfile
+        if self.hidden is True:
+            fpath = base_path + "/hidden/" + thisfile
+        try:
+            with open(fpath, 'r') as cfile:
+                pass   # TODO: the attributes must be here
+        # TODO: need forum test files to start writing/resting this code!!
         pass
 
 
