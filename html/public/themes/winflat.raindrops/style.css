@@ -518,6 +518,25 @@ img.imgExpand, .divExpand {
    line-height: 1.7; 
 }
 
+/* Styling for Lists */
+ul.prosCons {
+   list-style-type: none;
+   line-height: 1.4;
+   font-size: 14pt;
+   padding: 0 0 0 0;
+}
+    
+ul.prosCons li.point {
+   font-weight: bold;
+   text-decoration: underline;
+   padding: 0 0 0 0;
+}
+    
+ul.prosCons li.counter {
+   padding: 0 0 0 0;
+   margin-bottom: 20px;
+}
+ 
 /* Styling for Encyclopedia pages */
 ol.trackListing {
    margin-left: 0.5em;
@@ -837,6 +856,18 @@ div.card.help pre {
 
    ul, ol {
        text-align: left;
+   }
+
+   li {
+      margin-left: 14px;
+      margin-right: 8px;
+      line-height: 1.4;
+      font-size: 12pt;
+      text-align: left;
+      text-justify: none; 
+      text-justify-last: none;
+      letter-spacing: 0.8px;
+      word-spacing: 2px;
    }
 
    div.card p, div.card h2, div.card h5 {
