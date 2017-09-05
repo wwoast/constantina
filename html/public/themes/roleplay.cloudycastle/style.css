@@ -459,6 +459,9 @@ ul.prosCons {
    line-height: 1.4;
    font-size: 14pt;
    padding: 0 0 0 0;
+   text-align: justify;
+   text-justify: auto; 
+   text-justify-last: none;
 }
 
 ul.prosCons li.point {
