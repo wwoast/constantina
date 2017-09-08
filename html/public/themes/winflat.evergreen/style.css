@@ -520,22 +520,25 @@ img.imgExpand, .divExpand {
 
 /* Styling for Lists */
 ul.prosCons {
-    list-style-type: none;
-    line-height: 1.4;
-    font-size: 14pt;
-    padding: 0 0 0 0;
- }
+   list-style-type: none;
+   line-height: 1.4;
+   font-size: 14pt;
+   padding: 0 0 0 0;
+   text-align: justify;
+   text-justify: auto; 
+   text-justify-last: none;
+}
    
- ul.prosCons li.point {
-    font-weight: bold;
-    text-decoration: underline;
-    padding: 0 0 0 0;
- }
+ul.prosCons li.point {
+   font-weight: bold;
+   text-decoration: underline;
+   padding: 0 0 0 0;
+}
    
- ul.prosCons li.counter {
-    padding: 0 0 0 0;
-    margin-bottom: 20px;
- }
+ul.prosCons li.counter {
+   padding: 0 0 0 0;
+   margin-bottom: 20px;
+}
 
 /* Styling for Encyclopedia pages */
 ol.trackListing {
