@@ -6,45 +6,20 @@ import magic
 from urllib import unquote_plus
 import syslog
 import ConfigParser
+import json
 
 from constantina.shared import BaseFiles, BaseCardType, opendir
 
 syslog.openlog(ident='constantina.zoo.cards')
 
 
-class ZooThreadCardList:
+class ZooThreadCardGroup:
     """
     Linear series of ZooPost cards. Arranged as threads, but appended in order
-    as individual post cards prior to returning.
+    as individual post cards prior to returning. Each thread is its own JSON file,
+    and the posts are arranged in linear oldest-to-newest order.
     """
     def __init__(self):
-        pass
-
-
-    def get(self, strategy):
-        """
-        Based on user preferences, get either all posts, or only the last N*10.
-        """
-        pass
-
-
-    def ordering(self):
-        """
-        Set the M-of-N values in the threads so we can display how many posts are
-        in a single thread.
-        """
-        pass
-
-
-class ZooPostCard:
-    """
-    Since forum cards must track updatable state in each item, we don't load
-    these as HTML fragments anymore, but as raw JSON documents.
-
-    Constantina Forum Posts are written in a BBCode variant, and may contain
-    a single attachment pointed at (images translated into attachments)
-    """
-    def __init__(self, ctype, num, state, grab_body=True, permalink=False, search_result=False):
         self.config = state.config
 
         self.title = self.config.get("card_defaults", "title")
@@ -61,15 +36,27 @@ class ZooPostCard:
         self.permalink = permalink
         self.search_result = search_result
         self.hidden = False
-        # Don't hit the filesystem if we're just tracking which cards have
-        # been previously opened (MedusaPage.__get_previous_cards)
-        if grab_body is True:
-            self.cfile = self.__openfile()
 
 
+    def get(self, strategy):
+        """
+        Based on user preferences, get either all posts, or only the last N*10.
+        """
+        pass
+
+
+    def ordering(self):
+        """
+        Set the M-of-N values in the threads so we can display how many posts are
+        in a single thread.
+        """
+        pass
+
+    
     def __openfile(self):
         """
-        Opens JSON file based on being Nth in the directory, parses, and adds meta.
+        Opens JSON file based on being Nth in the directory and parses it into a group
+        of post cards.
         """
         # TODO: opendir supports paging now, but where does the page info come from?
         # The state of the page? Works, but not for permalinks.
@@ -96,41 +83,65 @@ class ZooPostCard:
         return self.__interpretfile(type_files[which_file])
 
 
-    def __interpretfile(self, thisfile):
+class ZooPostCardGroup:
+    """
+    Zoo Posts may be updated or revised. When they are, track the revisions
+    as post cards that are members of a ZooPostCardGroup.
+    """
+    def __init__(self, num, state, body=None, permalink=False, search_result=False):
+        pass
+
+
+class ZooPostCard:
+    """
+    Since forum cards must track updatable state in each item, we don't load
+    these as HTML fragments anymore, but as raw JSON documents.
+
+    Constantina Forum Posts are JSON objects. The body of the post itself is 
+    written in a BBCode variant, and may contain a single attachment link such
+    as an image, video, or song file that is uploaded to the forum.
+    """
+    def __init__(self, num, revision=None, state, body=None, permalink=False, search_result=False):
+        self.config = state.config
+        self.body = self.config.get("card_defaults", "body")
+
+        # Request the Nth post in this thread. If there are revisions, request the specific
+        # revision for that Nth number, which has a "duplicate" for each revision. If no
+        # revision is provided, find the highest revision number and display that.
+        self.num = num
+        self.revision = revision
+
+        self.songs = []
+        self.cfile = self.config.get("card_defaults", "file")
+        self.cdate = self.config.get("card_defaults", "date")
+        self.body = body
+        self.permalink = permalink
+        self.search_result = search_result
+        if self.body != None:
+            self.__interpretpost()
+
+
+    def __interpretpost(self):
         """
-        Validates that a single JSON file has all of the valid forum attributes.
+        Validates that a single JSON post has all of the valid forum attributes.
         If it doesn't, close/ignore the file, and log the failure.
         """
-        # Add the permalink (POST) link details (TODO: Zoo-State)
-
-        card_root = GlobalConfig.get("paths", "data_root") + "/private"
-        # TODO: where are these cards coming from?
-        base_path = card_root + "/" + self.config.get("paths", self.ctype)
-
-        fpath = base_path + "/" + thisfile
-        if self.hidden is True:
-            fpath = base_path + "/hidden/" + thisfile
-        try:
-            with open(fpath, 'r') as cfile:
-                pass   # TODO: the attributes must be here
-        # TODO: need forum test files to start writing/resting this code!!
-        pass
+        self.revision = self.body.revision
+        self.author = self.body.author
+        self.date = self.body.date
+        self.html = self.body.html
+        # TODO: Sanity checks for revision number domain, author strings, dates, and post size.
+        # TODO: Tag the post as fresh for styling
 
 
     def __fresh_property(self):
         """
         If the post is less than a certain period old, add "fresh" attributes
         so that we can draw this card as a "freshly updated" card.
-        """
-        pass
 
-
-    def __first_in_thread(self):
-        """
-        If the post has no indications it is in response to another post, add
-        markup in the JSON that tells Constantina to draw this card in the base
-        page as a "start of thread" card. Likely this will be called from the 
-        Thread object.
+        This property is added to the card prior to sending to the web client,
+        and never stored on disk. It applies either if the thread got a recent post,
+        or if the post itself is recent.
         """
         pass
 
