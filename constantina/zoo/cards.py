@@ -83,6 +83,31 @@ class ZooThreadCardGroup:
         return self.__interpretfile(type_files[which_file])
 
 
+    def __interpretfile(self):
+        """
+        If a thread is a validly-formed JSON file that contains a title, channel,
+        poll flag, and at least one valid post, then it's a proper thread and
+        should be displayed. Otherwise, log an error.
+        """
+        pass
+
+
+    def __valid_channel(self):
+        """
+        Is the channel valid?
+        """
+        pass
+
+    
+    def __valid_title(self):
+        """
+        Is the post title valid, or is it too long? If too long, what do we do?
+        Chop off the extra bits perhaps?
+        """
+        pass
+
+
+
 class ZooPostCardGroup:
     """
     Zoo Posts may be updated or revised. When they are, track the revisions
@@ -90,6 +115,7 @@ class ZooPostCardGroup:
     """
     def __init__(self, num, state, body=None, permalink=False, search_result=False):
         pass
+
 
 
 class ZooPostCard:
@@ -142,14 +168,6 @@ class ZooPostCard:
         This property is added to the card prior to sending to the web client,
         and never stored on disk. It applies either if the thread got a recent post,
         or if the post itself is recent.
-        """
-        pass
-
-
-    def __revisions(self):
-        """
-        If this thread has been revised, include the list of revisions as part of
-        the JSON for the single card, so that a user can select between them.
         """
         pass
 
