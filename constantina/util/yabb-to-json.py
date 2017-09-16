@@ -89,6 +89,7 @@ class zoo_post:
       self.author = values[1]
       self.revision = 0         # Reset revision counts from YaBB until I know how they work TODO
       # self.raw = values[-5]   # Don't keep raw data since none of these posts are modifiable
+      self.date = values[3]
       self.html = self.processCode(values[-5])
 
       # For now, don't process the attachments out of the yabbfiles dir

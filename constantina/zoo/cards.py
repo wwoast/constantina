@@ -126,6 +126,8 @@ class ZooPostCard:
     Constantina Forum Posts are JSON objects. The body of the post itself is 
     written in a BBCode variant, and may contain a single attachment link such
     as an image, video, or song file that is uploaded to the forum.
+
+    
     """
     def __init__(self, num, revision=None, state, body=None, permalink=False, search_result=False):
         self.config = state.config
@@ -157,7 +159,8 @@ class ZooPostCard:
         self.date = self.body.date
         self.html = self.body.html
         # TODO: Sanity checks for revision number domain, author strings, dates, and post size.
-        # TODO: Tag the post as fresh for styling
+        # Tag the post as fresh for styling
+        self.__fresh_property()
 
 
     def __fresh_property(self):
