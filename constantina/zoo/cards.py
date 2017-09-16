@@ -8,7 +8,7 @@ import syslog
 import ConfigParser
 import json
 
-from constantina.shared import BaseFiles, BaseCardType, opendir
+from constantina.shared import BaseFiles, BaseCardType, GlobalTime, opendir
 
 syslog.openlog(ident='constantina.zoo.cards')
 
@@ -169,7 +169,11 @@ class ZooPostCard:
         and never stored on disk. It applies either if the thread got a recent post,
         or if the post itself is recent.
         """
-        pass
+        fresh_time = GlobalTime - self.config.getint("zoo", "fresh_window")
+        if self.date > fresh_time:
+            self.fresh = True
+        else:
+            self.fresh = False
 
 
     def __attachments(self):
