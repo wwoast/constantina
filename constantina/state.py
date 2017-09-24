@@ -39,7 +39,8 @@ class ConstantinaState(BaseState):
         BaseState.__init__(self, in_state, None)
         self.config = GlobalConfig
         self.auth = authentication(env, post)
-
+        # HTTP response headers start with details relevant to authentication
+        self.headers = self.auth.headers
 
         # Getting defaults from the other states requires us to first import
         # any random seed value. Then, we can finish setting the imported state

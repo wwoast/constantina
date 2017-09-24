@@ -637,13 +637,13 @@ def application(env, start_response, instance="default"):
         return get_file(in_uri, start_response, [], auth_mode, state.auth)
     elif (auth_mode == "blog") or (auth_mode == "combined"):
         # Load basic blog contents.
-        html = contents_page(start_response, state, None, state.auth.headers)
+        html = contents_page(start_response, state, None, state.headers)
     else:
         if state.auth.logout is True:
-            html = logout_page(start_response, state, state.auth.headers)
+            html = logout_page(start_response, state, state.headers)
         elif state.auth.account.valid is True:
             prefs = preferences(env, post, state.auth)
-            html = contents_page(start_response, state, prefs, state.auth.headers + prefs.headers)
+            html = contents_page(start_response, state, prefs, state.headers + prefs.headers)
         else:
             html = authentication_page(start_response, state)
 
