@@ -15,9 +15,12 @@ syslog.openlog(ident='constantina.zoo.cards')
 
 class ZooThreadCardGroup:
     """
-    Linear series of ZooPost cards. Arranged as threads, but appended in order
-    as individual post cards prior to returning. Each thread is its own JSON file,
-    and the posts are arranged in linear oldest-to-newest order.
+    Linear series of ZooPostCardStacks (aka single cards, with revisions). Conceptually,
+    it's the same as a linear series of posts, but where each post is an object that includes
+    whatever revisions to that post exist.
+
+    Arranged as threads, but appended in order as individual post cards prior to returning. 
+    Each thread is its own JSON file, and the posts are arranged in linear oldest-to-newest order.
     """
     def __init__(self):
         self.config = state.config
@@ -86,7 +89,7 @@ class ZooThreadCardGroup:
     def __interpretfile(self):
         """
         If a thread is a validly-formed JSON file that contains a title, channel,
-        poll flag, and at least one valid post, then it's a proper thread and
+        poll flag, and at least one valid post-stack, then it's a proper thread and
         should be displayed. Otherwise, log an error.
         """
         pass
@@ -108,13 +111,41 @@ class ZooThreadCardGroup:
 
 
 
-class ZooPostCardGroup:
+class ZooPostCardStack:
     """
     Zoo Posts may be updated or revised. When they are, track the revisions
-    as post cards that are members of a ZooPostCardGroup.
+    as post cards that are members of a ZooPostCardStack.
     """
     def __init__(self, num, state, body=None, permalink=False, search_result=False):
-        pass
+        self.posts = []
+
+
+    def push(self, post):
+        """
+        Add a Zoo post card to a revision stack, in front of whatever earlier revisions
+        were already found there.
+        """
+        self.posts.insert(0, post)
+
+
+    def latest(self):
+        """Return the latest revision of this post."""
+        return self.posts[0]
+
+
+    def validate(self):
+        """
+        If the posts array is non-empty, and each post parses its own ZooPostCard logic
+        correctly, then the Stack of Revisions is also valid.
+        """
+        if self.posts == []:
+            return False
+
+        for post in self.posts:
+            if post.validate() != True:
+                return False
+
+        return True
 
 
 
@@ -127,11 +158,14 @@ class ZooPostCard:
     written in a BBCode variant, and may contain a single attachment link such
     as an image, video, or song file that is uploaded to the forum.
 
-    
+    Dates are just unix times, configurable with timezone values from a user's
+    browser.    
     """
     def __init__(self, num, revision=None, state, body=None, permalink=False, search_result=False):
         self.config = state.config
-        self.body = self.config.get("card_defaults", "body")
+        self.body = body
+        if self.body == None:
+            self.body = self.config.get("card_defaults", "body")
 
         # Request the Nth post in this thread. If there are revisions, request the specific
         # revision for that Nth number, which has a "duplicate" for each revision. If no
@@ -139,14 +173,19 @@ class ZooPostCard:
         self.num = num
         self.revision = revision
 
+        # Does the processed post data conform to policy? We'll check soon.
+        self.valid = False
+
+        # TODO: based on the provided token, add that username to the post as the author
+
         self.songs = []
         self.cfile = self.config.get("card_defaults", "file")
         self.cdate = self.config.get("card_defaults", "date")
         self.body = body
         self.permalink = permalink
         self.search_result = search_result
-        if self.body != None:
-            self.__interpretpost()
+        
+        self.__interpretpost()
 
 
     def __interpretpost(self):
@@ -158,7 +197,8 @@ class ZooPostCard:
         self.author = self.body.author
         self.date = self.body.date
         self.html = self.body.html
-        # TODO: Sanity checks for revision number domain, author strings, dates, and post size.
+        # Sanity checks for revision number domain, author strings, dates, and post size.
+        self.valid = self.validate()
         # Tag the post as fresh for styling
         self.__fresh_property()
 
@@ -186,9 +226,25 @@ class ZooPostCard:
         pass
 
 
+    def validate(self):
+        """
+        Check whether properties of this post object are valid or follow the
+        configured Zoo policies. This includes sanity checks for revision number 
+        domain, author strings, dates, and post size.
+        """
+        if not (self.revision >= 0 and self.revision <= 2**32-1):
+            return False
+        if type(self.date) != int:
+            # Post dates are unix times
+            return False
+        # TODO: check that it's a valid username (length mins and max)
+        # TODO: check post size and attachment size
+        return True
+
+
     def get(self):
         """
-        Based on user preferences, grab a post file, and return the JSON contents in
-        a card object.
+        Based on user preferences, grab a thread file, and return the JSON contents for
+        this particular card object.
         """
         pass
