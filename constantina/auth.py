@@ -31,7 +31,7 @@ class ConstantinaAuth:
         self.sunset = self.config.getint("key_settings", "sunset")
         self.time = GlobalTime.time    # Don't leak multiple timestamps
         self.headers = []    # Auth headers we add later
-        self.keypair = {}        # One of N keys for signing/encryption
+        self.keypair = {}    # One of N keys for signing/encryption
         self.jwe = None      # The encrypted token
         self.jwt = None      # The internal signed token
         self.serial = None   # Token serialized and read/written into cookies
@@ -297,14 +297,14 @@ def authentication_page(start_response, state):
     return html
 
 
-def logout_page(start_response, state, headers):
+def logout_page(start_response, state):
     """
     If Constantina is in "forum" mode, you can get a logout
     page by clicking the logout button in the settings menu.
     """
     base = open(state.theme + '/logout.html', 'r')
     html = base.read()
-    start_response('200 OK', headers)
+    start_response('200 OK', state.headers)
     return html
 
 

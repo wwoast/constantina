@@ -4,8 +4,7 @@ from math import floor
 from random import randint, seed
 import syslog
 
-from auth import authentication, authentication_page, logout_page
-from preferences import preferences
+from auth import authentication_page, logout_page
 from shared import GlobalConfig, GlobalTime, BaseFiles, opendir, safe_path, urldecode, process_post
 from state import ConstantinaState
 from templates import template_contents
@@ -465,7 +464,7 @@ def create_page(page):
     return output
 
 
-def contents_page(start_response, state, prefs, headers):
+def contents_page(start_response, state):
     """
     Three types of states:
     1) Normal page creation (randomized elements)
@@ -478,16 +477,16 @@ def contents_page(start_response, state, prefs, headers):
     substitute = '<!-- Contents go here -->'
 
     # Read in headers from authentication if they exist
-    headers.append(('Content-Type', 'text/html'))
+    state.headers.append(('Content-Type', 'text/html'))
 
     # Fresh new HTML, no previous state provided
     if state.fresh_mode() is True:
         page = ConstantinaPage(state)
         base = open(GlobalTheme.theme + '/contents.html', 'r')
         html = base.read()
-        html = template_contents(html, prefs)
+        html = template_contents(html, state.prefs)
         html = html.replace(substitute, create_page(page))
-        start_response('200 OK', headers)
+        start_response('200 OK', state.headers)
 
     # Permalink page of some kind
     elif state.permalink_mode() is True:
@@ -495,9 +494,9 @@ def contents_page(start_response, state, prefs, headers):
         page = ConstantinaPage(state)
         base = open(GlobalTheme.theme + '/contents.html', 'r')
         html = base.read()
-        html = template_contents(html, prefs)
+        html = template_contents(html, state.prefs)
         html = html.replace(substitute, create_page(page))
-        start_response('200 OK', headers)
+        start_response('200 OK', state.headers)
 
     # Empty search
     elif state.reshuffle_mode() is True:
@@ -506,9 +505,9 @@ def contents_page(start_response, state, prefs, headers):
         page = ConstantinaPage(state)
         base = open(GlobalTheme.theme + '/contents.html', 'r')
         html = base.read()
-        html = template_contents(html, prefs)
+        html = template_contents(html, state.prefs)
         html = html.replace(substitute, create_page(page))
-        start_response('200 OK', headers)
+        start_response('200 OK', state.headers)
 
     # Doing a search or a filter process
     elif state.search_mode() is True and state.page == 0:
@@ -516,16 +515,16 @@ def contents_page(start_response, state, prefs, headers):
         page = ConstantinaPage(state)
         base = open(GlobalTheme.theme + '/contents.html', 'r')
         html = base.read()
-        html = template_contents(html, prefs)
+        html = template_contents(html, state.prefs)
         html = html.replace(substitute, create_page(page))
-        start_response('200 OK', headers)
+        start_response('200 OK', state.headers)
 
     # Otherwise, there is state, but no special headers.
     else:
         page = ConstantinaPage(state)
         html = create_page(page)
-        html = template_contents(html, prefs)
-        start_response('200 OK', headers)
+        html = template_contents(html, state.prefs)
+        start_response('200 OK', state.headers)
 
     # Load html contents into the page with javascript
     return html
@@ -637,13 +636,12 @@ def application(env, start_response, instance="default"):
         return get_file(in_uri, start_response, [], auth_mode, state.auth)
     elif (auth_mode == "blog") or (auth_mode == "combined"):
         # Load basic blog contents.
-        html = contents_page(start_response, state, None, state.headers)
+        html = contents_page(start_response, state, None)
     else:
         if state.auth.logout is True:
-            html = logout_page(start_response, state, state.headers)
+            html = logout_page(start_response, state)
         elif state.auth.account.valid is True:
-            prefs = preferences(env, post, state.auth)
-            html = contents_page(start_response, state, prefs, state.headers + prefs.headers)
+            html = contents_page(start_response, state)
         else:
             html = authentication_page(start_response, state)
 
