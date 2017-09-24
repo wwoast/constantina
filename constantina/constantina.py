@@ -530,7 +530,7 @@ def contents_page(start_response, state):
     return html
 
 
-def get_file(in_uri, start_response, headers, auth_mode, auth=None):
+def get_file(in_uri, start_response, state):
     """
     Without authentication, if there is a file we can return, do that
     instead of running any page generation stuff.
@@ -545,9 +545,10 @@ def get_file(in_uri, start_response, headers, auth_mode, auth=None):
     static_file = "private" + in_uri
     output_file = "/private" + in_uri
     syslog.syslog(static_file)
+    headers = []   # Don't process any computed headers from state
 
-    if auth_mode != "blog":
-        if auth is None or auth.account.valid is False:
+    if state.auth.mode != "blog":
+        if state.auth is None or state.auth.account.valid is False:
             return
     
     os.chdir(data_root)
@@ -594,7 +595,6 @@ def application(env, start_response, instance="default"):
     in_uri = env.get('REQUEST_URI')
     in_method = env.get('REQUEST_METHOD')
     in_cookie = env.get('HTTP_COOKIE')
-    auth_mode = GlobalConfig.get("authentication", "mode")
     GlobalTime.update()   # Set timer value throughout the request
 
     # Normalize the state and truncate if the query string is
@@ -606,16 +606,6 @@ def application(env, start_response, instance="default"):
     else:
         in_state = None
 
-    # Normalize the inbound URI, for purpose of deciding whether to
-    # serve dynamic HTML or load a file.
-    if in_uri == '/' or in_uri[0] != '/' or in_uri[1] == '?':
-        in_uri = None
-    elif safe_path(in_uri) is False:
-        in_uri = "unsafe"
-    # Normalize the inbound cookie details
-    if in_cookie == '' or auth_mode == "blog":
-        in_cookie = None
-
     # Get POST values for processing by other tools
     post = {}
     if in_method == "POST":
@@ -624,19 +614,28 @@ def application(env, start_response, instance="default"):
     # Create a state object, and determine what authentication data
     # has been made available on this page load.
     state = ConstantinaState(in_state, env, post)   # Create state object
+    syslog.syslog("auth-mode: " + state.auth.mode)
+
+    # Normalize the inbound URI, for purpose of deciding whether to
+    # serve dynamic HTML or load a file.
+    if in_uri == '/' or in_uri[0] != '/' or in_uri[1] == '?':
+        in_uri = None
+    elif safe_path(in_uri) is False:
+        in_uri = "unsafe"
+    # Normalize the inbound cookie details
+    if in_cookie == '' or state.auth.mode == "blog":
+        in_cookie = None
+
+    # based on state.auth.mode and in_uri, do a thing.
     html = ""
-
-    syslog.syslog("auth-mode: " + auth_mode)
-
-    # based on auth_mode and in_uri, do a thing.
     if in_state is None and in_uri is not None:
         # How to characterize application GETs from file GETs?
         #   file gets have no state.
         #   file gets are not for /
-        return get_file(in_uri, start_response, [], auth_mode, state.auth)
-    elif (auth_mode == "blog") or (auth_mode == "combined"):
+        return get_file(in_uri, start_response, state)
+    elif (state.auth.mode == "blog") or (state.auth.mode == "combined"):
         # Load basic blog contents.
-        html = contents_page(start_response, state, None)
+        html = contents_page(start_response, state)
     else:
         if state.auth.logout is True:
             html = logout_page(start_response, state)

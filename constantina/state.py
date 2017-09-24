@@ -39,22 +39,42 @@ class ConstantinaState(BaseState):
     def __init__(self, in_state=None, env=None, post=None):
         BaseState.__init__(self, in_state, None)
         self.config = GlobalConfig
+
+        # If authentication is enabled, set headers and validate sessions
+        self.__import_authentication_state(env, post)
+
+        # Getting defaults from the other states requires us to first import
+        # any random seed value. Then, we can finish setting the imported state
+        self.__import_random_seed()
+        self.__set_application_state_defaults()
+        self.__import_state()
+
+
+    def __import_authentication_state(self, env, post):
+        """
+        Prior to displaying any page content, Constantina needs to reason about
+        what authentication mode it's in, and whether any incoming session cookies
+        are valid or not.
+
+        This is the only import function that doesn't process HTTP QueryString
+        parameters.
+        """
+        # TODO: set defaults or skip processing if auth mode has turned off auth
+        # in state.auth.mode
         self.auth = authentication(env, post)
         self.prefs = None
         if self.auth.account.valid is True:
             self.prefs = preferences(env, post, self.auth)
 
         # HTTP response headers start with details relevant to authentication
-        self.headers = self.auth.headers + self.prefs.headers
-
-        # Getting defaults from the other states requires us to first import
-        # any random seed value. Then, we can finish setting the imported state
-        self.__import_random_seed()
-        self.__set_state_defaults()
-        self.__import_state()
+        self.headers = []
+        if self.auth is not None:
+            self.headers += self.auth.headers
+        if self.prefs is not None:
+            self.headers += self.prefs.headers
 
 
-    def __set_state_defaults(self):
+    def __set_application_state_defaults(self):
         """
         Set default values for special_state properties and normal content-card
         properties, as well as upper limits on how many cards can exist on a

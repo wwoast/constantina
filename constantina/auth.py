@@ -19,10 +19,11 @@ class ConstantinaAuth:
 
     # TODO: Username sanitiation, once usernames can be enrolled!
     """
-    def __init__(self, mode, **kwargs):
+    def __init__(self, process, **kwargs):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read(GlobalConfig.get('paths', 'config_root') + "/shadow.ini")
         self.account = ConstantinaAccount()
+        self.mode = GlobalConfig.get("authentication", "mode")
         self.cookie_name = ("__Secure-" +
                             GlobalConfig.get('server', 'hostname') + "-" +
                             GlobalConfig.get('server', 'instance_id'))
@@ -45,12 +46,14 @@ class ConstantinaAuth:
         # if either one is expired.
         self.__read_auth_keypair()
 
-        if mode == "password":
+        # TODO: should we process based on self.mode here?
+
+        if process == "password":
             # Check username and password, and if the login was valid, the
             # set_token logic will go through
             self.account.login_password(**kwargs)
             self.set_token()
-        elif mode == "cookie":
+        elif process == "cookie":
             # Check if the auth cookie is valid
             if self.check_token(**kwargs) is True:
                 self.account.login_cookie(self.sub)
