@@ -6,6 +6,7 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
+from auth import authentication
 from shared import GlobalConfig, BaseFiles, BaseState
 from themes import GlobalTheme
 from medusa.state import MedusaState
@@ -21,14 +22,24 @@ class ConstantinaState(BaseState):
        ZooState: forum cards. threads, images, songs
        DraculaState: mail cards. ??
 
+    Constantina page-view is read from a colon-delimited list of values
+    stored in a single HTTP query parameter, and bundled into any relative
+    links to other Constantina pages.
+
+    Constantina authentication state is a function of the GlobalConfig,
+    deciding which authentication mode is in force, and the JWE session
+    token, stored in a cookie.
+
     Aggregate all other states here, and do counting for things like total
     cards, the number of pages, etc. Lots of helper functions for deciding
     things about the Constantina page are tracked here, since these conditions
     depend on properties of the various states
     """
-    def __init__(self, in_state=None):
+    def __init__(self, in_state=None, env=None, post=None):
         BaseState.__init__(self, in_state, None)
         self.config = GlobalConfig
+        self.auth = authentication(env, post)
+
 
         # Getting defaults from the other states requires us to first import
         # any random seed value. Then, we can finish setting the imported state

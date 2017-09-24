@@ -622,8 +622,9 @@ def application(env, start_response, instance="default"):
     if in_method == "POST":
         post = process_post(env)
 
-    state = ConstantinaState(in_state)   # Create state object
-    auth = authentication(env, post)
+    # Create a state object, and determine what authentication data
+    # has been made available on this page load.
+    state = ConstantinaState(in_state, env, post)   # Create state object
     html = ""
 
     syslog.syslog("auth-mode: " + auth_mode)
@@ -636,13 +637,13 @@ def application(env, start_response, instance="default"):
         return get_file(in_uri, start_response, [], auth_mode, auth)
     elif (auth_mode == "blog") or (auth_mode == "combined"):
         # Load basic blog contents.
-        html = contents_page(start_response, state, None, auth.headers)
+        html = contents_page(start_response, state, None, state.auth.headers)
     else:
         if auth.logout is True:
-            html = logout_page(start_response, state, auth.headers)
+            html = logout_page(start_response, state, state.auth.headers)
         elif auth.account.valid is True:
             prefs = preferences(env, post, auth)
-            html = contents_page(start_response, state, prefs, auth.headers + prefs.headers)
+            html = contents_page(start_response, state, prefs, state.auth.headers + prefs.headers)
         else:
             html = authentication_page(start_response, state)
 
