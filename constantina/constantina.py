@@ -537,7 +537,7 @@ def get_file(in_uri, start_response, headers, auth_mode, auth=None):
     instead of running any page generation stuff.
 
     With authentication, check for the file in /public and return if
-    it's found regardless if auth.account.valid is True or not. If the
+    it's found regardless if state.auth.account.valid is True or not. If the
     auth is True, try and find the file in /private as well.
     """
     data_root = GlobalConfig.get("paths", "data_root")
@@ -634,15 +634,15 @@ def application(env, start_response, instance="default"):
         # How to characterize application GETs from file GETs?
         #   file gets have no state.
         #   file gets are not for /
-        return get_file(in_uri, start_response, [], auth_mode, auth)
+        return get_file(in_uri, start_response, [], auth_mode, state.auth)
     elif (auth_mode == "blog") or (auth_mode == "combined"):
         # Load basic blog contents.
         html = contents_page(start_response, state, None, state.auth.headers)
     else:
-        if auth.logout is True:
+        if state.auth.logout is True:
             html = logout_page(start_response, state, state.auth.headers)
-        elif auth.account.valid is True:
-            prefs = preferences(env, post, auth)
+        elif state.auth.account.valid is True:
+            prefs = preferences(env, post, state.auth)
             html = contents_page(start_response, state, prefs, state.auth.headers + prefs.headers)
         else:
             html = authentication_page(start_response, state)
