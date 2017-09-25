@@ -20,10 +20,13 @@ class ConstantinaAuth:
     # TODO: Username sanitiation, once usernames can be enrolled!
     """
     def __init__(self, process, **kwargs):
+        self.mode = GlobalConfig.get("authentication", "mode")
+        if self.__auth_cancel() is True:
+            return
+
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read(GlobalConfig.get('paths', 'config_root') + "/shadow.ini")
         self.account = ConstantinaAccount()
-        self.mode = GlobalConfig.get("authentication", "mode")
         self.cookie_name = ("__Secure-" +
                             GlobalConfig.get('server', 'hostname') + "-" +
                             GlobalConfig.get('server', 'instance_id'))
@@ -46,8 +49,6 @@ class ConstantinaAuth:
         # if either one is expired.
         self.__read_auth_keypair()
 
-        # TODO: should we process based on self.mode here?
-
         if process == "password":
             # Check username and password, and if the login was valid, the
             # set_token logic will go through
@@ -60,6 +61,13 @@ class ConstantinaAuth:
         else:
             # No token or valid account
             pass
+
+    def __auth_cancel(self):
+        """
+        If we're in blog mode, or if something about the inbound cookie is goofy,
+        cancel the authentication flow.
+        """
+
 
     def __read_auth_keypair(self):
         """
