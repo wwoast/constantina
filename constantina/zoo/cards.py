@@ -40,13 +40,11 @@ class ZooThreadCardGroup:
         self.search_result = search_result
         self.hidden = False
 
-
     def get(self, strategy):
         """
         Based on user preferences, get either all posts, or only the last N*10.
         """
         pass
-
 
     def ordering(self):
         """
@@ -54,7 +52,6 @@ class ZooThreadCardGroup:
         in a single thread.
         """
         pass
-
     
     def __openfile(self):
         """
@@ -85,7 +82,6 @@ class ZooThreadCardGroup:
         # syslog.syslog(str(type_files[which_file]))
         return self.__interpretfile(type_files[which_file])
 
-
     def __interpretfile(self):
         """
         If a thread is a validly-formed JSON file that contains a title, channel,
@@ -94,13 +90,11 @@ class ZooThreadCardGroup:
         """
         pass
 
-
     def __valid_channel(self):
         """
         Is the channel valid?
         """
         pass
-
     
     def __valid_title(self):
         """
@@ -119,7 +113,6 @@ class ZooPostCardStack:
     def __init__(self, num, state, body=None, permalink=False, search_result=False):
         self.posts = []
 
-
     def push(self, post):
         """
         Add a Zoo post card to a revision stack, in front of whatever earlier revisions
@@ -127,11 +120,9 @@ class ZooPostCardStack:
         """
         self.posts.insert(0, post)
 
-
     def latest(self):
         """Return the latest revision of this post."""
         return self.posts[0]
-
 
     def validate(self):
         """
@@ -159,49 +150,56 @@ class ZooPostCard:
     as an image, video, or song file that is uploaded to the forum.
 
     Dates are just unix times, configurable with timezone values from a user's
-    browser.    
+    browser.
+
+    Similar to ConstantinaAuth, the modes are handled in the initialization
+    routine, and the process for setting or getting a post follows, utilizing all
+    of the same validation functions and default settings.
     """
-    def __init__(self, num, revision=None, state, body=None, permalink=False, search_result=False):
-        self.config = state.config
-        self.body = body
-        if self.body == None:
-            self.body = self.config.get("card_defaults", "body")
+    def __init__(self, process, **kwargs):
+        # Set defaults that will apply if one of the validated details doesn't work
+        self.body = self.config.get("card_defaults", "body")
 
-        # Request the Nth post in this thread. If there are revisions, request the specific
-        # revision for that Nth number, which has a "duplicate" for each revision. If no
-        # revision is provided, find the highest revision number and display that.
-        self.num = num
-        self.revision = revision
-
-        # Does the processed post data conform to policy? We'll check soon.
+        # Does the processed post data conform to policy? If not, don't complete
+        # whatever the process action is.
         self.valid = False
 
-        # TODO: based on the provided token, add that username to the post as the author
+        # The raw JSON post file itself, and the JSON-parsed body.
+        self.json = None
+        self.body = None
+
+        # The file path involved
+        self.cfile = None
 
         self.songs = []
         self.cfile = self.config.get("card_defaults", "file")
         self.cdate = self.config.get("card_defaults", "date")
-        self.body = body
-        self.permalink = permalink
-        self.search_result = search_result
-        
-        self.__interpretpost()
+        # TODO: all the post values that we care about
 
+        if process == "read":
+            self.get_post(**kwargs)
+        elif process == "write":
+            self.set_post(**kwargs)
+        else:
+            pass
 
-    def __interpretpost(self):
+    def __interpretpost(self, process="read"):
         """
         Validates that a single JSON post has all of the valid forum attributes.
         If it doesn't, close/ignore the file, and log the failure.
+
+        For read-mode post interpreting, any username already written to disk is
+        valid. For write-mode post interpreting, the JSON will have to match the
+        username in the auth cookie. 
         """
-        self.revision = self.body.revision
-        self.author = self.body.author
-        self.date = self.body.date
-        self.html = self.body.html
+        self.revision = self.body["revision"]
+        self.author = self.body["author"]
+        self.date = self.body["date"]
+        self.html = self.body["html"]
         # Sanity checks for revision number domain, author strings, dates, and post size.
         self.valid = self.validate()
         # Tag the post as fresh for styling
         self.__fresh_property()
-
 
     def __fresh_property(self):
         """
@@ -218,13 +216,22 @@ class ZooPostCard:
         else:
             self.fresh = False
 
-
     def __attachments(self):
         """
-        Validate that the links to attachments hosted by the forum are stil valid.
+        Validate that the links to attachments hosted by the forum still meet policy
+        and still exist on disk.
         """
         pass
 
+    def __consistent_username(self, account):
+        """
+        Check if the username token in the post matches the username from the
+        account state.
+        """
+        if (account.valid == True and self.username == account.username):
+            return True
+        else:
+            return False
 
     def validate(self):
         """
@@ -241,10 +248,52 @@ class ZooPostCard:
         # TODO: check post size and attachment size
         return True
 
-
-    def get(self):
+    def get_post(self, num, revision=None, state, permalink=False, search_result=False):
         """
         Based on user preferences, grab a thread file, and return the JSON contents for
         this particular card object.
         """
-        pass
+        # Request the Nth post in this thread. If there are revisions, request the specific
+        # revision for that Nth number, which has a "duplicate" for each revision. If no
+        # revision is provided, find the highest revision number and display that.
+        self.num = num
+        self.revision = revision
+
+        # Modes that will influence how this post is viewed
+        self.permalink = permalink
+        self.search_result = search_result
+        
+        # Read in the post itself
+        self.cfile = "TODO"   # Build from the revision and num
+        with open(filepath, 'r') as rfh:
+            self.json = rfh.read()
+            self.body = json.loads(self.json)
+
+        # TODO: convert read-in JSON values to possible parameters for interpret/validate
+        self.__interpretpost()
+
+        if self.valid == False:
+            # Either the number or the revision requested were invalid. Instead of
+            # returning the post itself baked into the page, return an error.
+            pass
+
+    def set_post(self, num, revision=None, state, json):
+        """
+        Given inputs from a client, validate that all of the submitted info is correct and
+        consistent with the authentication token.
+        """
+        self.json = json
+        # TODO: try-catch, since this json is untrusted input!
+        self.body = json.loads(self.json)
+
+        self.cfile = "TODO"   # Build from the revision and num
+        # TODO: convert read-in JSON values to possible parameters for interpret/validate
+        self.__interpretpost()
+
+        if self.valid == True:
+            # Write the JSON to a file. Not the final location, but one where an event queue
+            # can move the file into its final place "atomically"
+            pass
+        else:
+            # Return some kind of useful error page
+            pass

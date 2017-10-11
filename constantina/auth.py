@@ -65,9 +65,9 @@ class ConstantinaAuth:
     def __auth_cancel(self):
         """
         If we're in blog mode, or if something about the inbound cookie is goofy,
-        cancel the authentication flow.
+        cancel the authentication flow. TODO
         """
-
+        pass
 
     def __read_auth_keypair(self):
         """
