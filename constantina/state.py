@@ -6,6 +6,8 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
+from auth import authentication
+from preferences import preferences
 from shared import GlobalConfig, BaseFiles, BaseState
 from themes import GlobalTheme
 from medusa.state import MedusaState
@@ -21,23 +23,58 @@ class ConstantinaState(BaseState):
        ZooState: forum cards. threads, images, songs
        DraculaState: mail cards. ??
 
+    Constantina page-view is read from a colon-delimited list of values
+    stored in a single HTTP query parameter, and bundled into any relative
+    links to other Constantina pages.
+
+    Constantina authentication state is a function of the GlobalConfig,
+    deciding which authentication mode is in force, and the JWE session
+    token, stored in a cookie.
+
     Aggregate all other states here, and do counting for things like total
     cards, the number of pages, etc. Lots of helper functions for deciding
     things about the Constantina page are tracked here, since these conditions
     depend on properties of the various states
     """
-    def __init__(self, in_state=None):
+    def __init__(self, in_state=None, env=None, post=None):
         BaseState.__init__(self, in_state, None)
         self.config = GlobalConfig
+
+        # If authentication is enabled, set headers and validate sessions
+        self.__import_authentication_state(env, post)
 
         # Getting defaults from the other states requires us to first import
         # any random seed value. Then, we can finish setting the imported state
         self.__import_random_seed()
-        self.__set_state_defaults()
+        self.__set_application_state_defaults()
         self.__import_state()
 
 
-    def __set_state_defaults(self):
+    def __import_authentication_state(self, env, post):
+        """
+        Prior to displaying any page content, Constantina needs to reason about
+        what authentication mode it's in, and whether any incoming session cookies
+        are valid or not.
+
+        This is the only import function that doesn't process HTTP QueryString
+        parameters.
+        """
+        # TODO: set defaults or skip processing if auth mode has turned off auth
+        # in state.auth.mode
+        self.auth = authentication(env, post)
+        self.prefs = None
+        if self.auth.account.valid is True:
+            self.prefs = preferences(env, post, self.auth)
+
+        # HTTP response headers start with details relevant to authentication
+        self.headers = []
+        if self.auth is not None:
+            self.headers += self.auth.headers
+        if self.prefs is not None:
+            self.headers += self.prefs.headers
+
+
+    def __set_application_state_defaults(self):
         """
         Set default values for special_state properties and normal content-card
         properties, as well as upper limits on how many cards can exist on a

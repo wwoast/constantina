@@ -4,8 +4,7 @@ from math import floor
 from random import randint, seed
 import syslog
 
-from auth import authentication, authentication_page, logout_page
-from preferences import preferences
+from auth import authentication_page, logout_page
 from shared import GlobalConfig, GlobalTime, BaseFiles, opendir, safe_path, urldecode, process_post
 from state import ConstantinaState
 from templates import template_contents
@@ -465,7 +464,7 @@ def create_page(page):
     return output
 
 
-def contents_page(start_response, state, prefs, headers):
+def contents_page(start_response, state):
     """
     Three types of states:
     1) Normal page creation (randomized elements)
@@ -478,16 +477,16 @@ def contents_page(start_response, state, prefs, headers):
     substitute = '<!-- Contents go here -->'
 
     # Read in headers from authentication if they exist
-    headers.append(('Content-Type', 'text/html'))
+    state.headers.append(('Content-Type', 'text/html'))
 
     # Fresh new HTML, no previous state provided
     if state.fresh_mode() is True:
         page = ConstantinaPage(state)
         base = open(GlobalTheme.theme + '/contents.html', 'r')
         html = base.read()
-        html = template_contents(html, prefs)
+        html = template_contents(html, state.prefs)
         html = html.replace(substitute, create_page(page))
-        start_response('200 OK', headers)
+        start_response('200 OK', state.headers)
 
     # Permalink page of some kind
     elif state.permalink_mode() is True:
@@ -495,9 +494,9 @@ def contents_page(start_response, state, prefs, headers):
         page = ConstantinaPage(state)
         base = open(GlobalTheme.theme + '/contents.html', 'r')
         html = base.read()
-        html = template_contents(html, prefs)
+        html = template_contents(html, state.prefs)
         html = html.replace(substitute, create_page(page))
-        start_response('200 OK', headers)
+        start_response('200 OK', state.headers)
 
     # Empty search
     elif state.reshuffle_mode() is True:
@@ -506,9 +505,9 @@ def contents_page(start_response, state, prefs, headers):
         page = ConstantinaPage(state)
         base = open(GlobalTheme.theme + '/contents.html', 'r')
         html = base.read()
-        html = template_contents(html, prefs)
+        html = template_contents(html, state.prefs)
         html = html.replace(substitute, create_page(page))
-        start_response('200 OK', headers)
+        start_response('200 OK', state.headers)
 
     # Doing a search or a filter process
     elif state.search_mode() is True and state.page == 0:
@@ -516,28 +515,28 @@ def contents_page(start_response, state, prefs, headers):
         page = ConstantinaPage(state)
         base = open(GlobalTheme.theme + '/contents.html', 'r')
         html = base.read()
-        html = template_contents(html, prefs)
+        html = template_contents(html, state.prefs)
         html = html.replace(substitute, create_page(page))
-        start_response('200 OK', headers)
+        start_response('200 OK', state.headers)
 
     # Otherwise, there is state, but no special headers.
     else:
         page = ConstantinaPage(state)
         html = create_page(page)
-        html = template_contents(html, prefs)
-        start_response('200 OK', headers)
+        html = template_contents(html, state.prefs)
+        start_response('200 OK', state.headers)
 
     # Load html contents into the page with javascript
     return html
 
 
-def get_file(in_uri, start_response, headers, auth_mode, auth=None):
+def get_file(in_uri, start_response, state):
     """
     Without authentication, if there is a file we can return, do that
     instead of running any page generation stuff.
 
     With authentication, check for the file in /public and return if
-    it's found regardless if auth.account.valid is True or not. If the
+    it's found regardless if state.auth.account.valid is True or not. If the
     auth is True, try and find the file in /private as well.
     """
     data_root = GlobalConfig.get("paths", "data_root")
@@ -546,9 +545,10 @@ def get_file(in_uri, start_response, headers, auth_mode, auth=None):
     static_file = "private" + in_uri
     output_file = "/private" + in_uri
     syslog.syslog(static_file)
+    headers = []   # Don't process any computed headers from state
 
-    if auth_mode != "blog":
-        if auth is None or auth.account.valid is False:
+    if state.auth.mode != "blog":
+        if state.auth is None or state.auth.account.valid is False:
             return
     
     os.chdir(data_root)
@@ -595,7 +595,6 @@ def application(env, start_response, instance="default"):
     in_uri = env.get('REQUEST_URI')
     in_method = env.get('REQUEST_METHOD')
     in_cookie = env.get('HTTP_COOKIE')
-    auth_mode = GlobalConfig.get("authentication", "mode")
     GlobalTime.update()   # Set timer value throughout the request
 
     # Normalize the state and truncate if the query string is
@@ -607,6 +606,16 @@ def application(env, start_response, instance="default"):
     else:
         in_state = None
 
+    # Get POST values for processing by other tools
+    post = {}
+    if in_method == "POST":
+        post = process_post(env)
+
+    # Create a state object, and determine what authentication data
+    # has been made available on this page load.
+    state = ConstantinaState(in_state, env, post)   # Create state object
+    syslog.syslog("auth-mode: " + state.auth.mode)
+
     # Normalize the inbound URI, for purpose of deciding whether to
     # serve dynamic HTML or load a file.
     if in_uri == '/' or in_uri[0] != '/' or in_uri[1] == '?':
@@ -614,35 +623,24 @@ def application(env, start_response, instance="default"):
     elif safe_path(in_uri) is False:
         in_uri = "unsafe"
     # Normalize the inbound cookie details
-    if in_cookie == '' or auth_mode == "blog":
+    if in_cookie == '' or state.auth.mode == "blog":
         in_cookie = None
 
-    # Get POST values for processing by other tools
-    post = {}
-    if in_method == "POST":
-        post = process_post(env)
-
-    state = ConstantinaState(in_state)   # Create state object
-    auth = authentication(env, post)
+    # based on state.auth.mode and in_uri, do a thing.
     html = ""
-
-    syslog.syslog("auth-mode: " + auth_mode)
-
-    # based on auth_mode and in_uri, do a thing.
     if in_state is None and in_uri is not None:
         # How to characterize application GETs from file GETs?
         #   file gets have no state.
         #   file gets are not for /
-        return get_file(in_uri, start_response, [], auth_mode, auth)
-    elif (auth_mode == "blog") or (auth_mode == "combined"):
+        return get_file(in_uri, start_response, state)
+    elif (state.auth.mode == "blog") or (state.auth.mode == "combined"):
         # Load basic blog contents.
-        html = contents_page(start_response, state, None, auth.headers)
+        html = contents_page(start_response, state)
     else:
-        if auth.logout is True:
-            html = logout_page(start_response, state, auth.headers)
-        elif auth.account.valid is True:
-            prefs = preferences(env, post, auth)
-            html = contents_page(start_response, state, prefs, auth.headers + prefs.headers)
+        if state.auth.logout is True:
+            html = logout_page(start_response, state)
+        elif state.auth.account.valid is True:
+            html = contents_page(start_response, state)
         else:
             html = authentication_page(start_response, state)
 

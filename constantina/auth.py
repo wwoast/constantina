@@ -19,7 +19,11 @@ class ConstantinaAuth:
 
     # TODO: Username sanitiation, once usernames can be enrolled!
     """
-    def __init__(self, mode, **kwargs):
+    def __init__(self, process, **kwargs):
+        self.mode = GlobalConfig.get("authentication", "mode")
+        if self.__auth_cancel() is True:
+            return
+
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read(GlobalConfig.get('paths', 'config_root') + "/shadow.ini")
         self.account = ConstantinaAccount()
@@ -31,7 +35,7 @@ class ConstantinaAuth:
         self.sunset = self.config.getint("key_settings", "sunset")
         self.time = GlobalTime.time    # Don't leak multiple timestamps
         self.headers = []    # Auth headers we add later
-        self.keypair = {}        # One of N keys for signing/encryption
+        self.keypair = {}    # One of N keys for signing/encryption
         self.jwe = None      # The encrypted token
         self.jwt = None      # The internal signed token
         self.serial = None   # Token serialized and read/written into cookies
@@ -45,18 +49,25 @@ class ConstantinaAuth:
         # if either one is expired.
         self.__read_auth_keypair()
 
-        if mode == "password":
+        if process == "password":
             # Check username and password, and if the login was valid, the
             # set_token logic will go through
             self.account.login_password(**kwargs)
             self.set_token()
-        elif mode == "cookie":
+        elif process == "cookie":
             # Check if the auth cookie is valid
             if self.check_token(**kwargs) is True:
                 self.account.login_cookie(self.sub)
         else:
             # No token or valid account
             pass
+
+    def __auth_cancel(self):
+        """
+        If we're in blog mode, or if something about the inbound cookie is goofy,
+        cancel the authentication flow.
+        """
+
 
     def __read_auth_keypair(self):
         """
@@ -297,14 +308,14 @@ def authentication_page(start_response, state):
     return html
 
 
-def logout_page(start_response, state, headers):
+def logout_page(start_response, state):
     """
     If Constantina is in "forum" mode, you can get a logout
     page by clicking the logout button in the settings menu.
     """
     base = open(state.theme + '/logout.html', 'r')
     html = base.read()
-    start_response('200 OK', headers)
+    start_response('200 OK', state.headers)
     return html
 
 
