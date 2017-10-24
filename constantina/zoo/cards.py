@@ -69,8 +69,8 @@ class ZooThreadCardGroup:
 
         # TODO: copy medusa's logic for shuffle/hidden cards
 
-        # News posts are utimes. Forum threads can be utime.revision.utime...
-        # For permalink files, self.num should always be 0.
+        # Forum threads are utimes. Select either by Nth file in directory,
+        # or by a valid utime.
         which_file = self.num
         if which_file >= len(type_files):
             if self.num in type_files:
@@ -170,6 +170,7 @@ class ZooPostCard:
         # The raw JSON post file itself, and the JSON-parsed body.
         self.json = None
         self.body = None
+        self.revision = 0
 
         self.songs = []
         self.cfile = self.config.get("card_defaults", "file")
@@ -180,6 +181,8 @@ class ZooPostCard:
             self.get_post(**kwargs)
         elif process == "write":
             self.set_post(**kwargs)
+        elif process = "revise":
+            self.revise_post(**kwargs)
         else:
             pass
 
