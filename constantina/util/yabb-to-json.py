@@ -226,7 +226,8 @@ class zoo_thread:
          self.title = values[0]
 
          for line in body:
-            self.posts.append(zoo_post(line))
+            # Each post is a potential array of revised posts.
+            self.posts.append([zoo_post(line)])
 
    def pollProcess(self, file_prefix):
       """If .poll and .polled files exist, roll them into the post JSON"""

@@ -164,12 +164,12 @@ class ZooPostCard:
         # whatever the process action is.
         self.valid = False
 
+        # The file path that the JSON is read from
+        self.cfile = None
+
         # The raw JSON post file itself, and the JSON-parsed body.
         self.json = None
         self.body = None
-
-        # The file path involved
-        self.cfile = None
 
         self.songs = []
         self.cfile = self.config.get("card_defaults", "file")
@@ -248,7 +248,7 @@ class ZooPostCard:
         # TODO: check post size and attachment size
         return True
 
-    def get_post(self, num, revision=None, state, permalink=False, search_result=False):
+    def get_post(self, num, revision=0, state, permalink=False, search_result=False):
         """
         Based on user preferences, grab a thread file, and return the JSON contents for
         this particular card object.
@@ -277,7 +277,7 @@ class ZooPostCard:
             # returning the post itself baked into the page, return an error.
             pass
 
-    def set_post(self, num, revision=None, state, json):
+    def set_post(self, num, revision=0, state, json):
         """
         Given inputs from a client, validate that all of the submitted info is correct and
         consistent with the authentication token.
