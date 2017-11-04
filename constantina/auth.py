@@ -7,7 +7,6 @@ from passlib.hash import argon2
 
 from shared import GlobalConfig, GlobalTime, specific_cookie
 from keypair import ConstantinaKeypair
-from preferences import ConstantinaPreferences
 
 syslog.openlog(ident='constantina.auth')
 

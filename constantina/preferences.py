@@ -84,7 +84,7 @@ class ConstantinaPreferences:
         if not self.preferences.has_option(self.username, "preference_id"):
             self.__set_user_preference(self.username, opaque_identifier())
         self.preference_id = self.preferences.get(self.username, "preference_id")
-        self.cookie_id = self.create_cookie_id(self.instance_id, self.preference_id)
+        self.cookie_id = self.__create_cookie_id(self.instance_id, self.preference_id)
         self.cookie_name = ("__Secure-" +
                             GlobalConfig.get('server', 'hostname') + "-" +
                             self.cookie_id)
@@ -208,7 +208,7 @@ class ConstantinaPreferences:
             syslog.syslog("ioerror, likely from the image failing to open")
             return
 
-    def create_cookie_id(self, instance_id, preference_id):
+    def __create_cookie_id(self, instance_id, preference_id):
         """
         XOR the instance_id and preference_id binary representations together, and
         and then output the BASE62 minus similar characters result, for use as the
