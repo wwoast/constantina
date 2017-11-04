@@ -328,7 +328,6 @@ def set_authentication(post):
     """
     auth = ConstantinaAuth()
     auth.password(username=post["username"], password=post["password"])
-    auth.set_token()
     return auth
 
 
