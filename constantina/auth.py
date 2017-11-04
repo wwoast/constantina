@@ -56,11 +56,11 @@ class ConstantinaAuth:
         self.account.login_password(username, password)
         self.set_token()
 
-    def cookie(self, cookie):
+    def cookie(self, raw_cookie):
         """
         Check if the authentication cookie is valid.
         """
-        if self.check_token(cookie) is True:
+        if self.check_token(raw_cookie) is True:
             self.account.login_cookie(self.sub)
 
     def __auth_cancel(self):
@@ -143,14 +143,14 @@ class ConstantinaAuth:
         self.jwe = jwt.JWT(header=encryption_parameters, claims=payload)
         self.jwe.make_encrypted_token(encryption_key)
 
-    def check_token(self, cookie):
+    def check_token(self, raw_cookie):
         """
         Process a JWE token. In Constantina these come from the users' cookie.
         If all the validation works, self.jwt becomes a valid JWT, read in the
         JWT's claims, and return True.
         If any part of this fails, do not set a cookie and return False.
         """
-        token = specific_cookie(self.cookie_name, cookie)
+        token = specific_cookie(self.cookie_name, raw_cookie)
         if token is None:
             return False
         for key_id in ["current", "last"]:
@@ -338,8 +338,8 @@ def show_authentication(env):
     """
     auth = ConstantinaAuth()
     if 'HTTP_COOKIE' in env:
-        cookie = env.get('HTTP_COOKIE')
-        auth.cookie(cookie)
+        raw_cookie = env.get('HTTP_COOKIE')
+        auth.cookie(raw_cookie)
     return auth
 
 
