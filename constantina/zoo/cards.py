@@ -22,7 +22,7 @@ class ZooThreadCardGroup:
     Arranged as threads, but appended in order as individual post cards prior to returning. 
     Each thread is its own JSON file, and the posts are arranged in linear oldest-to-newest order.
     """
-    def __init__(self):
+    def __init__(self, process, **kwargs):
         self.config = state.config
 
         self.title = self.config.get("card_defaults", "title")
@@ -110,7 +110,8 @@ class ZooPostCardStack:
     Zoo Posts may be updated or revised. When they are, track the revisions
     as post cards that are members of a ZooPostCardStack.
     """
-    def __init__(self, num, state, body=None, permalink=False, search_result=False):
+    # def __init__(self, num, state, body=None, permalink=False, search_result=False):
+    def __init__(self, process, **kwargs):
         self.posts = []
 
     def push(self, post):
