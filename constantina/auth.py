@@ -19,7 +19,7 @@ class ConstantinaAuth:
 
     # TODO: Username sanitiation, once usernames can be enrolled!
     """
-    def __init__(self, process, **kwargs):
+    def __init__(self):
         self.mode = GlobalConfig.get("authentication", "mode")
         if self.__auth_cancel() is True:
             return
@@ -49,18 +49,19 @@ class ConstantinaAuth:
         # if either one is expired.
         self.__read_auth_keypair()
 
-        if process == "password":
-            # Check username and password, and if the login was valid, the
-            # set_token logic will go through
-            self.account.login_password(**kwargs)
-            self.set_token()
-        elif process == "cookie":
-            # Check if the auth cookie is valid
-            if self.check_token(**kwargs) is True:
-                self.account.login_cookie(self.sub)
-        else:
-            # No token or valid account
-            pass
+    def password(self, username, password):
+        """
+        Check username and password. If the login was valid, a token will be set.
+        """
+        self.account.login_password(username, password)
+        self.set_token()
+
+    def cookie(self, cookie):
+        """
+        Check if the authentication cookie is valid.
+        """
+        if self.check_token(cookie) is True:
+            self.account.login_cookie(self.sub)
 
     def __auth_cancel(self):
         """
@@ -325,7 +326,8 @@ def set_authentication(post):
     hidden form field "action" with value "login" for this to be processed
     as a POST login.
     """
-    auth = ConstantinaAuth("password", username=post["username"], password=post["password"])
+    auth = ConstantinaAuth()
+    auth.password(username=post["username"], password=post["password"])
     auth.set_token()
     return auth
 
@@ -333,14 +335,13 @@ def set_authentication(post):
 def show_authentication(env):
     """
     Received a GET with a cookie. See if there's an auth cookie in there.
+    If not, just return enough of an auth object to say that no auth happened.
     """
+    auth = ConstantinaAuth()
     if 'HTTP_COOKIE' in env:
-        raw_cookie = env.get('HTTP_COOKIE')
-        auth = ConstantinaAuth("cookie", cookie=raw_cookie)
-        return auth
-    else:
-        auth = ConstantinaAuth("fail")
-        return auth
+        cookie = env.get('HTTP_COOKIE')
+        auth.cookie(cookie)
+    return auth
 
 
 def authentication(env, post):
@@ -349,13 +350,12 @@ def authentication(env, post):
     If a POST comes in, check the given username and password before
     handing out a new cookie with a JWE value.
     """
+    auth = None
     if post.get('action') == "login":
         auth = set_authentication(post)
-        return auth
     elif post.get('action') == "logout":
         auth = show_authentication(env)
         auth.expire_token()
-        return auth
     else:
         auth = show_authentication(env)
-        return auth
+    return auth

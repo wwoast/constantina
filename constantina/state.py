@@ -60,7 +60,7 @@ class ConstantinaState(BaseState):
         parameters.
         """
         # TODO: set defaults or skip processing if auth mode has turned off auth
-        # in state.auth.mode
+        # in state.auth.mode. TODO: testing on localhost means themes dont work :(
         self.auth = authentication(env, post)
         self.prefs = None
         if self.auth.account.valid is True:

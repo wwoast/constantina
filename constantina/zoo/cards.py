@@ -182,8 +182,6 @@ class ZooPostCard:
             self.get_post(**kwargs)
         elif process == "write":
             self.set_post(**kwargs)
-        elif process = "revise":
-            self.revise_post(**kwargs)
         else:
             pass
 
@@ -252,7 +250,7 @@ class ZooPostCard:
         # TODO: check post size and attachment size
         return True
 
-    def get_post(self, num, revision=0, state, permalink=False, search_result=False):
+    def get_post(self, num, revision, state, permalink=False, search_result=False):
         """
         Based on user preferences, grab a thread file, and return the JSON contents for
         this particular card object.
@@ -281,7 +279,7 @@ class ZooPostCard:
             # returning the post itself baked into the page, return an error.
             pass
 
-    def set_post(self, num, revision=0, state, json):
+    def set_post(self, num, revision, state, json):
         """
         Given inputs from a client, validate that all of the submitted info is correct and
         consistent with the authentication token.
