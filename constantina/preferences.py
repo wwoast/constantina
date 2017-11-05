@@ -34,19 +34,26 @@ class ConstantinaPreferences:
     in their own classes where preferences are checked and validated, but for
     now there aren't enough preferences to justify this approach.
     """
-    def __init__(self, mode, auth, **kwargs):
+    def __init__(self, auth):
         self.username = auth.account.username
         self.__read_config()
         self.__default_preferences()
         self.valid = False
 
-        if mode == "set":
-            self.__write_claims(**kwargs)
-            self.write_preferences()
-            self.__upload_avatar(auth, kwargs['updateAvatar'])
-        if mode == "cookie":
-            # Read in an existing preferences cookie
-            self.valid = self.read_preferences(**kwargs)
+    def post(self, auth, **raw_post):
+        """
+        Given a POST form with new preferences data, write a fresh preferences
+        cookie and return it.
+        """
+        self.__write_claims(**raw_post)
+        self.write_preferences()
+        self.__upload_avatar(auth, raw_post['updateAvatar'])
+    
+    def cookie(self, raw_cookie):
+        """
+        If the existing preferences cookie is valid, read its preferences in.
+        """
+        self.valid = self.read_preferences(raw_cookie)
 
     def __read_config(self):
         """Necessary config files for setting preferences."""
@@ -300,7 +307,9 @@ def preferences(env, post, auth):
 
     # Assume a cookie is there if an authentication succeeded. If it wasn't we'll
     # create a new one in subsequent steps.
-    prefs = ConstantinaPreferences("cookie", auth, cookie=raw_cookie)
+    # prefs = ConstantinaPreferences("cookie", auth, cookie=raw_cookie)
+    prefs = ConstantinaPreferences(auth)
+    prefs.cookie(raw_cookie)
 
     if prefs.valid is False:
         # No cookie but correct authentication. Write a default preferences cookie
@@ -314,9 +323,10 @@ def preferences(env, post, auth):
         # TODO: change preferences key as well!
         del post['action']
         syslog.syslog("setting cookie. revision timer: " + str(post['rev']))
-        prefs = ConstantinaPreferences("set", auth, **post)
+        prefs.post(auth, **post)
         return prefs
 
     else:
         # Not updating or rewriting preferences. Just return what we have.
+        # TODO: don't leak data about the cookie that was seen?
         return prefs
