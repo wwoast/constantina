@@ -101,7 +101,7 @@ def template_contents(raw, prefs):
         '1': 'Show Only The Latest 10 Posts'
     }
 
-    if prefs is None:
+    if prefs.valid is False:
         # Replace page variables with defaults
         for field in missing.keys():
             replacements[field] = missing[field]
@@ -119,6 +119,7 @@ def template_contents(raw, prefs):
         }
         [replacements['theme_menu'],
          replacements['theme_directory']] = template_themes(int(prefs.thm))
+        # syslog.syslog("Theme in cookie: " + str(prefs.thm))
 
     # Expand Threads form
     replacements['expand_options'] = template_selectoptions(replacements['default_expand'], **expand_options)

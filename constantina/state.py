@@ -205,6 +205,13 @@ class ConstantinaState(BaseState):
         The appearance value lets us look up which theme we display for the user.
         This theme value is a path fragment to a theme's images and stylesheets.
         """
+        # If a preferences cookie with a theme exists, use what's in that cookie.
+        # TODO: get it from the cookie object iself?
+        if self.prefs is not None:
+            self.theme = GlobalTheme.theme
+            return
+
+        # Otherwise, if no cookie exists, use the appearance state.
         appearance_state = BaseState._find_state_variable(self, 'xa')
 
         if appearance_state is not None:
@@ -247,9 +254,12 @@ class ConstantinaState(BaseState):
 
 
     def export_theme_state(self):
-        """If tracking an appearance or theme, include it in state links"""
+        """
+        If tracking an appearance or theme, include it in state links. If a forum
+        cookie exists, don't leak this info in the page loads.
+        """
         appearance_string = None
-        if self.appearance is not None:
+        if self.appearance is not None and self.prefs is None:
             appearance_string = "xa" + str(self.appearance)
         return appearance_string
  

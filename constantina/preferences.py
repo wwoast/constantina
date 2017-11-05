@@ -307,7 +307,6 @@ def preferences(env, post, auth):
 
     # Assume a cookie is there if an authentication succeeded. If it wasn't we'll
     # create a new one in subsequent steps.
-    # prefs = ConstantinaPreferences("cookie", auth, cookie=raw_cookie)
     prefs = ConstantinaPreferences(auth)
     prefs.cookie(raw_cookie)
 
