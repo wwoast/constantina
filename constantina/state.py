@@ -59,12 +59,15 @@ class ConstantinaState(BaseState):
         This is the only import function that doesn't process HTTP QueryString
         parameters.
         """
-        # TODO: set defaults or skip processing if auth mode has turned off auth
-        # in state.auth.mode. TODO: testing on localhost means themes dont work :(
-        self.auth = authentication(env, post)
+        # Tells other methods whether to look at auth/preferences objects
+        self.valid_session = False
+        self.auth = None
         self.prefs = None
-        if self.auth.account.valid is True:
+
+        if self.config.get("authentication", "mode") != "blog":
+            self.auth = authentication(env, post)
             self.prefs = preferences(env, post, self.auth)
+            self.valid_session = self.auth.account.valid
 
         # HTTP response headers start with details relevant to authentication
         self.headers = []
@@ -206,25 +209,26 @@ class ConstantinaState(BaseState):
         This theme value is a path fragment to a theme's images and stylesheets.
         """
         # If a preferences cookie with a theme exists, use what's in that cookie.
-        # TODO: get it from the cookie object iself?
-        if self.prefs is not None:
+        if self.valid_session is True:
+            self.appearance = BaseState._int_translate(self, self.prefs.thm, 1, 0)
+            self.theme = self.prefs.theme
+            GlobalTheme.set(self.appearance)
+
+        # Otherwise, look for appearance state in the QUERY_PARAMS
+        else:
+            appearance_state = BaseState._find_state_variable(self, 'xa')
+
+            if appearance_state is not None:
+                # Read in single char of theme state value
+                self.appearance = BaseState._int_translate(self, appearance_state, 1, 0)
+
+            # If the configuration supports a random theme, and we didn't have a
+            # theme provided in the initial state, let's choose one randomly
+            seed()   # Enable non-seeded choice
+            GlobalTheme.set(self.appearance)
+            if self.seed:   # Re-enable seeded nonrandom choice
+                seed(self.seed)
             self.theme = GlobalTheme.theme
-            return
-
-        # Otherwise, if no cookie exists, use the appearance state.
-        appearance_state = BaseState._find_state_variable(self, 'xa')
-
-        if appearance_state is not None:
-            # Read in single char of theme state value
-            self.appearance = BaseState._int_translate(self, appearance_state, 1, 0)
-
-        # If the configuration supports a random theme, and we didn't have a
-        # theme provided in the initial state, let's choose one randomly
-        seed()   # Enable non-seeded choice
-        GlobalTheme.set(self.appearance)
-        if self.seed:   # Re-enable seeded nonrandom choice
-            seed(self.seed)
-        self.theme = GlobalTheme.theme
 
 
     def __import_state(self):
@@ -259,7 +263,7 @@ class ConstantinaState(BaseState):
         cookie exists, don't leak this info in the page loads.
         """
         appearance_string = None
-        if self.appearance is not None and self.prefs is None:
+        if self.appearance is not None and self.valid_session is False:
             appearance_string = "xa" + str(self.appearance)
         return appearance_string
  

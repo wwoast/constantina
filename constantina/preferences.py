@@ -48,6 +48,7 @@ class ConstantinaPreferences:
         self.__write_claims(**raw_post)
         self.write_preferences()
         self.__upload_avatar(auth, raw_post['updateAvatar'])
+        # self.valid = True   # TODO: template pumping on first login
     
     def cookie(self, raw_cookie):
         """
@@ -87,6 +88,8 @@ class ConstantinaPreferences:
         self.gro = '0'
         self.rev = self.zoo.get('zoo', 'edit_window')
 
+        # TODO TODO: refactor that instance/preference/cookie details don't get set
+        # unless a valid session is in force.
         self.instance_id = GlobalConfig.get("server", "instance_id")
         if not self.preferences.has_option(self.username, "preference_id"):
             self.__set_user_preference(self.username, opaque_identifier())
