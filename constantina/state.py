@@ -71,10 +71,10 @@ class ConstantinaState(BaseState):
 
         # HTTP response headers start with details relevant to authentication
         self.headers = []
-        if self.auth is not None:
+        if self.valid_session is True:
             self.headers += self.auth.headers
-        if self.prefs is not None:
-            self.headers += self.prefs.headers
+            if self.prefs.valid is True:
+                self.headers += self.prefs.headers
 
 
     def __set_application_state_defaults(self):
@@ -210,7 +210,7 @@ class ConstantinaState(BaseState):
         """
         # If a preferences cookie with a theme exists, use what's in that cookie.
         if self.valid_session is True:
-            self.appearance = BaseState._int_translate(self, self.prefs.thm, 1, 0)
+            self.appearance = BaseState._int_translate(self, str(self.prefs.thm), 1, 0)
             self.theme = self.prefs.theme
             GlobalTheme.set(self.appearance)
 
