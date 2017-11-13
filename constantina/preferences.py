@@ -64,6 +64,16 @@ class ConstantinaPreferences:
         self.__auth_preferences(auth)
         self.valid = self.__read_preferences(raw_cookie)
 
+    def get_cookie_preference_id(self, instance_id, cookie_id):
+        """
+        Whichever preference-id XORs the cookie-id into the instance-id, that
+        is the correct key for dealing with this cookie. TODO: make this private
+        if we can.
+        """
+        instance_int = opaque_integer(instance_id)
+        cookie_int = opaque_integer(cookie_id)
+        return opaque_identifier(instance_int ^ cookie_int)
+
     def __read_config(self):
         """Necessary config files for setting preferences."""
         self.config_file = "preferences.ini"
@@ -187,15 +197,6 @@ class ConstantinaPreferences:
         self.preferences.set(username, "preference_id", preference_id)
         with open(self.config_path, 'wb') as pfh:
             self.preferences.write(pfh)
-
-    def get_cookie_preference_id(self, instance_id, cookie_id):
-        """
-        Whichever preference-id XORs the cookie-id into the instance-id, that
-        is the correct key for dealing with this cookie.
-        """
-        instance_int = opaque_integer(instance_id)
-        cookie_int = opaque_integer(cookie_id)
-        return opaque_identifier(instance_int ^ cookie_int)
 
     def __upload_avatar(self, auth, upload):
         """

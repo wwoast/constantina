@@ -22,7 +22,7 @@ class ZooThreadCardGroup:
     Arranged as threads, but appended in order as individual post cards prior to returning. 
     Each thread is its own JSON file, and the posts are arranged in linear oldest-to-newest order.
     """
-    def __init__(self, process, **kwargs):
+    def __init__(self):
         self.config = state.config
 
         self.title = self.config.get("card_defaults", "title")
@@ -40,9 +40,16 @@ class ZooThreadCardGroup:
         self.search_result = search_result
         self.hidden = False
 
-    def get(self, strategy):
+    def get_thread(self, strategy):
         """
         Based on user preferences, get either all posts, or only the last N*10.
+        """
+        pass
+
+    def set_thread(self):
+        """
+        Start a new thread. New threads should always have only a single post stack
+        and a single post in them.
         """
         pass
 
@@ -110,8 +117,7 @@ class ZooPostCardStack:
     Zoo Posts may be updated or revised. When they are, track the revisions
     as post cards that are members of a ZooPostCardStack.
     """
-    # def __init__(self, num, state, body=None, permalink=False, search_result=False):
-    def __init__(self, process, **kwargs):
+    def __init__(self):
         self.posts = []
 
     def push(self, post):
@@ -121,11 +127,17 @@ class ZooPostCardStack:
         """
         self.posts.insert(0, post)
 
+    def pop(self):
+        """
+        Remove a card from the revision stack before returning it to a client.
+        """
+        pass
+
     def latest(self):
         """Return the latest revision of this post."""
         return self.posts[0]
 
-    def validate(self):
+    def __validate(self):
         """
         If the posts array is non-empty, and each post parses its own ZooPostCard logic
         correctly, then the Stack of Revisions is also valid.
@@ -157,7 +169,7 @@ class ZooPostCard:
     routine, and the process for setting or getting a post follows, utilizing all
     of the same validation functions and default settings.
     """
-    def __init__(self, process, **kwargs):
+    def __init__(self):
         # Set defaults that will apply if one of the validated details doesn't work
         self.body = self.config.get("card_defaults", "body")
 
@@ -178,14 +190,57 @@ class ZooPostCard:
         self.cdate = self.config.get("card_defaults", "date")
         # TODO: all the post values that we care about
 
-        if process == "read":
-            self.get_post(**kwargs)
-        elif process == "write":
-            self.set_post(**kwargs)
-        else:
+    def get_post(self, num, revision, permalink=False, search_result=False):
+        """
+        Based on user preferences, grab a thread file, and return the JSON contents for
+        this particular card object.
+        """
+        # Request the Nth post in this thread. If there are revisions, request the specific
+        # revision for that Nth number, which has a "duplicate" for each revision. If no
+        # revision is provided, find the highest revision number and display that.
+        self.num = num
+        self.revision = revision
+
+        # Modes that will influence how this post is viewed
+        self.permalink = permalink
+        self.search_result = search_result
+        
+        # Read in the post itself
+        self.cfile = "TODO"   # Build from the revision and num
+        with open(filepath, 'r') as rfh:
+            self.json = rfh.read()
+            self.body = json.loads(self.json)
+
+        # TODO: convert read-in JSON values to possible parameters for interpret/validate
+        self.__interpretpost()
+
+        if self.valid == False:
+            # Either the number or the revision requested were invalid. Instead of
+            # returning the post itself baked into the page, return an error.
             pass
 
-    def __interpretpost(self, process="read"):
+    def set_post(self, num, revision, json):
+        """
+        Given inputs from a client, validate that all of the submitted info is correct and
+        consistent with the authentication token.
+        """
+        self.json = json
+        # TODO: try-catch, since this json is untrusted input!
+        self.body = json.loads(self.json)
+
+        self.cfile = "TODO"   # Build from the revision and num
+        # TODO: convert read-in JSON values to possible parameters for interpret/validate
+        self.__interpretpost()
+
+        if self.valid == True:
+            # Write the JSON to a file. Not the final location, but one where an event queue
+            # can move the file into its final place "atomically"
+            pass
+        else:
+            # Return some kind of useful error page
+            pass
+
+    def __interpretpost(self):
         """
         Validates that a single JSON post has all of the valid forum attributes.
         If it doesn't, close/ignore the file, and log the failure.
@@ -235,7 +290,7 @@ class ZooPostCard:
         else:
             return False
 
-    def validate(self):
+    def __validate(self):
         """
         Check whether properties of this post object are valid or follow the
         configured Zoo policies. This includes sanity checks for revision number 
@@ -249,53 +304,3 @@ class ZooPostCard:
         # TODO: check that it's a valid username (length mins and max)
         # TODO: check post size and attachment size
         return True
-
-    def get_post(self, num, revision, state, permalink=False, search_result=False):
-        """
-        Based on user preferences, grab a thread file, and return the JSON contents for
-        this particular card object.
-        """
-        # Request the Nth post in this thread. If there are revisions, request the specific
-        # revision for that Nth number, which has a "duplicate" for each revision. If no
-        # revision is provided, find the highest revision number and display that.
-        self.num = num
-        self.revision = revision
-
-        # Modes that will influence how this post is viewed
-        self.permalink = permalink
-        self.search_result = search_result
-        
-        # Read in the post itself
-        self.cfile = "TODO"   # Build from the revision and num
-        with open(filepath, 'r') as rfh:
-            self.json = rfh.read()
-            self.body = json.loads(self.json)
-
-        # TODO: convert read-in JSON values to possible parameters for interpret/validate
-        self.__interpretpost()
-
-        if self.valid == False:
-            # Either the number or the revision requested were invalid. Instead of
-            # returning the post itself baked into the page, return an error.
-            pass
-
-    def set_post(self, num, revision, state, json):
-        """
-        Given inputs from a client, validate that all of the submitted info is correct and
-        consistent with the authentication token.
-        """
-        self.json = json
-        # TODO: try-catch, since this json is untrusted input!
-        self.body = json.loads(self.json)
-
-        self.cfile = "TODO"   # Build from the revision and num
-        # TODO: convert read-in JSON values to possible parameters for interpret/validate
-        self.__interpretpost()
-
-        if self.valid == True:
-            # Write the JSON to a file. Not the final location, but one where an event queue
-            # can move the file into its final place "atomically"
-            pass
-        else:
-            # Return some kind of useful error page
-            pass

@@ -211,8 +211,8 @@ class ConstantinaState(BaseState):
         # If a preferences cookie with a theme exists, use what's in that cookie.
         if self.valid_session is True:
             self.appearance = BaseState._int_translate(self, str(self.prefs.thm), 1, 0)
-            self.theme = self.prefs.theme
             GlobalTheme.set(self.appearance)
+            self.theme = self.prefs.theme
 
         # Otherwise, look for appearance state in the QUERY_PARAMS
         else:
