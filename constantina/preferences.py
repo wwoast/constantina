@@ -323,17 +323,14 @@ def preferences(env, post, auth):
     """
     Determine what the valid preferences action should be. Options include:
     - Valid auth, POST, form values: write a cookie with the given preferences
-    - Valid auth, no preferences cookie: create a cookie with default preferences
     - Valid auth, valid preferences cookie: read cookie in, don't create a new one
+    - Valid auth, no preferences cookie: create a cookie with default preferences
     - Invalid auth: Just a stock preferences object
     """
     prefs = ConstantinaPreferences()
 
     if post.get('action') == "preferences":
         # Form data appears, so write a new preferences cookie.
-        # TODO: all form data should be represented, so looking at the old cookie
-        # shouldn't be necessary. Use the form's values, not the cookie.
-        # TODO: change preferences key as well!
         del post['action']
         syslog.syslog("setting cookie. revision timer: " + str(post['rev']))
         prefs.post(auth, **post)
