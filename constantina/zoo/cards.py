@@ -8,7 +8,7 @@ import syslog
 import ConfigParser
 import json
 
-from constantina.shared import BaseFiles, BaseCardType, GlobalTime, opendir
+from constantina.shared import BaseFiles, BaseCardType, GlobalConfig, GlobalTime, opendir
 
 syslog.openlog(ident='constantina.zoo.cards')
 
@@ -64,12 +64,27 @@ class ZooThreadCardGroup:
         """
         pass
 
-    def __interpretfile(self):
+    def __interpretfile(self, thisfile):
         """
+        File opening heuristics for threads.
+
         If a thread is a validly-formed JSON file that contains a title, channel,
         poll flag, and at least one valid post-stack, then it's a proper thread and
         should be displayed. Otherwise, log an error.
         """
+        magi = magic.Magic(mine=True)
+        
+        card_root = GlobalConfig.get("paths", "data_root") + "/private"
+        base_path = card_root + "/" + self.config.get("paths", self.ctype)
+        fpath = base_path + "/" + thisfile
+        if self.hidden is True:
+            fpath = base_path + "/hidden/" + thisfile
+
+        try:
+            with open(fpath, 'r') as cfile:
+                ftype = magi.from_file(fpath)
+                # TODO: not a great way to read in and validate a JSON file.
+
         pass
 
     def __openfile(self):

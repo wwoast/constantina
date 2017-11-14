@@ -124,10 +124,10 @@ class MedusaCard:
 
         card_root = GlobalConfig.get("paths", "data_root") + "/private"
         base_path = card_root + "/" + self.config.get("paths", self.ctype)
-
         fpath = base_path + "/" + thisfile
         if self.hidden is True:
             fpath = base_path + "/hidden/" + thisfile
+            
         try:
             with open(fpath, 'r') as cfile:
                 ftype = magi.from_file(fpath)
