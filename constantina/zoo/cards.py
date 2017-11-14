@@ -21,6 +21,9 @@ class ZooThreadCardGroup:
 
     Arranged as threads, but appended in order as individual post cards prior to returning. 
     Each thread is its own JSON file, and the posts are arranged in linear oldest-to-newest order.
+
+    Each object is initialized with a loading strategy for the posts to return. By default
+    it's all_posts, but you can opt for next_N or last_N instead.
     """
     def __init__(self):
         self.config = state.config
@@ -28,22 +31,30 @@ class ZooThreadCardGroup:
         self.title = self.config.get("card_defaults", "title")
         self.channel = self.config.get("card_defaults", "channel")
         self.body = self.config.get("card_defaults", "body")
-        self.ctype = ctype
+        self.expand_mode = self.config.get("zoo", "expand_mode")
+        self.expand_posts = self.config.get("zoo", "expand_posts")
+
+        self.ctype = "threads_zoo"
         # Request either the Nth entry of this type, or a specific date/utime
-        self.num = num
-        # If we need to access data from the state object, for card shuffling
-        self.state = state
-        self.songs = []
+        self.num = None
+
         self.cfile = self.config.get("card_defaults", "file")
         self.cdate = self.config.get("card_defaults", "date")
         self.permalink = permalink
         self.search_result = search_result
         self.hidden = False
 
-    def get_thread(self, strategy):
+    def get_thread(self, num, expand_mode, shown, page):
         """
-        Based on user preferences, get either all posts, or only the last N*10.
+        Based on user preferences, get either all posts, or only the next/last N*10.
+        If doing next_10 or last_10, track the page of data shown so that a cursor
+        tracks which set of N posts to grab.
         """
+        # 1. Open a thread file
+        # 2. Return JSON object with the posts desired, as well as an index list
+        # describing which ones are showin in this set.
+        # 3. In the JSON, also create the navigation cards to show or hide any
+        # posts that are already shown.
         pass
 
     def set_thread(self):
@@ -53,13 +64,14 @@ class ZooThreadCardGroup:
         """
         pass
 
-    def ordering(self):
+    def __interpretfile(self):
         """
-        Set the M-of-N values in the threads so we can display how many posts are
-        in a single thread.
+        If a thread is a validly-formed JSON file that contains a title, channel,
+        poll flag, and at least one valid post-stack, then it's a proper thread and
+        should be displayed. Otherwise, log an error.
         """
         pass
-    
+
     def __openfile(self):
         """
         Opens JSON file based on being Nth in the directory and parses it into a group
@@ -89,14 +101,13 @@ class ZooThreadCardGroup:
         # syslog.syslog(str(type_files[which_file]))
         return self.__interpretfile(type_files[which_file])
 
-    def __interpretfile(self):
+    def __ordering(self):
         """
-        If a thread is a validly-formed JSON file that contains a title, channel,
-        poll flag, and at least one valid post-stack, then it's a proper thread and
-        should be displayed. Otherwise, log an error.
+        Set the M-of-N values in the threads so we can display how many posts are
+        in a single thread.
         """
         pass
-
+    
     def __valid_channel(self):
         """
         Is the channel valid?
@@ -120,12 +131,9 @@ class ZooPostCardStack:
     def __init__(self):
         self.posts = []
 
-    def push(self, post):
-        """
-        Add a Zoo post card to a revision stack, in front of whatever earlier revisions
-        were already found there.
-        """
-        self.posts.insert(0, post)
+    def latest(self):
+        """Return the latest revision of this post."""
+        return self.posts[0]
 
     def pop(self):
         """
@@ -133,9 +141,12 @@ class ZooPostCardStack:
         """
         pass
 
-    def latest(self):
-        """Return the latest revision of this post."""
-        return self.posts[0]
+    def push(self, post):
+        """
+        Add a Zoo post card to a revision stack, in front of whatever earlier revisions
+        were already found there.
+        """
+        self.posts.insert(0, post)
 
     def __validate(self):
         """
@@ -240,6 +251,38 @@ class ZooPostCard:
             # Return some kind of useful error page
             pass
 
+    def __attachments(self):
+        """
+        Validate that the links to attachments hosted by the forum still meet policy
+        and still exist on disk.
+        """
+        pass
+
+    def __consistent_username(self, account):
+        """
+        Check if the username token in the post matches the username from the
+        account state.
+        """
+        if (account.valid == True and self.username == account.username):
+            return True
+        else:
+            return False
+
+    def __fresh_property(self):
+        """
+        If the post is less than a certain period old, add "fresh" attributes
+        so that we can draw this card as a "freshly updated" card.
+
+        This property is added to the card prior to sending to the web client,
+        and never stored on disk. It applies either if the thread got a recent post,
+        or if the post itself is recent.
+        """
+        fresh_time = GlobalTime - self.config.getint("zoo", "fresh_window")
+        if self.date > fresh_time:
+            self.fresh = True
+        else:
+            self.fresh = False
+
     def __interpretpost(self):
         """
         Validates that a single JSON post has all of the valid forum attributes.
@@ -257,38 +300,6 @@ class ZooPostCard:
         self.valid = self.validate()
         # Tag the post as fresh for styling
         self.__fresh_property()
-
-    def __fresh_property(self):
-        """
-        If the post is less than a certain period old, add "fresh" attributes
-        so that we can draw this card as a "freshly updated" card.
-
-        This property is added to the card prior to sending to the web client,
-        and never stored on disk. It applies either if the thread got a recent post,
-        or if the post itself is recent.
-        """
-        fresh_time = GlobalTime - self.config.getint("zoo", "fresh_window")
-        if self.date > fresh_time:
-            self.fresh = True
-        else:
-            self.fresh = False
-
-    def __attachments(self):
-        """
-        Validate that the links to attachments hosted by the forum still meet policy
-        and still exist on disk.
-        """
-        pass
-
-    def __consistent_username(self, account):
-        """
-        Check if the username token in the post matches the username from the
-        account state.
-        """
-        if (account.valid == True and self.username == account.username):
-            return True
-        else:
-            return False
 
     def __validate(self):
         """
