@@ -28,13 +28,13 @@ class ZooThreadCardGroup:
     def __init__(self):
         self.config = state.config
 
-        self.title = self.config.get("card_defaults", "title")
         self.channel = self.config.get("card_defaults", "channel")
-        self.body = self.config.get("card_defaults", "body")
-        self.expand_mode = self.config.get("zoo", "expand_mode")
-        self.expand_posts = self.config.get("zoo", "expand_posts")
-
+        self.poll = None
+        self.pstacks = []
+        self.title = self.config.get("card_defaults", "title")
+    
         self.ctype = "threads_zoo"
+        self.hidden = False
         # Request either the Nth entry of this type, or a specific date/utime
         self.num = None
 
@@ -42,7 +42,8 @@ class ZooThreadCardGroup:
         self.cdate = self.config.get("card_defaults", "date")
         self.permalink = permalink
         self.search_result = search_result
-        self.hidden = False
+        self.expand_mode = self.config.get("zoo", "expand_mode")
+        self.expand_posts = self.config.get("zoo", "expand_posts")
 
     def get_thread(self, num, expand_mode, shown, page):
         """
@@ -73,7 +74,8 @@ class ZooThreadCardGroup:
         should be displayed. Otherwise, log an error.
         """
         magi = magic.Magic(mine=True)
-        
+        raw = None
+
         card_root = GlobalConfig.get("paths", "data_root") + "/private"
         base_path = card_root + "/" + self.config.get("paths", self.ctype)
         fpath = base_path + "/" + thisfile
@@ -81,12 +83,27 @@ class ZooThreadCardGroup:
             fpath = base_path + "/hidden/" + thisfile
 
         try:
-            with open(fpath, 'r') as cfile:
+            with open(fpath, 'r') as tfh:
                 ftype = magi.from_file(fpath)
                 # TODO: not a great way to read in and validate a JSON file.
+                if ftype == "text/plain":
+                    raw = json.loads(tfh.read())
+                else
+                    return
+            
+            # Look for thread-specific properties
+            self.channel = raw['channel']
+            self.poll = raw['poll']
+            self.pstacks = raw['posts']
+            self.title = raw['title']
+             
+        except:
+            # handle keyerrors and file read errors here
+            return            
 
-        pass
+        
 
+        
     def __openfile(self):
         """
         Opens JSON file based on being Nth in the directory and parses it into a group
@@ -100,8 +117,6 @@ class ZooThreadCardGroup:
             type_files = opendir(self.config, self.ctype, self.hidden)   # TODO: paging info
         else:
             type_files = [self.num]   # TODO: validate directory
-
-        # TODO: copy medusa's logic for shuffle/hidden cards
 
         # Forum threads are utimes. Select either by Nth file in directory,
         # or by a valid utime.
