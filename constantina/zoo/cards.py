@@ -52,17 +52,51 @@ class ZooThreadCardGroup:
         tracks which set of N posts to grab.
         """
         # 1. Open a thread file
+        self.num = num
+        self.__openfile()
         # 2. Return JSON object with the posts desired, as well as an index list
         # describing which ones are showin in this set.
         # 3. In the JSON, also create the navigation cards to show or hide any
         # posts that are already shown.
         pass
 
-    def set_thread(self):
+    def create_thread(self, num, rawjson):
         """
-        Start a new thread. New threads should always have only a single post stack
-        and a single post in them.
+        Start a new thread with filename "num".
+        New threads should always have only a single post stack.
         """
+        # Process the raw JSON as a single post.
+        pass
+
+    def append_thread(self, num, rawjson):
+        """
+        Append a post to the filename "num" at the end of its thread-stack.
+        """
+        # Process the raw JSON as a single post.
+        pass
+
+    def revise_thread(self, num, index, revision, rawjson):
+        """
+        For the thread with filename "num", find the post-stack at "index" and
+        revise the "revision"th post in that stack.
+        """
+        # Process the raw JSON as a single post.
+        pass
+
+    def create_poll(self, num, rawjson):
+        """
+        The poll is stored in the thread metadata at the top level. When creating
+        a thread, if poll data is detected, we create a poll instead.
+        """
+        # Process the raw JSON post-section as a post, and poll section as a poll.
+        pass
+
+    def revise_poll(self, num, rawjson):
+        """
+        Poll entries can be revised within the post edit window. Make sure this
+        window has an upper limit
+        """
+        # Process raw JSON as poll-section. Cannot revise poll and post at the same time
         pass
 
     def __interpretfile(self, thisfile):
@@ -89,7 +123,7 @@ class ZooThreadCardGroup:
                 if ftype == "text/plain":
                     raw = json.loads(tfh.read())
                 else
-                    return
+                    return "nofile"
             
             # Look for thread-specific properties
             self.channel = raw['channel']
@@ -98,11 +132,8 @@ class ZooThreadCardGroup:
             self.title = raw['title']
              
         except:
-            # handle keyerrors and file read errors here
-            return            
-
-        
-
+            # TODO: handle keyerrors and file read errors here
+            return "nofile"          
         
     def __openfile(self):
         """
