@@ -411,4 +411,3 @@ def create_medusa_songcard(card):
 
     output += """</div>"""
     return output
-
