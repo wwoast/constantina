@@ -11,6 +11,7 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
+import constantina.exceptions
 from constantina.shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, count_ptags, opendir, unroll_newlines, escape_amp
 
 syslog.openlog(ident='constantina.medusa.cards')
@@ -91,11 +92,12 @@ class MedusaCard:
 
         # News files: convert utime filename to the "Nth" item in the folder
         if which_file >= len(type_files):
-            if self.num in type_files:
+            try:
                 which_file = type_files.index(self.num)
                 self.num = which_file
-            else:
-                return "nofile"
+            except IndexError err:
+                syslog.syslog("Card number \"" + str(self.num) + "\" is not a filename or an Nth file.")
+                pass
 
         # syslog.syslog(str(type_files[which_file]))
         return self.__interpretfile(type_files[which_file])
