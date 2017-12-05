@@ -550,7 +550,7 @@ def get_file(in_uri, start_response, state):
     if state.auth.mode != "blog":
         if state.auth is None or state.auth.account.valid is False:
             return
-    
+
     os.chdir(data_root)
     try:
         # Return X-Sendfile/X-Accel-Redirect headers, along
@@ -564,7 +564,7 @@ def get_file(in_uri, start_response, state):
         headers.append(("Cache-Control", "max-age=31536000"))
         start_response(http_response, headers)
         return
-    except Exception as e:
+    except Exception:
         # If no files available, return 404. This might be a lie
         http_response = '404 Not Found'
         start_response(http_response, headers)

@@ -265,7 +265,7 @@ class ConstantinaAccount:
         try:
             pwd_hash = self.config.get("passwords", self.username)
             return argon2.verify(self.password, pwd_hash)
-        except:
+        except ConfigParser.Error:
             return False
 
     def set_password(self):

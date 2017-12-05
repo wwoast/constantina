@@ -95,9 +95,8 @@ class MedusaCard:
             try:
                 which_file = type_files.index(self.num)
                 self.num = which_file
-            except IndexError err:
+            except IndexError:
                 syslog.syslog("Card number \"" + str(self.num) + "\" is not a filename or an Nth file.")
-                pass
 
         # syslog.syslog(str(type_files[which_file]))
         return self.__interpretfile(type_files[which_file])
@@ -181,7 +180,7 @@ class MedusaCard:
 
             file.close(cfile)
 
-        except:   # File got moved in between dirlist caching and us reading it
+        except IOError:   # File got moved in between dirlist caching and us reading it
             self.topics = []   # Makes the card go away if we had an error reading content
             return self.config.get("card_defaults", "file")
 

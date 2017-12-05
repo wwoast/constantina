@@ -201,10 +201,10 @@ class ConstantinaPreferences:
                 dst = src.convert('RGB').convert('P', palette=Image.ADAPTIVE, colors=128)
                 dst.save(tmp, "PNG")
                 rename(tmp, self.avatar)
-        except OSError as e:
-            syslog.syslog("oserror")
+        except OSError:
+            syslog.syslog("oserror when dealing with image upload")
             return
-        except IOError as e:
+        except IOError:
             syslog.syslog("ioerror, likely from the image failing to open")
             return
 

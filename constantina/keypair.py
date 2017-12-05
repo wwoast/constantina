@@ -237,7 +237,7 @@ class ConstantinaKeypair:
             decrypted = jwt.JWT(key=self.encrypt, jwt=token)
             validated = jwt.JWT(key=self.sign, jwt=decrypted.claims)
             return {'decrypted': decrypted, 'validated': validated}
-        except Exception as err:
+        except ConfigParser.Error as err:
             # syslog.syslog("Token validation error: " + err.message)
             return False
             
