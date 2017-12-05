@@ -195,14 +195,14 @@ class ZooSearch:
         for filename in BaseFiles[ctype]:
             try:
                 fnmtime = int(os.path.getmtime(card_path + "/" + filename))
-            except IOError:
+            except os.error:
                 syslog.syslog("Failed to get \"" + filename + "\" mtime for indexing.")
                 return   # File has been removed, nothing to index
 
             lastmtime = ''
             try:
                 lastmtime = int(float(self.searcher.document(file=unicode(filename))['mtime']))
-            except:
+            except index.IndexError:
                 lastmtime = 0   # File hasn't been indexed
             # If small revisions were made after the fact, the indexes won't
             # be accurate unless we reindex this file now

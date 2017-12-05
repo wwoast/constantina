@@ -189,8 +189,8 @@ class ConstantinaPage:
                 encyclopedia = MedusaCard('topics', self.query_terms.lower(), state=self.state.medusa, grab_body=True, search_result=True)
                 self.cards.append(encyclopedia)
 
-        for application in self.applications:
-            app_state = getattr(self.state, application)
+        for each_app in self.applications:
+            app_state = getattr(self.state, each_app)
 
             # Other types of search results come afterwards
             for ctype in app_state.searchtypes:
@@ -218,7 +218,7 @@ class ConstantinaPage:
                                 grab_file = k
                                 break
 
-                    card = CardClass[application](ctype, grab_file, state=app_state, grab_body=True, search_result=True)
+                    card = CardClass[each_app](ctype, grab_file, state=app_state, grab_body=True, search_result=True)
                     # News articles without topic strings won't load. Other card types that
                     # don't have embedded topics will load just fine.
                     if (card.topics != []) or (ctype == 'quotes') or (ctype == 'topics'):
@@ -229,8 +229,8 @@ class ConstantinaPage:
         """
         Given a utime or card filename, return a permalink page of that type.
         """
-        for application in self.applications:
-            app_state = getattr(self.state, application)
+        for each_app in self.applications:
+            app_state = getattr(self.state, each_app)
 
             permalink_fields = [sv for sv in app_state.specials
                                 if sv.find("permalink") != -1]
@@ -240,7 +240,7 @@ class ConstantinaPage:
                     cnum = str(getattr(app_state, spcfield))
                     # Insert a card after the first heading
                     ctype = spcfield.split("_")[0]
-                    self.cards.append(CardClass[application](ctype, cnum, state=app_state, grab_body=True, permalink=True))
+                    self.cards.append(CardClass[each_app](ctype, cnum, state=app_state, grab_body=True, permalink=True))
 
 
     def __get_prior_cards(self):
