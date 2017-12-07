@@ -11,7 +11,6 @@ from urllib import unquote_plus
 import syslog
 import ConfigParser
 
-import constantina.exceptions
 from constantina.shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, count_ptags, opendir, unroll_newlines, escape_amp
 
 syslog.openlog(ident='constantina.medusa.cards')
@@ -180,7 +179,7 @@ class MedusaCard:
 
             file.close(cfile)
 
-        except IOError:   # File got moved in between dirlist caching and us reading it
+        except IOError:        # File got moved in between dirlist caching and us reading it
             self.topics = []   # Makes the card go away if we had an error reading content
             return self.config.get("card_defaults", "file")
 
