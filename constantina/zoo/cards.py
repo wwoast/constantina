@@ -45,7 +45,7 @@ class ZooThreadCardGroup:
         self.expand_mode = self.config.get("zoo", "expand_mode")
         self.expand_posts = self.config.get("zoo", "expand_posts")
 
-    def get_thread(self, num, expand_mode, shown, page):
+    def get_thread(self, num, expand_mode, page):
         """
         Based on user preferences, get either all posts, or only the next/last N*10.
         If doing next_10 or last_10, track the page of data shown so that a cursor
@@ -54,10 +54,13 @@ class ZooThreadCardGroup:
         # 1. Open a thread file
         self.num = num
         self.__openfile()
-        # 2. Return JSON object with the posts desired, as well as an index list
-        # describing which ones are showin in this set.
+
+        # 2. We have a JSON object with an entire thread of posts. Based on the expand_mode
+        # and the page, only keep the posts desired (TODO: WRITE TESTS)
+        self.__keep_desired_posts(expand_mode, page)
+
         # 3. In the JSON, also create the navigation cards to show or hide any
-        # posts that are already shown.
+        # posts that are already shown. (ADDING CARDS)
         pass
 
     def create_thread(self, num, rawjson):
@@ -98,6 +101,58 @@ class ZooThreadCardGroup:
         """
         # Process raw JSON as poll-section. Cannot revise poll and post at the same time
         pass
+
+    def __calculate_page_point(expand_mode, page):
+        """
+        Next or last N posts from the current page the browser is showing.
+        Enforce paging policy based on zoo.ini:expand_posts (10 posts at a time).
+        TODO: Last == last posts in thread, not previous!
+        """
+        direction = "next"
+        count = self.expand_posts
+        max = self.config.getint("zoo", "max_expand_posts")
+        point = page * count
+        try:
+            (direction, count) = expand_mode.split("_")
+            # Improper specified expand_mode return default first page point
+            if direction != "previous" and direction != "next" and direction != "last" :
+                raise ValueError
+            # Page count can't be a silly number
+            if count > max or count < 0:
+                raise ValueError
+            # Page count isn't consistent with the users' settings.
+            if count % self.expand_posts != 0:
+                raise ValueError 
+        except ValueError:
+            # No underscore in the split, or other format issues
+            return 0
+
+        # Assume "count" posts per page. Current browser-displayed page
+        # point prior to new page load should be post-count * page number.
+        return point
+        
+    def __keep_desired_posts(self, expand_mode, page)
+        """
+        Starting with an entire thread of posts, keep the ones that match the
+        policy. If expand_mode is all_posts, that mean this is a no-op.
+        """
+        if (expand_mode == "all_posts")
+            return
+
+        # Find the page-point in your threads based on. If page point is
+        # zero, we can only get the next page of posts.
+        point = self.__calculate_page_point(expand_mode, page)
+        direction = self.expand_mode.split("_")[0]
+        if direction == "last"
+            # Get the last N posts in the thread
+        elif direction == "previous"
+            # From page point, get the previous N posts
+        else:
+            # Get the next N posts
+
+        return
+
+
 
     def __interpretfile(self, thisfile):
         """
