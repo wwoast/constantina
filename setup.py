@@ -153,6 +153,7 @@ class InstallPyCommand(install):
              ['config/constantina.ini',
               'config/medusa.ini',
               'config/uwsgi.ini',
+              'config/keys.ini',
               'config/zoo.ini',
               'config/preferences.ini',
               'config/shadow.ini']))
@@ -203,7 +204,7 @@ if __name__ == '__main__':
     try:
         Package = {
             'name': "constantina",
-            'version': "0.5.5",
+            'version': "0.5.6",
             'description': "a dynamic-content blog platform for \"grazing\"",
             'author': "Justin Cassidy",
             'author_email': 'boil.afraid@gmail.com',

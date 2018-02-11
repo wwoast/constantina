@@ -3,6 +3,13 @@
 
 ## Upgrade Notes
 
+### 0.5.6
+
+The configuration files related to secrets were reorganized, so that file monitoring tools can more easily
+track changes to sensitive keys and passwords separately from the preferences that govern thoes secrets.
+Contents from `shadow.ini` were split off, with only password hashes remaining in this file. Server keys
+are now found in `keys.ini`, and key algorithms and password length settings moved to `sensitive.ini`.
+
 ### 0.5.5
 
 The `X-Sendfile` trampolining support involved overhauling the Nginx and Apache configurations for Constantina. `INSTALL.md` describes the current configuration setup that works for Constantina going forward. 
