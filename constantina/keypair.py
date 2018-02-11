@@ -35,21 +35,17 @@ class ConstantinaKeypair:
     give you that behavior, but only when generating a key into a slot where
     no previous timestamp was specified.
     """
-    def __init__(self, config_file, key_id, **kwargs):
-        self.config_file = config_file
+    def __init__(self, key_id, **kwargs):
         self.key_id = key_id
         self.time = GlobalTime.time     # The timestamp used if we set keys.
-
         self.__read_config()
         self.__set_defaults(key_id, **kwargs)
 
     def __read_config(self):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config_root = GlobalConfig.get('paths', 'config_root')
-        self.config_path = self.config_root + "/" + self.config_file
+        self.config_path = self.config_root + "/keys.ini"
         self.config.read(self.config_path)
-        self.shadow = ConfigParser.SafeConfigParser()
-        self.shadow.read(self.config_root + "/shadow.ini")
 
     def __set_defaults(self, key_id, **kwargs):
         """
@@ -58,10 +54,10 @@ class ConstantinaKeypair:
         """
         self.mode = kwargs.get('mode', 'regen')       # Regen keys, or age-swap?
         self.stamp = kwargs.get('stamp', 'current')   # Backdate key issue time, or make it current?
-        self.key_format = self.shadow.get("defaults", "key_format")
-        self.key_size = self.shadow.getint("defaults", "key_size")
-        self.lifetime = self.shadow.getint("key_settings", "lifetime")
-        self.sunset = self.shadow.getint("key_settings", "sunset")
+        self.key_format = self.config.get("defaults", "key_format")
+        self.key_size = self.config.getint("defaults", "key_size")
+        self.lifetime = self.config.getint("defaults", "lifetime")
+        self.sunset = self.config.getint("defaults", "sunset")
         self.iat = {}
         self.encrypt = None
         self.sign = None
