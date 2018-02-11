@@ -7,7 +7,6 @@ from passlib.hash import argon2
 
 from shared import GlobalConfig, GlobalTime, specific_cookie
 from keypair import ConstantinaKeypair
-from preferences import ConstantinaPreferences
 
 syslog.openlog(ident='constantina.auth')
 
@@ -19,7 +18,7 @@ class ConstantinaAuth:
 
     # TODO: Username sanitiation, once usernames can be enrolled!
     """
-    def __init__(self, process, **kwargs):
+    def __init__(self):
         self.mode = GlobalConfig.get("authentication", "mode")
         if self.__auth_cancel() is True:
             return
@@ -49,25 +48,26 @@ class ConstantinaAuth:
         # if either one is expired.
         self.__read_auth_keypair()
 
-        if process == "password":
-            # Check username and password, and if the login was valid, the
-            # set_token logic will go through
-            self.account.login_password(**kwargs)
-            self.set_token()
-        elif process == "cookie":
-            # Check if the auth cookie is valid
-            if self.check_token(**kwargs) is True:
-                self.account.login_cookie(self.sub)
-        else:
-            # No token or valid account
-            pass
+    def password(self, username, password):
+        """
+        Check username and password. If the login was valid, a token will be set.
+        """
+        self.account.login_password(username, password)
+        self.set_token()
+
+    def cookie(self, raw_cookie):
+        """
+        Check if the authentication cookie is valid.
+        """
+        if self.check_token(raw_cookie) is True:
+            self.account.login_cookie(self.sub)
 
     def __auth_cancel(self):
         """
         If we're in blog mode, or if something about the inbound cookie is goofy,
-        cancel the authentication flow.
+        cancel the authentication flow. TODO
         """
-
+        pass
 
     def __read_auth_keypair(self):
         """
@@ -142,14 +142,14 @@ class ConstantinaAuth:
         self.jwe = jwt.JWT(header=encryption_parameters, claims=payload)
         self.jwe.make_encrypted_token(encryption_key)
 
-    def check_token(self, cookie):
+    def check_token(self, raw_cookie):
         """
         Process a JWE token. In Constantina these come from the users' cookie.
         If all the validation works, self.jwt becomes a valid JWT, read in the
         JWT's claims, and return True.
         If any part of this fails, do not set a cookie and return False.
         """
-        token = specific_cookie(self.cookie_name, cookie)
+        token = specific_cookie(self.cookie_name, raw_cookie)
         if token is None:
             return False
         for key_id in ["current", "last"]:
@@ -325,22 +325,21 @@ def set_authentication(post):
     hidden form field "action" with value "login" for this to be processed
     as a POST login.
     """
-    auth = ConstantinaAuth("password", username=post["username"], password=post["password"])
-    auth.set_token()
+    auth = ConstantinaAuth()
+    auth.password(username=post["username"], password=post["password"])
     return auth
 
 
 def show_authentication(env):
     """
     Received a GET with a cookie. See if there's an auth cookie in there.
+    If not, just return enough of an auth object to say that no auth happened.
     """
+    auth = ConstantinaAuth()
     if 'HTTP_COOKIE' in env:
         raw_cookie = env.get('HTTP_COOKIE')
-        auth = ConstantinaAuth("cookie", cookie=raw_cookie)
-        return auth
-    else:
-        auth = ConstantinaAuth("fail")
-        return auth
+        auth.cookie(raw_cookie)
+    return auth
 
 
 def authentication(env, post):
@@ -349,13 +348,12 @@ def authentication(env, post):
     If a POST comes in, check the given username and password before
     handing out a new cookie with a JWE value.
     """
+    auth = None
     if post.get('action') == "login":
         auth = set_authentication(post)
-        return auth
     elif post.get('action') == "logout":
         auth = show_authentication(env)
         auth.expire_token()
-        return auth
     else:
         auth = show_authentication(env)
-        return auth
+    return auth

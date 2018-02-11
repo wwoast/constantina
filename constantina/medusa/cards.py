@@ -24,7 +24,6 @@ class MedusaCard:
     link. We track whether the image or link may be duplicated within
     the card, as well as what its page index and type are.
     """
-
     def __init__(self, ctype, num, state, grab_body=True, permalink=False, search_result=False):
         self.config = state.config
 
@@ -57,14 +56,14 @@ class MedusaCard:
         For news files, the filename itself is a Unix timestamp number, and
         can be specified directly.
         """
-        type_files = opendir(self.config, self.ctype, self.hidden)
+        type_files = opendir(self.config, self.ctype, self.hidden)   # Sets BaseFiles
 
         # Find the utime value in the array if the number given isn't an array index.
         # If we're inserting cards into an active page, the state variable will be
         # given, and should be represented by a shuffled value.
         random_types = self.state.randomize
 
-        # Even if we have cards of a type, don't run this logic if cards array is []
+        # Even if we have cards of a type, don't run random-select logic if cards array is []
         if ((self.ctype in random_types) and
             (self.state is not False) and
             (self.search_result is False) and
@@ -125,10 +124,10 @@ class MedusaCard:
 
         card_root = GlobalConfig.get("paths", "data_root") + "/private"
         base_path = card_root + "/" + self.config.get("paths", self.ctype)
-
         fpath = base_path + "/" + thisfile
         if self.hidden is True:
             fpath = base_path + "/hidden/" + thisfile
+            
         try:
             with open(fpath, 'r') as cfile:
                 ftype = magi.from_file(fpath)
@@ -412,4 +411,3 @@ def create_medusa_songcard(card):
 
     output += """</div>"""
     return output
-

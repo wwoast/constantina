@@ -59,19 +59,22 @@ class ConstantinaState(BaseState):
         This is the only import function that doesn't process HTTP QueryString
         parameters.
         """
-        # TODO: set defaults or skip processing if auth mode has turned off auth
-        # in state.auth.mode
-        self.auth = authentication(env, post)
+        # Tells other methods whether to look at auth/preferences objects
+        self.valid_session = False
+        self.auth = None
         self.prefs = None
-        if self.auth.account.valid is True:
+
+        if self.config.get("authentication", "mode") != "blog":
+            self.auth = authentication(env, post)
             self.prefs = preferences(env, post, self.auth)
+            self.valid_session = self.auth.account.valid
 
         # HTTP response headers start with details relevant to authentication
         self.headers = []
-        if self.auth is not None:
+        if self.valid_session is True:
             self.headers += self.auth.headers
-        if self.prefs is not None:
-            self.headers += self.prefs.headers
+            if self.prefs.valid is True:
+                self.headers += self.prefs.headers
 
 
     def __set_application_state_defaults(self):
@@ -105,6 +108,7 @@ class ConstantinaState(BaseState):
             # TODO: Testing -- No zoo code written yet
             # This needs to refer to ZooState when done (self.zoo.max_items, self.zoo...)
             self.medusa = MedusaState(self.in_state)
+            # self.zoo = ZooSate(self.in_state)
             self.max_items += self.medusa.max_items
             self.filtered += self.medusa.filtered
 
@@ -158,6 +162,10 @@ class ConstantinaState(BaseState):
             return None
 
 
+    # TODO: search aggregation from other applications
+    # TODO: filter aggregation from other applications
+
+
     def __import_page_count_state(self):
         """
         For all subsequent "infinite-scroll AJAX" content after the initial page
@@ -200,19 +208,27 @@ class ConstantinaState(BaseState):
         The appearance value lets us look up which theme we display for the user.
         This theme value is a path fragment to a theme's images and stylesheets.
         """
-        appearance_state = BaseState._find_state_variable(self, 'xa')
+        # If a preferences cookie with a theme exists, use what's in that cookie.
+        if self.valid_session is True:
+            self.appearance = BaseState._int_translate(self, str(self.prefs.thm), 1, 0)
+            GlobalTheme.set(self.appearance)
+            self.theme = self.prefs.theme
 
-        if appearance_state is not None:
-            # Read in single char of theme state value
-            self.appearance = BaseState._int_translate(self, appearance_state, 1, 0)
+        # Otherwise, look for appearance state in the QUERY_PARAMS
+        else:
+            appearance_state = BaseState._find_state_variable(self, 'xa')
 
-        # If the configuration supports a random theme, and we didn't have a
-        # theme provided in the initial state, let's choose one randomly
-        seed()   # Enable non-seeded choice
-        GlobalTheme.set(self.appearance)
-        if self.seed:   # Re-enable seeded nonrandom choice
-            seed(self.seed)
-        self.theme = GlobalTheme.theme
+            if appearance_state is not None:
+                # Read in single char of theme state value
+                self.appearance = BaseState._int_translate(self, appearance_state, 1, 0)
+
+            # If the configuration supports a random theme, and we didn't have a
+            # theme provided in the initial state, let's choose one randomly
+            seed()   # Enable non-seeded choice
+            GlobalTheme.set(self.appearance)
+            if self.seed:   # Re-enable seeded nonrandom choice
+                seed(self.seed)
+            self.theme = GlobalTheme.theme
 
 
     def __import_state(self):
@@ -242,9 +258,12 @@ class ConstantinaState(BaseState):
 
 
     def export_theme_state(self):
-        """If tracking an appearance or theme, include it in state links"""
+        """
+        If tracking an appearance or theme, include it in state links. If a forum
+        cookie exists, don't leak this info in the page loads.
+        """
         appearance_string = None
-        if self.appearance is not None:
+        if self.appearance is not None and self.valid_session is False:
             appearance_string = "xa" + str(self.appearance)
         return appearance_string
  

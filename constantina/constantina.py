@@ -544,7 +544,7 @@ def get_file(in_uri, start_response, state):
     # Use X-Sendfile/the private directory for files behind auth
     static_file = "private" + in_uri
     output_file = "/private" + in_uri
-    syslog.syslog(static_file)
+    # syslog.syslog(static_file)
     headers = []   # Don't process any computed headers from state
 
     if state.auth.mode != "blog":
@@ -614,7 +614,6 @@ def application(env, start_response, instance="default"):
     # Create a state object, and determine what authentication data
     # has been made available on this page load.
     state = ConstantinaState(in_state, env, post)   # Create state object
-    syslog.syslog("auth-mode: " + state.auth.mode)
 
     # Normalize the inbound URI, for purpose of deciding whether to
     # serve dynamic HTML or load a file.
