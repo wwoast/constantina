@@ -163,6 +163,7 @@ class InstallPyCommand(install):
                  ['config/constantina.ini',
                   'config/medusa.ini',
                   'config/uwsgi.ini',
+                  'config/keys.ini',
                   'config/zoo.ini',
                   'config/preferences.ini',
                   'config/shadow.ini']))

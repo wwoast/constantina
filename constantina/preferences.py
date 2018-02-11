@@ -126,7 +126,7 @@ class ConstantinaPreferences:
         self.headers = []
 
         # Given a preference_id, create/load the keypair (regen mode)
-        self.key = ConstantinaKeypair(self.config_file, self.preference_id)
+        self.key = ConstantinaKeypair(self.preference_id)
         self.jwe = None
         self.jwt = None
         self.serial = None
