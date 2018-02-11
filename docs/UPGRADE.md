@@ -6,9 +6,29 @@
 ### 0.5.6
 
 The configuration files related to secrets were reorganized, so that file monitoring tools can more easily
-track changes to sensitive keys and passwords separately from the preferences that govern thoes secrets.
-Contents from `shadow.ini` were split off, with only password hashes remaining in this file. Server keys
-are now found in `keys.ini`, and key algorithms and password length settings moved to `sensitive.ini`.
+track changes to secret preferences separately from changes to keys or passwords themselves. Contents from
+`shadow.ini` were split off, with only password hashes remaining in this file. Server keys are now found in
+`keys.ini`, and key algorithms and password length settings moved to `sensitive.ini`.
+
+When upgrading, you'll likely need to move your settings to new sections by hand, as follows. Once you finish
+these tasks, only the `[passwords]` section should remain in `shadow.ini`.
+
+ * `shadow.ini [defaults]`:
+   * `charset` => `sensitive.ini [accounts]`
+   * `user_length` => `sensitive.ini [accounts]`
+   * `password_length` => `sensitive.ini [accounts]`
+   * `key_format` => `sensitive.ini [key_defaults]`
+   * `key_size` => `sensitive.ini [key_defaults]`
+   * `signing_algorithm` => `sensitive.ini [key_defaults]`
+   * `encryption_algorithm` => `sensitive.ini [key_defaults]`
+   * `encryption_mode` => `sensitive.ini [key_defaults]`
+   * `subject_id` => `sensitive.ini [key_defaults]`
+ * `shadow.ini [key_settings]`:
+   * `lifetime` => `sensitive.ini [key_defaults]`
+   * `sunset` => `sensitive.ini [key_defaults]`
+ * `shadow.ini [argon2]` => `sensitive.ini [argon2]`
+ * `shadow.ini [encrypt_*]` => `keys.ini [encrypt_*]`
+ * `shadow.ini [sign_*]` => `keys.ini [sign_*]`
 
 ### 0.5.5
 
