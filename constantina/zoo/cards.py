@@ -131,24 +131,27 @@ class ZooThreadCardGroup:
         # point prior to new page load should be post-count * page number.
         return point
         
-    def __keep_desired_posts(self, expand_mode, page)
+    def __keep_desired_posts(self, expand_mode, page):
         """
         Starting with an entire thread of posts, keep the ones that match the
         policy. If expand_mode is all_posts, that mean this is a no-op.
         """
-        if (expand_mode == "all_posts")
+        if (expand_mode == "all_posts"):
             return
 
         # Find the page-point in your threads based on. If page point is
         # zero, we can only get the next page of posts.
         point = self.__calculate_page_point(expand_mode, page)
         direction = self.expand_mode.split("_")[0]
-        if direction == "last"
+        if (direction == "last"):
+            pass
             # Get the last N posts in the thread
-        elif direction == "previous"
+        elif (direction == "previous"):
             # From page point, get the previous N posts
+            pass
         else:
             # Get the next N posts
+            pass
 
         return
 
@@ -177,7 +180,7 @@ class ZooThreadCardGroup:
                 # TODO: not a great way to read in and validate a JSON file.
                 if ftype == "text/plain":
                     raw = json.loads(tfh.read())
-                else
+                else:
                     return "nofile"
             
             # Look for thread-specific properties

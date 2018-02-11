@@ -82,10 +82,10 @@ class ConstantinaAuth:
         for specifying source and dest slots is.
         """
         self.keypair['current'] = ConstantinaKeypair(
-            'current', stamp='current', mode='age',
+            config_file='keys.ini', key_id='current', stamp='current', mode='age',
             source="current", dest="last")
         self.keypair['last'] = ConstantinaKeypair(
-            'last', stamp='backdate', mode='regen')
+            config_file='keys.ini', key_id='last', stamp='backdate', mode='regen')
 
     def __create_jwt(self):
         """

@@ -124,9 +124,9 @@ class ConstantinaPreferences:
                             GlobalConfig.get('server', 'hostname') + "-" +
                             self.cookie_id)
         self.headers = []
-
+        # syslog.syslog("config: %s   preference_id: %s" % (self.config_file, self.preference_id)
         # Given a preference_id, create/load the keypair (regen mode)
-        self.key = ConstantinaKeypair(self.preference_id)
+        self.key = ConstantinaKeypair(self.config_file, self.preference_id)
         self.jwe = None
         self.jwt = None
         self.serial = None

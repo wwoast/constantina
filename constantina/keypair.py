@@ -35,7 +35,8 @@ class ConstantinaKeypair:
     give you that behavior, but only when generating a key into a slot where
     no previous timestamp was specified.
     """
-    def __init__(self, key_id, **kwargs):
+    def __init__(self, config_file, key_id, **kwargs):
+        self.config_file = config_file
         self.key_id = key_id
         self.time = GlobalTime.time     # The timestamp used if we set keys.
         self.__read_config()
@@ -44,7 +45,7 @@ class ConstantinaKeypair:
     def __read_config(self):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config_root = GlobalConfig.get('paths', 'config_root')
-        self.config_path = self.config_root + "/keys.ini"
+        self.config_path = self.config_root + "/" + self.config_file
         self.config.read(self.config_path)
 
     def __set_defaults(self, key_id, **kwargs):
