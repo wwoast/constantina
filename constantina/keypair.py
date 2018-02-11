@@ -47,9 +47,9 @@ class ConstantinaKeypair:
         self.config_root = GlobalConfig.get('paths', 'config_root')
         self.config_path = self.config_root + "/" + self.config_file
         self.config.read(self.config_path)
-        self.key_config = ConfigParser.SafeConfigParser(allow_no_value=True)
-        self.key_config_path = self.config_root + "/keys.ini"
-        self.key_config.read(self.key_config_path)
+        self.sensitive_config = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.sensitive_config_path = self.config_root + "/sensitive.ini"
+        self.sensitive_config.read(self.sensitive_config_path)
 
     def __set_defaults(self, key_id, **kwargs):
         """
@@ -58,10 +58,10 @@ class ConstantinaKeypair:
         """
         self.mode = kwargs.get('mode', 'regen')       # Regen keys, or age-swap?
         self.stamp = kwargs.get('stamp', 'current')   # Backdate key issue time, or make it current?
-        self.key_format = self.key_config.get("defaults", "key_format")
-        self.key_size = self.key_config.getint("defaults", "key_size")
-        self.lifetime = self.key_config.getint("defaults", "lifetime")
-        self.sunset = self.key_config.getint("defaults", "sunset")
+        self.key_format = self.sensitive_config.get("key_defaults", "key_format")
+        self.key_size = self.sensitive_config.getint("key_defaults", "key_size")
+        self.lifetime = self.sensitive_config.getint("key_defaults", "lifetime")
+        self.sunset = self.sensitive_config.getint("key_defaults", "sunset")
         self.iat = {}
         self.encrypt = None
         self.sign = None

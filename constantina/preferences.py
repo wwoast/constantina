@@ -83,8 +83,8 @@ class ConstantinaPreferences:
         self.zoo.read(self.config_root + "/zoo.ini")
         self.preferences = ConfigParser.SafeConfigParser()
         self.preferences.read(self.config_path)
-        self.key_config = ConfigParser.SafeConfigParser()
-        self.key_config.read(self.config_root + "/keys.ini")
+        self.sensitive_config = ConfigParser.SafeConfigParser()
+        self.sensitive_config.read(self.config_root + "/sensitive.ini")
 
     def __default_preferences(self):
         """
@@ -282,7 +282,7 @@ class ConstantinaPreferences:
         """
         Set new preferences, and then write a new cookie.
         """
-        signing_algorithm = self.key_config.get("defaults", "signing_algorithm")
+        signing_algorithm = self.sensitive_config.get("key_defaults", "signing_algorithm")
         self.iat = GlobalTime.time    # Don't leak how long operations take
         self.nbf = self.iat - 60
         jti = uuid4().int
@@ -302,8 +302,8 @@ class ConstantinaPreferences:
         self.jwt.make_signed_token(self.key.sign)
 
         encryption_parameters = {
-            "alg": self.key_config.get("defaults", "encryption_algorithm"),
-            "enc": self.key_config.get("defaults", "encryption_mode")
+            "alg": self.sensitive_config.get("key_defaults", "encryption_algorithm"),
+            "enc": self.sensitive_config.get("key_defaults", "encryption_mode")
         }
         payload = self.jwt.serialize()
         self.jwe = jwt.JWT(header=encryption_parameters, claims=payload)

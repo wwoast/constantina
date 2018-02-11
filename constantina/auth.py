@@ -23,16 +23,16 @@ class ConstantinaAuth:
         if self.__auth_cancel() is True:
             return
 
-        self.key_config = ConfigParser.SafeConfigParser(allow_no_value=True)
-        self.key_config.read(GlobalConfig.get('paths', 'config_root') + "/keys.ini")
+        self.sensitive_config = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.sensitive_config.read(GlobalConfig.get('paths', 'config_root') + "/sensitive.ini")
 
         self.account = ConstantinaAccount()
         self.cookie_name = ("__Secure-" +
                             GlobalConfig.get('server', 'hostname') + "-" +
                             GlobalConfig.get('server', 'instance_id'))
         self.logout = False
-        self.lifetime = self.key_config.getint("defaults", "lifetime")
-        self.sunset = self.key_config.getint("defaults", "sunset")
+        self.lifetime = self.sensitive_config.getint("key_defaults", "lifetime")
+        self.sunset = self.sensitive_config.getint("key_defaults", "sunset")
         self.time = GlobalTime.time    # Don't leak multiple timestamps
         self.headers = []    # Auth headers we add later
         self.keypair = {}    # One of N keys for signing/encryption
@@ -92,8 +92,8 @@ class ConstantinaAuth:
         Create a signed JWT with the key_current, and define any of the
         signed claims that are of interest.
         """
-        signing_algorithm = self.key_config.get("defaults", "signing_algorithm")
-        subject_id = self.key_config.get("defaults", "subject_id")
+        signing_algorithm = self.sensitive_config.get("key_defaults", "signing_algorithm")
+        subject_id = self.sensitive_config.get("key_defaults", "subject_id")
         instance_id = GlobalConfig.get("server", "instance_id")
         signing_key = self.keypair["current"].sign
         self.iat = self.time    # Don't leak how long operations take
@@ -136,8 +136,8 @@ class ConstantinaAuth:
         self.jwt = self.__create_jwt()
         encryption_key = self.keypair["current"].encrypt
         encryption_parameters = {
-            "alg": self.key_config.get("defaults", "encryption_algorithm"),
-            "enc": self.key_config.get("defaults", "encryption_mode")
+            "alg": self.sensitive_config.get("key_defaults", "encryption_algorithm"),
+            "enc": self.sensitive_config.get("key_defaults", "encryption_mode")
         }
         payload = self.jwt.serialize()
         self.jwe = jwt.JWT(header=encryption_parameters, claims=payload)
@@ -205,8 +205,8 @@ class ConstantinaAccount:
     def __init__(self):
         self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config.read(GlobalConfig.get("paths", "config_root") + "/shadow.ini")
-        self.key_config = ConfigParser.SafeConfigParser(allow_no_value=True)
-        self.key_config.read(GlobalConfig.get("paths", "config_root") + "/keys.ini")
+        self.sensitive_config = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.sensitive_config.read(GlobalConfig.get("paths", "config_root") + "/sensitive.ini")
         self.valid = False
         self.username = None
         self.password = None
@@ -243,7 +243,7 @@ class ConstantinaAccount:
         and GlobalConfigs, then we consider it valid.
         """
         instance_id = GlobalConfig.get("server", "instance_id")
-        subject_id = self.key_config.get("defaults", "subject_id")
+        subject_id = self.sensitive_config.get("key_defaults", "subject_id")
         subject = subject_id + "-" + instance_id
         (test_id, self.username) = self.subject.split("/")
         return test_id == subject
