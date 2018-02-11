@@ -250,7 +250,7 @@ class ConstantinaAccount:
 
     def __validate_user(self):
         """Valid new usernames are less than 24 characters"""
-        return len(self.username) < self.config.getint('defaults', 'user_length')
+        return len(self.username) < self.sensitive_config.getint('accounts', 'user_length')
 
     def __validate_password(self):
         """
@@ -258,7 +258,7 @@ class ConstantinaAccount:
         What should that be? People want to type these on phones and
         things, so force 2FA or certificates for security.
         """
-        return len(self.password) < self.config.getint('defaults', 'password_length')
+        return len(self.password) < self.sensitive_config.getint('accounts', 'password_length')
 
     def __check_password(self):
         """
