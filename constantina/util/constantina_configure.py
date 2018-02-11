@@ -154,8 +154,12 @@ class ShadowConfig:
     def __init__(self, config_root):
         """Read in the shadow.ini config file and settings."""
         self.settings = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.sensitive_config = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.key_config = ConfigParser.SafeConfigParser(allow_no_value=True)
         self.config_root = config_root
         self.settings.read(self.config_root + "/shadow.ini")
+        self.sensitive_config.read(self.config_root + "/sensitive.ini")
+        self.key_config.read(self.config_root + "/keys.ini")
         self.admin_exists = self.settings.has_option("passwords", "admin")
         self.argon2_setup()
 
@@ -164,11 +168,11 @@ class ShadowConfig:
         Read argon2 algorithm and backend settings from the config file
         """
         # TODO: Make these apply regardless of backend?
-        self.v = self.settings.get("argon2", "v")
-        self.m = self.settings.get("argon2", "m")
-        self.t = self.settings.get("argon2", "t")
-        self.p = self.settings.get("argon2", "p")
-        backend = self.settings.get("argon2", "backend")
+        self.v = self.sensitive_config.get("argon2", "v")
+        self.m = self.sensitive_config.get("argon2", "m")
+        self.t = self.sensitive_config.get("argon2", "t")
+        self.p = self.sensitive_config.get("argon2", "p")
+        backend = self.sensitive_config.get("argon2", "backend")
         argon2.set_backend(backend)
 
     def add_user(self, username, password=None):
@@ -197,7 +201,7 @@ class ShadowConfig:
     def __delete_key(self, keyname):
         """Delete an arbitrary key from the shadow configuration"""
         for item in self.settings.items(keyname):
-            self.settings.remove_option(item[0], item[1])
+            self.key_config.remove_option(item[0], item[1])
 
     def delete_keys(self):
         """
