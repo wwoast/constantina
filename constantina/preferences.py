@@ -83,8 +83,8 @@ class ConstantinaPreferences:
         self.zoo.read(self.config_root + "/zoo.ini")
         self.preferences = ConfigParser.SafeConfigParser()
         self.preferences.read(self.config_path)
-        self.shadow = ConfigParser.SafeConfigParser()
-        self.shadow.read(self.config_root + "/shadow.ini")
+        self.key_config = ConfigParser.SafeConfigParser()
+        self.key_config.read(self.config_root + "/keys.ini")
 
     def __default_preferences(self):
         """
@@ -124,7 +124,7 @@ class ConstantinaPreferences:
                             GlobalConfig.get('server', 'hostname') + "-" +
                             self.cookie_id)
         self.headers = []
-        # syslog.syslog("config: %s   preference_id: %s" % (self.config_file, self.preference_id)
+        syslog.syslog("config: %s   preference_id: %s" % (self.config_file, self.preference_id))
         # Given a preference_id, create/load the keypair (regen mode)
         self.key = ConstantinaKeypair(self.config_file, self.preference_id)
         self.jwe = None
@@ -282,7 +282,7 @@ class ConstantinaPreferences:
         """
         Set new preferences, and then write a new cookie.
         """
-        signing_algorithm = self.shadow.get("defaults", "signing_algorithm")
+        signing_algorithm = self.key_config.get("defaults", "signing_algorithm")
         self.iat = GlobalTime.time    # Don't leak how long operations take
         self.nbf = self.iat - 60
         jti = uuid4().int
@@ -302,8 +302,8 @@ class ConstantinaPreferences:
         self.jwt.make_signed_token(self.key.sign)
 
         encryption_parameters = {
-            "alg": self.shadow.get("defaults", "encryption_algorithm"),
-            "enc": self.shadow.get("defaults", "encryption_mode")
+            "alg": self.key_config.get("defaults", "encryption_algorithm"),
+            "enc": self.key_config.get("defaults", "encryption_mode")
         }
         payload = self.jwt.serialize()
         self.jwe = jwt.JWT(header=encryption_parameters, claims=payload)
