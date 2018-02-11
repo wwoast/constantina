@@ -151,23 +151,25 @@ class InstallPyCommand(install):
         Package['data_files'].append(
             (Settings.templates,
              ['config/constantina.ini',
-              'config/medusa.ini',
-              'config/uwsgi.ini',
               'config/keys.ini',
-              'config/zoo.ini',
+              'config/medusa.ini',
               'config/preferences.ini',
-              'config/shadow.ini']))
+              'config/sensitive.ini',
+              'config/shadow.ini',
+              'config/uwsgi.ini',
+              'config/zoo.ini']))
         # Initial config files for your chosen instance
         if self.upgrade is False and self.scriptonly is False:
             Package['data_files'].append(
                 (Settings.config_root,
                  ['config/constantina.ini',
-                  'config/medusa.ini',
-                  'config/uwsgi.ini',
                   'config/keys.ini',
-                  'config/zoo.ini',
+                  'config/medusa.ini',
                   'config/preferences.ini',
-                  'config/shadow.ini']))
+                  'config/sensitive.ini',
+                  'config/shadow.ini',
+                  'config/uwsgi.ini',
+                  'config/zoo.ini']))
         # The CGI script
         Package['data_files'].append(
             (Settings.cgi_bin,
