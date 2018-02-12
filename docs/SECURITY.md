@@ -88,12 +88,12 @@ to `forum` in your instance's `constantina.ini`.
 
 
 ### How Authentication Works
-If Authentication is enabled, relevant settings for users' *session cookies*
-will appear in your instance's `/etc/constantina/<instance>/shadow.ini` file.
-
 On the backend, Constantina uses *Argon2* password hashing for modern and 
-tunable security of sensitive password hashes. All aspects of the Argon 
-hashing algorithm are configurable in the `shadow.ini` file, including:
+tunable security of sensitive password hashes. Password hashes themselves are
+stored in the `shadow.ini` file. 
+
+All aspects of the Argon hashing algorithm are configurable in the `sensitive.ini`
+file, including:
 
  * `v`: The version of the *Argon2* hash format (*19 is fine*)
  * `m`: The memory cost of checking a hash, in kilobytes
@@ -102,14 +102,15 @@ hashing algorithm are configurable in the `shadow.ini` file, including:
 
 Session cookies are JWE tokens, a format for encrypted JSON data. Inside
 the JWE is a signed JWT that indicates a user, instance, and validity period.
-The `shadow.ini` file, after a user first loads Constantina in a browser, contains
-two encryption keys and two signing keys using the HMAC-SHA256 algorithm. One key
-is labelled "current" and the other is labelled "last".
+The `keys.ini` file, after a user first loads Constantina in a browser, contains
+two encryption keys and two signing keys. The chosen algorithm for these keys'
+signing and encryption is defined in the `sensitive.ini` file. One key is labelled 
+*current* and the other is labelled *last*.
 
 Each signing and encryption key has a *two-day validity period* by default, and is 
 *sunsetted* after one day. Sunsetting is where existing older tokens are still valid,
 but their key is no longer used for encrypting or signing new tokens. The validity
-and sunsetting timeframes are configurable in the `key_settings` section of `shadow.ini`.
+and sunsetting timeframes are configurable in the `key_defaults` section of `sensitive.ini`.
 
 Each instance of Constantina has an opaque *instance ID* that it adds to the name of the 
 cookie. A given Constantina instance will only validate the cookie that contains the
@@ -126,8 +127,8 @@ attacker context on whether the other application cookies are worth reviewing.
 
 On the Constantina server, each user is assigned a *preferences keypair* containing one 
 signing key and one encryption key, along with a *preferences id* for that keypair. None
-of this preference data is sent to users, and this information is the only user preference
-data stored on the server.
+of this preference data is sent to users, and this information in `preferences.ini` is the 
+only user preference data stored on the server.
 
 To prevent leaking what this cookie is used for, preference cookies names are given an
 opaque *cookie id* that is the XOR of the Constantina instance id and the preferences id
@@ -141,3 +142,15 @@ Any time the user changes their preferences, the server reads the existing prefe
 cookie details. Next, it generates a fresh preferences keypair, which invalidates any
 unexpired old cookies from being useful. Lastly, the server writes the updated preferences
 cookie, signed and encrypted by the fresh keypair.
+
+
+### Tracking File Modifications
+Constantina's configuration file layout is intended to support external monitoring for
+suspicious file modifications. Core security configuration is isolated into its own files,
+so that frequently-changing data doesn't cause noise for security monitoring tools.
+
+`preferences.ini` and `keys.ini` will be regularly updated as logins happen, and as the
+server's encryption keys are cycled every two days. On the other hand, files that describe
+Constantina's core configuration or security operations should change very infrequently.
+`sensitive.ini` and `constantina.ini` changes should be closely monitored. Even `shadow.ini`
+password changes should not be expected to occur frequently.
