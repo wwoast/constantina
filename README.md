@@ -1,6 +1,6 @@
 # Constantina
 ### A dynamic-content blog platform
-##### Justin Cassidy, July 2017
+##### Justin Cassidy, February 2018
 
 ## Overview
 Constantina is a single-page static site generator designed to randomize 
@@ -13,6 +13,7 @@ to host my music and technology site, [Codaworry](http://www.codaworry.com).
 
 ## Changelog
 
+* **0.5.6** - Separated out security-oriented configuration for file monitoring purposes
 * **0.5.5** - Forum settings forms and cookies, `X-Sendfile` trampolining for `private` media
 * **0.5.3** - For `private` files, added caching headers and fixed paths with spaces
 * **0.5.2** - Move images to `private`, make search non-AJAX to better support auth checks
