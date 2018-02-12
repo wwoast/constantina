@@ -612,8 +612,11 @@ def application(env, start_response, instance="default"):
         post = process_post(env)
 
     # Create a state object, and determine what authentication data
-    # has been made available on this page load.
-    state = ConstantinaState(in_state, env, post)   # Create state object
+    # has been made available on this page load. Since we don't make
+    # an authentication object if auth is unnecessary, track the
+    # authentication mode straight from the config.
+    state = ConstantinaState(in_state, env, post)
+    mode = GlobalConfig.get("authentication", "mode")
 
     # Normalize the inbound URI, for purpose of deciding whether to
     # serve dynamic HTML or load a file.
@@ -622,17 +625,18 @@ def application(env, start_response, instance="default"):
     elif safe_path(in_uri) is False:
         in_uri = "unsafe"
     # Normalize the inbound cookie details
-    if in_cookie == '' or state.auth.mode == "blog":
+    if in_cookie == '' or mode == "blog":
         in_cookie = None
 
-    # based on state.auth.mode and in_uri, do a thing.
+    # based on configured mode and in_uri, do a thing.
     html = ""
+
     if in_state is None and in_uri is not None:
         # How to characterize application GETs from file GETs?
         #   file gets have no state.
         #   file gets are not for /
         return get_file(in_uri, start_response, state)
-    elif (state.auth.mode == "blog") or (state.auth.mode == "combined"):
+    elif (mode == "blog") or (mode == "combined"):
         # Load basic blog contents.
         html = contents_page(start_response, state)
     else:

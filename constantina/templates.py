@@ -77,6 +77,38 @@ def template_selectoptions(default_value, **kwargs):
     return output
 
 
+def default_template_values(missing):
+    """
+    For cases where no authentication happens, return default template values
+    """
+    # Replace page variables with defaults
+    replacements = {}
+    for field in missing.keys():
+        replacements[field] = missing[field]
+    [replacements['theme_menu'],
+     replacements['theme_directory']] = template_themes(GlobalTheme.index)
+    return replacements
+
+
+def replace_template_values(missing, prefs):
+    """
+    If authentication and forums are happening, replace any template strings
+    with the necessary user or content data.
+    """
+    replacements = {
+        'username': prefs.username,
+        'post_count': missing['post_count'],   # TODO
+        'registration_date': missing['registration_date'],   # TODO
+        'default_topic': prefs.top,
+        'default_expand': str(prefs.gro),
+        'default_revise': str(prefs.rev)
+    }
+    [replacements['theme_menu'],
+     replacements['theme_directory']] = template_themes(int(prefs.thm))
+    # syslog.syslog("Theme in cookie: " + str(prefs.thm))
+    return replacements
+
+
 def template_contents(raw, prefs):
     """
     Given the values in the preferences form, adjust the contents page
@@ -101,25 +133,12 @@ def template_contents(raw, prefs):
         '1': 'Show Only The Latest 10 Posts'
     }
 
-    if prefs.valid is False:
-        # Replace page variables with defaults
-        for field in missing.keys():
-            replacements[field] = missing[field]
-        [replacements['theme_menu'],
-         replacements['theme_directory']] = template_themes(GlobalTheme.index)
+    if prefs is None:
+        replacements = default_template_values(missing)
+    elif prefs.valid is False:
+        replacements = default_template_values(missing)
     else:
-        # Replace page variables with preferences
-        replacements = {
-            'username': prefs.username,
-            'post_count': missing['post_count'],   # TODO
-            'registration_date': missing['registration_date'],   # TODO
-            'default_topic': prefs.top,
-            'default_expand': str(prefs.gro),
-            'default_revise': str(prefs.rev)
-        }
-        [replacements['theme_menu'],
-         replacements['theme_directory']] = template_themes(int(prefs.thm))
-        # syslog.syslog("Theme in cookie: " + str(prefs.thm))
+        replacements = replace_template_values(missing, prefs)
 
     # Expand Threads form
     replacements['expand_options'] = template_selectoptions(replacements['default_expand'], **expand_options)
