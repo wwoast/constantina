@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Constantina installer script. The installer script by default will also run
 a configuration script intended to set up reasonable defaults for an instance
@@ -245,11 +245,11 @@ Programming Language :: Python :: 2.7""".splitlines(),
         }
         setup(**Package)
 
-    except distutils.errors.DistutilsPlatformError, ex:
-        print
-        print str(ex)
+    except distutils.errors.DistutilsPlatformError as ex:
+        print()
+        print(str(ex))
 
-        print """
+        print("""
 POSSIBLE CAUSE
 
 "distutils" often needs developer support installed to work
@@ -257,6 +257,6 @@ correctly, which is usually located in a separate package
 called "python%d.%d-dev(el)".
 
 Please contact the system administrator to have it installed.
-""" % sys.version_info[:2]
+""" % sys.version_info[:2])
         sys.exit(1)
 
