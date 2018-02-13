@@ -1,5 +1,5 @@
 from uuid import uuid4
-import ConfigParser
+import configparser
 import json
 import syslog
 from jwcrypto import jwt

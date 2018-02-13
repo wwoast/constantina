@@ -6,7 +6,7 @@ import re
 from defusedxml.ElementTree import fromstring
 from xml.sax.saxutils import unescape
 import syslog
-import ConfigParser
+import configparser
 
 from constantina.shared import GlobalConfig, BaseFiles, opendir, unroll_newlines, escape_amp
 

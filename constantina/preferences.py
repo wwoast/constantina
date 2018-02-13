@@ -1,6 +1,6 @@
 from uuid import uuid4
 from os import rename
-import ConfigParser
+import configparser
 import json
 from io import BytesIO
 from PIL import Image

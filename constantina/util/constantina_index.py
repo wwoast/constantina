@@ -4,7 +4,7 @@ Run this script at the shell, and it will create the search indexes
 if they don't exist, and do a search for the term "Constantina".
 """
 from os import chdir
-import ConfigParser
+import configparser
 
 from constantina.state import ConstantinaState
 from constantina.medusa.search import MedusaSearch

@@ -1,4 +1,4 @@
-import ConfigParser
+import configparser
 import json
 from os import rename
 import syslog

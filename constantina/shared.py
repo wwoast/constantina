@@ -4,7 +4,7 @@ import sys
 import time
 from urllib import unquote_plus
 import syslog
-import ConfigParser
+import configparser
 from math import floor
 from random import randint, shuffle
 

@@ -9,7 +9,7 @@ import os
 import magic
 from urllib import unquote_plus
 import syslog
-import ConfigParser
+import configparser
 
 from constantina.shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, count_ptags, opendir, unroll_newlines, escape_amp
 

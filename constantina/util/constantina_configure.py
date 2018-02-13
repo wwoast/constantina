@@ -1,11 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 from getpass import getuser, getpass
 import os
 import sys
 from random import randint
 import argparse
-import ConfigParser
+import configparser
 from socket import getfqdn
 from passlib.hash import argon2
 from pwd import getpwnam
@@ -179,7 +179,7 @@ class ShadowConfig:
         """
         Add a user to the shadow file. If no password is given, prompt for one.
         """
-        print "Adding new Constantina user %s" % (username)
+        print("Adding new Constantina user %s" % (username))
         if password == None:
             prompt = "Password for %s: " % (username)
             password = getpass(prompt=prompt)

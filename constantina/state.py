@@ -4,7 +4,7 @@ from datetime import datetime
 import os
 from urllib import unquote_plus
 import syslog
-import ConfigParser
+import configparser
 
 from auth import authentication
 from preferences import preferences

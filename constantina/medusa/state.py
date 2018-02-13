@@ -1,5 +1,5 @@
 import syslog
-import ConfigParser
+import configparser
 
 from constantina.shared import GlobalConfig, BaseFiles, BaseCardType, BaseState, opendir
 

@@ -5,7 +5,7 @@ import os
 import magic
 from urllib import unquote_plus
 import syslog
-import ConfigParser
+import configparser
 import json
 
 from constantina.shared import BaseFiles, BaseCardType, GlobalConfig, GlobalTime, opendir
