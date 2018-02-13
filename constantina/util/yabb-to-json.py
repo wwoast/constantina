@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 YaBB to Zoo forum conversion tool
@@ -141,7 +141,7 @@ class zoo_post:
             "url": [r'<a href="', r'">', r'</a>']
       }
       output = text
-      for smiley_name, patterns in YABB_SMILIES.iteritems():
+      for smiley_name, patterns in YABB_SMILIES.items():
          for pattern in patterns:
             matchsets = re.findall(pattern, text)
             for m in matchsets:

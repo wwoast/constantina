@@ -122,7 +122,7 @@ class ConstantinaConfig:
         Take the output of parse_known_args and set them in this class.
         Update the config directory to represent the instance being used.
         """
-        for item in namespace.__dict__.iteritems():
+        for item in namespace.__dict__.items():
             setattr(self, item[0], item[1])
         self.update_instance_directory("config_root")
         self.update_instance_directory("cgi_bin")
