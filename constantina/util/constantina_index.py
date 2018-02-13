@@ -9,7 +9,7 @@ import configparser
 from constantina.state import ConstantinaState
 from constantina.medusa.search import MedusaSearch
 
-CONFIG = ConfigParser.SafeConfigParser()
+CONFIG = configparser.SafeConfigParser()
 CONFIG.read('constantina.ini')
 
 ROOT_DIR = CONFIG.get("paths", "data_root")

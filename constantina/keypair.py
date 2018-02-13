@@ -43,11 +43,11 @@ class ConstantinaKeypair:
         self.__set_defaults(key_id, **kwargs)
 
     def __read_config(self):
-        self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.config = configparser.SafeConfigParser(allow_no_value=True)
         self.config_root = GlobalConfig.get('paths', 'config_root')
         self.config_path = self.config_root + "/" + self.config_file
         self.config.read(self.config_path)
-        self.sensitive_config = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.sensitive_config = configparser.SafeConfigParser(allow_no_value=True)
         self.sensitive_config_path = self.config_root + "/sensitive.ini"
         self.sensitive_config.read(self.sensitive_config_path)
 
@@ -237,7 +237,7 @@ class ConstantinaKeypair:
             decrypted = jwt.JWT(key=self.encrypt, jwt=token)
             validated = jwt.JWT(key=self.sign, jwt=decrypted.claims)
             return {'decrypted': decrypted, 'validated': validated}
-        except ConfigParser.Error as err:
+        except configparser.Error as err:
             # syslog.syslog("Token validation error: " + err.message)
             return False
             

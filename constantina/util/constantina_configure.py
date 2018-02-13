@@ -59,8 +59,8 @@ class ConstantinaConfig:
     the setup.py install script in addition to the configuration script itself.
     """
     def __init__(self):
-        self.settings = ConfigParser.SafeConfigParser(allow_no_value=True)
-        self.uwsgi = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.settings = configparser.SafeConfigParser(allow_no_value=True)
+        self.uwsgi = configparser.SafeConfigParser(allow_no_value=True)
         self.default = ConstantinaDefaults()
         self.add_user = self.default.add_user
         self.delete_user = self.default.delete_user
@@ -153,9 +153,9 @@ class ShadowConfig:
     """
     def __init__(self, config_root):
         """Read in the shadow.ini config file and settings."""
-        self.settings = ConfigParser.SafeConfigParser(allow_no_value=True)
-        self.sensitive_config = ConfigParser.SafeConfigParser(allow_no_value=True)
-        self.key_config = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.settings = configparser.SafeConfigParser(allow_no_value=True)
+        self.sensitive_config = configparser.SafeConfigParser(allow_no_value=True)
+        self.key_config = configparser.SafeConfigParser(allow_no_value=True)
         self.config_root = config_root
         self.settings.read(self.config_root + "/shadow.ini")
         self.sensitive_config.read(self.config_root + "/sensitive.ini")

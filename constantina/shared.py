@@ -12,7 +12,7 @@ from random import randint, shuffle
 syslog.openlog(ident='constantina.shared')
 
 Instance = os.environ.get("INSTANCE") or "default"
-GlobalConfig = ConfigParser.SafeConfigParser()
+GlobalConfig = configparser.SafeConfigParser()
 # Configuration setup must find the Global Config file in one of these paths.
 # Once you have GlobalConfig, the other config files can then be enumerated.
 ConfigOptions = [
@@ -199,7 +199,7 @@ class BaseState:
     def __read_config(self, config_file):
         """Read the configuration file that will populate the sub-application"""
         self.config_path = GlobalConfig.get('paths', 'config_root') + "/" + config_file
-        self.config = ConfigParser.SafeConfigParser()
+        self.config = configparser.SafeConfigParser()
         self.config.read(self.config_path)
 
 

@@ -19,7 +19,7 @@ class ZooSearch:
     # TODO: Modify this from the MedusaSearch in more than just a hack way! :)
     # TODO: No cardtype filtering here. Zoo filter will either apply this search or not
     def __init__(self, page, resultcount, unsafe_query_terms):
-        self.config = ConfigParser.SafeConfigParser()
+        self.config = configparser.SafeConfigParser()
         self.config.read('zoo.ini')
 
         # Upper limit on the permitted number of searchable items.

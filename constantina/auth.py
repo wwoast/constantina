@@ -23,7 +23,7 @@ class ConstantinaAuth:
         if self.__auth_cancel() is True:
             return
 
-        self.sensitive_config = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.sensitive_config = configparser.SafeConfigParser(allow_no_value=True)
         self.sensitive_config.read(GlobalConfig.get('paths', 'config_root') + "/sensitive.ini")
 
         self.account = ConstantinaAccount()
@@ -203,9 +203,9 @@ class ConstantinaAccount:
     certificate values passed from an upstream Nginx client-cert verification.
     """
     def __init__(self):
-        self.config = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.config = configparser.SafeConfigParser(allow_no_value=True)
         self.config.read(GlobalConfig.get("paths", "config_root") + "/shadow.ini")
-        self.sensitive_config = ConfigParser.SafeConfigParser(allow_no_value=True)
+        self.sensitive_config = configparser.SafeConfigParser(allow_no_value=True)
         self.sensitive_config.read(GlobalConfig.get("paths", "config_root") + "/sensitive.ini")
         self.valid = False
         self.username = None
@@ -268,7 +268,7 @@ class ConstantinaAccount:
         try:
             pwd_hash = self.config.get("passwords", self.username)
             return argon2.verify(self.password, pwd_hash)
-        except ConfigParser.Error:
+        except configparser.Error:
             return False
 
     def set_password(self):
