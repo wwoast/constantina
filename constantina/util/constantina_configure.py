@@ -329,7 +329,7 @@ def opaque_identifier(random_id=randint(0, 2**32-1)):
     length = len(base)
     opaque = ''
     while random_id != 0:
-        opaque = base[random_id % length] + opaque
+        opaque = base[int(random_id % length)] + opaque
         random_id /= length
     return opaque
 
