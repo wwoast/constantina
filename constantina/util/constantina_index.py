@@ -21,4 +21,4 @@ chdir(ROOT_DIR)
 state = ConstantinaState(None)
 state.medusa.search = ["Constantina"]
 search_results = MedusaSearch(state)
-print str(search_results.hits)
+print(str(search_results.hits))

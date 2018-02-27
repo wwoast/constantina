@@ -656,4 +656,4 @@ def application(env, start_response, instance="default"):
 if __name__ == "__main__":
     stub = lambda a, b: a.strip()
     html_body = application(True, stub)
-    print html_body
+    print(html_body)
