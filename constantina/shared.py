@@ -84,7 +84,7 @@ class BaseCardType:
         if self.per_page == 0:
             self.page_distance = 0
         else:
-            self.page_distance = self.file_count*2 / self.per_page
+            self.page_distance = self.file_count*2 // self.per_page
 
 
     def shuffle(self):
@@ -108,7 +108,7 @@ class BaseCardType:
         adjusted so that repeat rules across pages will be respected
         """
         # TODO: news doesn't generalize anymore. Needs to come from page_state.
-        total_pages = int(floor(len(opendir(self.config, "news")) / self.config.getint("card_counts", "news")))
+        total_pages = int(floor(len(opendir(self.config, "news")) // self.config.getint("card_counts", "news")))
         total_ctype = total_pages * self.per_page
 
         # Guarantee enough cards to choose from

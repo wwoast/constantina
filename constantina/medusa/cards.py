@@ -202,7 +202,7 @@ class MedusaSong:
         self.songtitle = filename.split("/")[-1].replace(".mp3", "")
         audio = MP3(filename)
         time = audio.info.length
-        minutes = time / 60
+        minutes = time // 60
         seconds = time % 60
         self.songlength = str(int(minutes)) + ":" + str(int(seconds))
         songmb = os.path.getsize(filename) / 1048576.0
