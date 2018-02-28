@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 import sys
 import time
-from urllib import unquote_plus
+from urllib.parse import unquote_plus
 import syslog
 import configparser
 from math import floor

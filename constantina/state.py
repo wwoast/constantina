@@ -2,7 +2,7 @@ from math import floor
 from random import random, randint, seed, shuffle
 from datetime import datetime
 import os
-from urllib import unquote_plus
+from urllib.parse import unquote_plus
 import syslog
 import configparser
 
