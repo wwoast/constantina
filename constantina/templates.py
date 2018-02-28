@@ -2,8 +2,8 @@ from random import randint
 from string import Template
 import syslog
 
-from shared import GlobalConfig
-from themes import GlobalTheme
+from constantina.shared import GlobalConfig
+from constantina.themes import GlobalTheme
 
 syslog.openlog(ident='constantina.templates')
 

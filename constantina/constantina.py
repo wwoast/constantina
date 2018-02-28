@@ -4,16 +4,16 @@ from math import floor
 from random import randint, seed
 import syslog
 
-from auth import authentication_page, logout_page
-from shared import GlobalConfig, GlobalTime, BaseFiles, opendir, safe_path, urldecode, process_post
-from state import ConstantinaState
-from templates import template_contents
-from themes import GlobalTheme
-from medusa.cards import *
-from medusa.search import MedusaSearch
-# from zoo.state import ZooState
-# from zoo.cards import *
-# from zoo.search import ZooSearch
+from constantina.auth import authentication_page, logout_page
+from constantina.shared import GlobalConfig, GlobalTime, BaseFiles, opendir, safe_path, urldecode, process_post
+from constantina.state import ConstantinaState
+from constantina.templates import template_contents
+from constantina.themes import GlobalTheme
+from constantina.medusa.cards import *
+from constantina.medusa.search import MedusaSearch
+# from constantina.zoo.state import ZooState
+# from constantina.zoo.cards import *
+# from constantina.zoo.search import ZooSearch
 
 # Look up Cards by application config name, instead of calling
 # MedusaCard/ZooCard directly

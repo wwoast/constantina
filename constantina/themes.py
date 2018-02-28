@@ -1,7 +1,7 @@
 import syslog
 
-from random import randint, seed
-from shared import GlobalConfig
+from constantina.random import randint, seed
+from constantina.shared import GlobalConfig
 
 syslog.openlog(ident='constantina.themes')
 

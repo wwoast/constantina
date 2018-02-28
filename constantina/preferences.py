@@ -8,9 +8,9 @@ import syslog
 from jwcrypto import jwk, jwt
 from random import randint
 
-from keypair import ConstantinaKeypair
-from shared import GlobalConfig, GlobalTime, opaque_identifier, opaque_integer, opaque_mix, specific_cookie
-from themes import GlobalTheme
+from constantina.keypair import ConstantinaKeypair
+from constantina.shared import GlobalConfig, GlobalTime, opaque_identifier, opaque_integer, opaque_mix, specific_cookie
+from constantina.themes import GlobalTheme
 
 syslog.openlog(ident='constantina.preferences')
 

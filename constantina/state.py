@@ -6,12 +6,12 @@ from urllib import unquote_plus
 import syslog
 import configparser
 
-from auth import authentication
-from preferences import preferences
-from shared import GlobalConfig, BaseFiles, BaseState
-from themes import GlobalTheme
-from medusa.state import MedusaState
-from zoo.state import ZooState
+from constantina.auth import authentication
+from constantina.preferences import preferences
+from constantina.shared import GlobalConfig, BaseFiles, BaseState
+from constantina.themes import GlobalTheme
+from constantina.medusa.state import MedusaState
+from constantina.zoo.state import ZooState
 
 syslog.openlog(ident='constantina.state')
 

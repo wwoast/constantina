@@ -5,7 +5,7 @@ import syslog
 from random import randint
 from jwcrypto import jwk, jwt
 
-from shared import GlobalConfig, GlobalTime
+from constantina.shared import GlobalConfig, GlobalTime
 
 syslog.openlog(ident='constantina.token')
 

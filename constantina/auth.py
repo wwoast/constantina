@@ -5,8 +5,8 @@ import syslog
 from jwcrypto import jwt
 from passlib.hash import argon2
 
-from shared import GlobalConfig, GlobalTime, specific_cookie
-from keypair import ConstantinaKeypair
+from constantina.shared import GlobalConfig, GlobalTime, specific_cookie
+from constantina.keypair import ConstantinaKeypair
 
 syslog.openlog(ident='constantina.auth')
 
