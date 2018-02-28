@@ -112,7 +112,7 @@ class BaseCardType:
         total_ctype = total_pages * self.per_page
 
         # Guarantee enough cards to choose from
-        self.clist = range(0, self.file_count) * total_ctype
+        self.clist = list(range(0, self.file_count)) * total_ctype
         self.clist = self.clist[0:total_ctype]
         shuffle(self.clist)
 
@@ -154,7 +154,7 @@ class BaseCardType:
             if i + part_end > len(self.clist):
                 part_end = len(self.clist)
 
-            choices = range(0, self.file_count)
+            choices = list(range(0, self.file_count))
             shuffle(choices)
             for k in choices:
                 if k not in self.clist[part_start:part_end]:
@@ -356,7 +356,7 @@ class BaseState:
                             # between here and the end of the page
         common_seen = False # Have we processed a news card yet?
         # Traversing backwards from the end, find the last of each cardtype shown
-        for i in xrange(len(cards) - 1, -1, -1):
+        for i in range(len(cards) - 1, -1, -1):
             card = cards[i]
             if card.ctype == common:
                 if common_seen is False:

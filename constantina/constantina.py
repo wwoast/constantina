@@ -164,7 +164,7 @@ class ConstantinaPage:
                 else:
                     start = int(self.state.page * card_count)
 
-                for i in xrange(start, start + card_count):
+                for i in range(start, start + card_count):
                     # TODO: specify generic card class for obtaining
                     card = CardClass[application](ctype, i, state=app_state, grab_body=True)
                     # Don't include cards that failed to load content
@@ -208,11 +208,11 @@ class ConstantinaPage:
                 if end_dist == 0:
                     continue
 
-                for j in xrange(start, end_dist):
+                for j in range(start, end_dist):
                     grab_file = self.search_results.hits[ctype][j]
                     # If the hits[ctype][j] is a file name, figure out which Nth file this is
                     if grab_file.isdigit() is False:
-                        for k in xrange(0, len(BaseFiles[ctype])):
+                        for k in range(0, len(BaseFiles[ctype])):
                             # syslog.syslog("compare:" + grab_file + "==" + BaseFiles[ctype][k])
                             if BaseFiles[ctype][k] == grab_file:
                                 grab_file = k
@@ -264,7 +264,7 @@ class ConstantinaPage:
         news_items = int(self.state.medusa.news.count) * self.state.page
 
         # Then add the appropriate page count's worth of news
-        for n in xrange(0, news_items):
+        for n in range(0, news_items):
             self.cards.append(MedusaCard('news', n, state=self.state.medusa, grab_body=False))
 
         # Now, for each card type, go back state.ctype.distance
@@ -336,7 +336,7 @@ class ConstantinaPage:
                 c_nodist[ctype] = []
 
             # Make arrays of each card type, so we can random-jump their inserts later.
-            for i in xrange(lstop, total):
+            for i in range(lstop, total):
                 ctype = self.cards[i].ctype
                 # News cards don't get redistributed, and cards that we
                 # already adjusted don't get moved either
@@ -348,11 +348,11 @@ class ConstantinaPage:
 
             # Erase this snippet of the cards array, so we can reconstruct
             # it manually. Keep popping from the point where we snipped things
-            for i in xrange(lstop, total):
+            for i in range(lstop, total):
                 self.cards.pop(lstop)
 
             # Now, add the news cards back
-            for j in xrange(0, len(c_nodist['news'])):
+            for j in range(0, len(c_nodist['news'])):
                 self.cards.insert(lstop + j, c_nodist['news'][j])
 
             # Now, for each type of non-news card, figure out the starting point
@@ -400,7 +400,7 @@ class ConstantinaPage:
                 # syslog.syslog("*** dist initial: ctype:%s  cnt:%d  spacing:%d cur_pd:%d  sj:%d  ej:%d" % ( ctype, len(c_redist[ctype]), norm_dist, cur_p_dist, start_jrange, end_jrange))
                 # Add back the cards. NOTE all jumpranges must be offsets from lstop,
                 # not specific indexes that refer to the insert points in the array
-                for k in xrange(0, card_count):
+                for k in range(0, card_count):
                     # Not many items in the array?
                     if start_jrange >= end_jrange:
                         jump = start_jrange
@@ -426,7 +426,7 @@ class ConstantinaPage:
                 seed(self.state.seed)
 
         # Lastly, add the topics cards back
-        for j in xrange(0, len(c_nodist['topics'])):
+        for j in range(0, len(c_nodist['topics'])):
             self.cards.insert(lstop + j, c_nodist['topics'][j])
 
 
@@ -444,7 +444,7 @@ def create_page(page):
     total = len(page.cards)
     start_point = page.cur_len
 
-    for i in xrange(start_point, total):
+    for i in range(start_point, total):
         if ((page.cards[i].ctype == "news") or
             (page.cards[i].ctype == "topics") or
             (page.cards[i].ctype == "features")):

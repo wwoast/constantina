@@ -78,7 +78,7 @@ class MedusaCard:
                 self.hidden = True
                 type_files = opendir(self.config, self.ctype, self.hidden)
                 # syslog.syslog(str(BaseFiles.keys()))
-                hidden_cards = xrange(0, len(BaseFiles[self.ctype + "/hidden"]))
+                hidden_cards = range(0, len(BaseFiles[self.ctype + "/hidden"]))
                 self.num = hidden_cards[randint(0, len(hidden_cards)-1)]
                 # syslog.syslog("open hidden file: " + str(self.num) + "/" + str(hidden_cards))
                 which_file = self.num

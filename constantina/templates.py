@@ -25,7 +25,7 @@ def template_themes(desired_theme):
   </label>
 """)
 
-    for index in xrange(0, GlobalTheme.count):
+    for index in range(0, GlobalTheme.count):
         replacements = {}
         replacements['theme_index'] = str(index)
         replacements['theme_directory'] = GlobalConfig.get('themes', str(index))
