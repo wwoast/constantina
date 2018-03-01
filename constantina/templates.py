@@ -133,9 +133,7 @@ def template_contents(raw, prefs):
         '1': 'Show Only The Latest 10 Posts'
     }
 
-    if prefs is None:
-        replacements = default_template_values(missing)
-    elif prefs.valid is False:
+    if prefs is None or prefs.valid is False or prefs.thm is None:
         replacements = default_template_values(missing)
     else:
         replacements = replace_template_values(missing, prefs)
