@@ -718,7 +718,7 @@ def process_post(env):
     max_size = GlobalConfig.getint('miscellaneous', 'max_request_size_mb') * 1024 * 1024
     if read_size >= max_size:
         return {}   # Don't process overlarge form inputs
-    inbuf = env['wsgi.input'].read(read_size)
+    inbuf = env['wsgi.input'].read(read_size).decode("utf-8")
     if inbuf.find("-----") == 0:   # Delimiter heuristic
         return process_multipart_form(inbuf)
     else:
