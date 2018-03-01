@@ -176,8 +176,6 @@ class MedusaCard:
                 fnmtime = os.path.getmtime(fpath)
                 self.cdate = datetime.fromtimestamp(int(fnmtime)).strftime("%B %-d, %Y")
 
-            file.close(cfile)
-
         except IOError:        # File got moved in between dirlist caching and us reading it
             self.topics = []   # Makes the card go away if we had an error reading content
             return self.config.get("card_defaults", "file")
