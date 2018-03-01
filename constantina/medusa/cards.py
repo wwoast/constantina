@@ -89,15 +89,17 @@ class MedusaCard:
             which_file = self.num
 
         # News files: convert utime filename to the "Nth" item in the folder
-        if which_file >= len(type_files):
-            try:
-                which_file = type_files.index(self.num)
-                self.num = which_file
-            except IndexError:
-                syslog.syslog("Card number \"" + str(self.num) + "\" is not a filename or an Nth file.")
+        chosen_file = "__nonexistent__"
+        try:
+            if str(which_file).isdigit() == True:
+                if int(which_file) >= len(type_files):
+                    which_file = type_files.index(self.num)
+                    self.num = which_file
+                chosen_file = type_files[which_file]
+        except (ValueError, IndexError):
+            syslog.syslog("Card number \"" + str(self.num) + "\" is not a filename or an Nth file.")
 
-        # syslog.syslog(str(type_files[which_file]))
-        return self.__interpretfile(type_files[which_file])
+        return self.__interpretfile(chosen_file)
 
 
     def __songfiles(self):
