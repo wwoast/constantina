@@ -255,7 +255,7 @@ class ConstantinaPreferences:
             "Max-Age=0",
             "SameSite=strict"
         ]
-        self.headers.append(("Set-Cookie", '; '.join(cookie_values).encode('utf-8')))
+        self.headers.append(("Set-Cookie", '; '.join(cookie_values)))
 
     def __read_preferences(self, raw_cookie):
         """
@@ -316,8 +316,7 @@ class ConstantinaPreferences:
             "Max-Age=" + str(GlobalTime.time // 10),
             "SameSite=strict"
         ]
-        # Cookies must be Python byte-string types -- encode "fixes" this
-        self.headers.append(("Set-Cookie", '; '.join(cookie_values).encode('utf-8')))
+        self.headers.append(("Set-Cookie", '; '.join(cookie_values)))
 
 
 def preferences(env, post, auth):
