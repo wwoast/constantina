@@ -319,13 +319,13 @@ def create_medusa_textcard(card, display_state):
                 pass
 
             # Track that we saw an img tag, and write the tag out
-            output += unescape(tostring(e))
+            output += unescape(tostring(e, encoding="unicode"))
             passed.update({'img': True})
 
         elif e.tag == 'p':
             # If further than the first paragraph, write output
             if 'p' in passed:
-                output += unescape(tostring(e))
+                output += unescape(tostring(e, encoding="unicode"))
 
             # If more than three paragraphs, and it's a news entry,
             # start hiding extra paragraphs from view
@@ -335,12 +335,12 @@ def create_medusa_textcard(card, display_state):
                 # First <p> is OK, but follow it with a (Read More) link, and a
                 # div with showExtend that hides all the other elements
                 read_more = """ <a href="#%s" class="showShort" onclick="revealToggle('%s');">(Read&nbsp;More...)</a>""" % (anchor, anchor)
-                prep = unescape(tostring(e))
+                prep = unescape(tostring(e, encoding="unicode"))
                 output += prep.replace('</p>', read_more + '</p>')
                 output += """<div class="divExpand">\n"""
 
             else:
-                output += unescape(tostring(e))
+                output += unescape(tostring(e, encoding="unicode"))
 
             # Track that we saw an img tag, and write the tag out
             passed.update({'p': True})
