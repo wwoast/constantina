@@ -219,7 +219,7 @@ class MedusaSearch:
             # Update wraps add if the document hasn't been inserted, and
             # replaces current indexed data if it has been inserted. This
             # requires the file parameter to be set "unique" in the Schema
-            writer.update_document(file=filename, ctype=ctype, mtime=fnmtime, content=self.content)
+            writer.update_document(file=filename, ctype=ctype, mtime=str(fnmtime), content=self.content)
 
         # Finish by commiting the updates
         writer.commit()
