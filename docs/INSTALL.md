@@ -10,7 +10,7 @@
 There are a handful of Linux packages needed (Debian/Ubuntu) to support the ones
 installed by Python:
 
- * `apt-get install libjpeg-dev libffi-dev libssl-dev uwsgi uwsgi-plugin-python`
+ * `apt-get install libjpeg-dev libffi-dev libssl-dev uwsgi uwsgi-plugin-python3`
 
 
 ### List of Python dependencies
@@ -20,7 +20,7 @@ API than the version in `pip`.
 
 Install the Python dependencies manually or from `pip`:
 
- * `pip install -r requirements.txt`
+ * `pip3 install -r requirements.txt`
    * `argon2_cffi` and `argon2pure` for password hashing
    * `jwcrypto` for managing JWT and JWE session token formats
    * `defusedxml` for occasions where you need to parse HTML files
@@ -35,7 +35,7 @@ Install the Python dependencies manually or from `pip`:
 
 
 ### Running the Installer
-`python setup.py install -h` describes the options for installing Constantina.
+`python3 setup.py install -h` describes the options for installing Constantina.
 The setup script attempts to install all files necessary for running the 
 application, aside from the webserver configuration.
 
@@ -44,7 +44,7 @@ files for, the hostname the site will be accessed through, and a port number
 that the application will listen on:
 
 ```
-sudo python ./setup.py install -u www-data -g www-data \
+sudo python3 ./setup.py install -u www-data -g www-data \
   --hostname codaworry.com --port 9090
 ```
 
@@ -67,14 +67,14 @@ site. If you want to install just the Python and HTML updates, you can add the
 files in `/etc/constantina/default`.
 
 ```
-sudo python ./setup.py install --upgrade -u www-data -g www-data
+sudo python3 ./setup.py install --upgrade -u www-data -g www-data
 ```
 
 Alternatively, you may install just the Python scripts. This puts any HTML or
 configuration file placement responsibilties in your hands:
 
 ```
-python ./setup.py install --scriptonly
+python3 ./setup.py install --scriptonly
 ```
 
 
@@ -85,7 +85,7 @@ a good way to test configuration changes prior to making them on your live
 site. Every static resource and configuration for an instance is separated
 from the others.
 
-If no instance is specified when running `python ./setup.py install`, the
+If no instance is specified when running `python3 ./setup.py install`, the
 instance name is called `default`. You'll see that reflected in the paths
 to the installed file locations.
 
@@ -93,9 +93,9 @@ Here's an example of installing Constantina twice, under two different
 locations and ports, using the *instances* feature:
 
 ```
-python ./setup.py install -i default --port 9090 \
+python3 ./setup.py install -i default --port 9090 \
    --hostname codaworry.com -u www-data -g www-data
-python ./setup.py install -i staging --port 9091 \
+python3 ./setup.py install -i staging --port 9091 \
    --hostname codaworry.com -u www-data -g www-data \
 ```
 
@@ -202,7 +202,7 @@ server {
 ```
 [uwsgi]
 socket       = localhost:9090
-plugin       = python
+plugin       = python35
 module       = constantina.constantina
 processes    = 3
 procname     = constantina-default
@@ -251,7 +251,7 @@ server {
 ```
 [uwsgi]
 socket       = localhost:9090
-plugin       = python
+plugin       = python35
 module       = constantina.constantina
 processes    = 3
 procname     = constantina-default

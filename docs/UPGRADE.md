@@ -3,6 +3,10 @@
 
 ## Upgrade Notes
 
+### 0.6.0
+
+TOWRITE: tweaks to make to config
+
 ### 0.5.6
 
 The configuration files related to secrets were reorganized, so that file monitoring tools can more easily

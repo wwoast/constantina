@@ -14,7 +14,7 @@ security hardening, and known weaknesses.
 
 
 ## Known Weaknesses
-In Constantina version 0.5.5, authentication tokens do not utilize any browser
+In Constantina version 0.6.0, authentication tokens do not utilize any browser
 identification strategies. This means they can be stolen and used on other systems.
 This will be rectified prior to *Zoo*'s release.
 
@@ -44,6 +44,18 @@ using standard e-mail protocols.
 
 
 ## Security Hardening
+
+### 0.5.6: Tracking File Modifications
+Constantina's configuration file layout is intended to support external monitoring for
+suspicious file modifications. Core security configuration is isolated into its own files,
+so that frequently-changing data doesn't cause noise for security monitoring tools.
+
+`preferences.ini` and `keys.ini` will be regularly updated as logins happen, and as the
+server's encryption keys are cycled every two days. On the other hand, files that describe
+Constantina's core configuration or security operations should change very infrequently.
+`sensitive.ini` and `constantina.ini` changes should be closely monitored. Even `shadow.ini`
+password changes should not be expected to occur frequently.
+
 
 ### 0.5.0: Authentication, IDOR Folder Shadowing, Directory Traversal Prevention
 Constantina authentication appears in a testing configuration in 0.5.0. When converting
@@ -142,15 +154,3 @@ Any time the user changes their preferences, the server reads the existing prefe
 cookie details. Next, it generates a fresh preferences keypair, which invalidates any
 unexpired old cookies from being useful. Lastly, the server writes the updated preferences
 cookie, signed and encrypted by the fresh keypair.
-
-
-### Tracking File Modifications
-Constantina's configuration file layout is intended to support external monitoring for
-suspicious file modifications. Core security configuration is isolated into its own files,
-so that frequently-changing data doesn't cause noise for security monitoring tools.
-
-`preferences.ini` and `keys.ini` will be regularly updated as logins happen, and as the
-server's encryption keys are cycled every two days. On the other hand, files that describe
-Constantina's core configuration or security operations should change very infrequently.
-`sensitive.ini` and `constantina.ini` changes should be closely monitored. Even `shadow.ini`
-password changes should not be expected to occur frequently.
