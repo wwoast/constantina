@@ -206,14 +206,13 @@ if __name__ == '__main__':
     try:
         Package = {
             'name': "constantina",
-            'version': "0.5.6",
+            'version': "0.6.0",
             'description': "a dynamic-content blog platform for \"grazing\"",
             'author': "Justin Cassidy",
             'author_email': 'boil.afraid@gmail.com',
             'url': 'https://github.com/wwoast/constantina',
             'classifiers':"""Programming Language :: Python
-Programming Language :: Python :: 2
-Programming Language :: Python :: 2.7""".splitlines(),
+Programming Language :: Python :: 3 :: Only""".splitlines(),
             'packages': [
                 'constantina',
                 'constantina.medusa',
