@@ -89,13 +89,13 @@ class MedusaState(BaseState):
         # cardtype and be added to the filter state instead.
         if self.search is not None:
             searchterms = self.search.split(' ')
-            searchterms = filter(None, searchterms)   # remove nulls
+            searchterms = list(filter(None, searchterms))   # remove nulls
             [ newfilters, removeterms ] = BaseState._process_search_strings(self, '#', searchterms)
             # Remove filter strings from the search state list if they exist
             [searchterms.remove(term) for term in removeterms]
             self.search = searchterms
             # Take off leading #-sigil for card type searches
-            self.card_filter = map(lambda x: x[1:], newfilters)
+            self.card_filter = list(map(lambda x: x[1:], newfilters))
             for ctype in self.card_filter:
                 getattr(self, ctype).filtertype = True
             if self.card_filter == []:

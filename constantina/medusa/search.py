@@ -219,7 +219,7 @@ class MedusaSearch:
             # Update wraps add if the document hasn't been inserted, and
             # replaces current indexed data if it has been inserted. This
             # requires the file parameter to be set "unique" in the Schema
-            writer.update_document(file=unicode(filename), ctype=unicode(ctype), mtime=unicode(fnmtime), content=unicode(self.content))
+            writer.update_document(file=filename, ctype=ctype, mtime=fnmtime, content=self.content)
 
         # Finish by commiting the updates
         writer.commit()
@@ -241,7 +241,7 @@ class MedusaSearch:
 
             lastmtime = ''
             try:
-                lastmtime = int(float(self.searcher.document(file=unicode(filename))['mtime']))
+                lastmtime = int(float(self.searcher.document(file=filename)['mtime']))
             except:
                 lastmtime = 0
             # If small revisions were made after the fact, the indexes won't
@@ -256,7 +256,7 @@ class MedusaSearch:
         indexes. Don't return the Nth pge of resultcount hits.
         """
         self.parser = QueryParser("content", self.schema)
-        self.query = self.parser.parse(unicode(self.query_string))
+        self.query = self.parser.parse(self.query_string)
         self.results = self.searcher.search_page(self.query, self.page, sortedby="file", reverse=True, pagelen=self.resultcount)
 
         # Just want the utime filenames themselves? Here they are, in
