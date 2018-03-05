@@ -332,7 +332,7 @@ def preferences(env, post, auth):
     if post.get('action') == "preferences":
         # Form data appears, so write a new preferences cookie.
         del post['action']
-        syslog.syslog("setting cookie. revision timer: " + str(post['rev']))
+        # syslog.syslog("setting cookie. revision timer: " + str(post['rev']))
         prefs.post(auth, **post)
 
     elif auth.account.valid is True:
@@ -341,7 +341,7 @@ def preferences(env, post, auth):
         # If it wasn't we'll generate a new one.
         prefs.cookie(auth, raw_cookie)
         if prefs.valid is False:
-            syslog.syslog("brand new prefs cookie")
+            # syslog.syslog("brand new prefs cookie")
             prefs.generate(auth)
 
     else:

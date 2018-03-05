@@ -36,7 +36,7 @@ class ConstantinaState(BaseState):
     things about the Constantina page are tracked here, since these conditions
     depend on properties of the various states
     """
-    def __init__(self, in_state=None, env=None, post=None):
+    def __init__(self, in_state=None, env={}, post={}):
         BaseState.__init__(self, in_state, None)
         self.config = GlobalConfig
 
