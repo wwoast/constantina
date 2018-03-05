@@ -91,13 +91,15 @@ class MedusaCard:
         # News files: convert utime filename to the "Nth" item in the folder
         chosen_file = "__nonexistent__"
         try:
-            if str(which_file).isdigit() == True:
+            if str(which_file).isdigit() is True:
                 if int(which_file) >= len(type_files):
                     which_file = type_files.index(self.num)
                     self.num = which_file
                 chosen_file = type_files[which_file]
+            else:
+                chosen_file = which_file
         except (ValueError, IndexError):
-            syslog.syslog("Card number \"" + str(self.num) + "\" is not a filename or an Nth file.")
+            syslog.syslog("Card \"" + str(self.num) + "\" (" + self.ctype + ") is not a filename or an Nth file.")
 
         return self.__interpretfile(chosen_file)
 
@@ -129,7 +131,7 @@ class MedusaCard:
         fpath = base_path + "/" + thisfile
         if self.hidden is True:
             fpath = base_path + "/hidden/" + thisfile
-            
+
         try:
             with open(fpath, 'r') as cfile:
                 ftype = magi.from_file(fpath)
