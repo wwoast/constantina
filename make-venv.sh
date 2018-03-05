@@ -22,7 +22,7 @@ pip install -r requirements.txt
 ln -s $VENV_PATH/etc .
 
 # All pathnames below are relative to the $VENV_PATH
-python setup.py install \
+python3 setup.py install \
    --instance $CONSTANTINA_INSTANCE \
    --hostname $CONSTANTINA_HOSTNAME \
    --config-root $CONFIG_ROOT \
