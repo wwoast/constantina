@@ -148,7 +148,7 @@ class ConstantinaState(BaseState):
         for application in self.config.get("applications", "enabled").replace(" ","").split(","):
             items.append(self.get(application, value, args))
         if mode == "append":
-            items = filter(None, items)
+            items = list(filter(None, items))
             if items == []:
                 return None
             return [item for sublist in items for item in sublist]   # Flatten
@@ -294,8 +294,9 @@ class ConstantinaState(BaseState):
 
     def reshuffle_mode(self):
         """An empty search was given, so reshuffle the page"""
-        if ((self.all("search") is None) and
-            (self.all("reshuffle", "or") is True) and
+        syslog.syslog("reshuffle mode: " + str(self.all("card_filter")))
+
+        if ((self.all("reshuffle", "or") is True) and
             (self.all("card_filter") is None)):
             return True
         else:

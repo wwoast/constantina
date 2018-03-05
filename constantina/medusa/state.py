@@ -80,7 +80,9 @@ class MedusaState(BaseState):
         """
         self.search = BaseState._find_state_variable(self, 'xs')
         # TODO: Must check each application's search state before turning on shuffle mode.
-        if self.search == '':
+        # Python's recommended way to see if a string is empty or null is using the not operator.
+        # This doesn't differentiate between None and an empty string '' though.
+        if not self.search and isinstance(self.search, str):
             self.reshuffle = True
         else:
             self.reshuffle = False
