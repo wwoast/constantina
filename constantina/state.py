@@ -209,6 +209,7 @@ class ConstantinaState(BaseState):
         This theme value is a path fragment to a theme's images and stylesheets.
         """
         # If a preferences cookie with a theme exists, use what's in that cookie.
+        # TODO: what if the cookie's index/state is none?
         if self.valid_session is True:
             self.appearance = BaseState._int_translate(self, str(self.prefs.thm), 1, 0)
             GlobalTheme.set(self.appearance)

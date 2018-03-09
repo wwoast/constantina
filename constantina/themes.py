@@ -27,9 +27,16 @@ class ConstantinaTheme:
         """
         self.index = None
         self.theme = None
-        self.default = GlobalConfig.get("themes", "default")
-        self.count = len(GlobalConfig.items("themes")) - 1
         self.random = False
+        self.count = len(GlobalConfig.items("themes")) - 1
+        self.default = GlobalConfig.get("themes", "default")
+        # The index has to be set to something. Otherwise, if the preferences
+        # cookie was malformed, we assume a valid session, and then set an
+        # incorrect preferences cookie theme index.
+        if self.default == "random":
+            self.__random_choice()
+        else:
+            self.__choose_theme()
 
     def set(self, desired_theme=None):
         """
@@ -50,17 +57,25 @@ class ConstantinaTheme:
             self.theme = GlobalConfig.get("themes", str(self.index))
             self.random = False
 
-        # Do we have a default set to 'random'?
+        # We either have index or "random" now. Make a final choice
+        self.__choose_theme(desired_theme)
+
+    def __choose_theme(self, desired_theme=None):
+        """
+        Given a valid index or "random", properly set the theme value from
+        one of the numbered-index values in constantina.ini
+        """
         if desired_theme is None and self.theme == "random":
             self.__random_choice()
-        # Otherwise, the index is whatever matches the theme value
         else:
             self.index = [int(x[0]) for x in GlobalConfig.items("themes")[1:]
                           if x[1] == self.theme][0]
 
     def __random_choice(self):
-        # If the configuration supports a random theme, and we didn't have a
-        # theme provided in the initial state, let's choose one randomly
+        """
+        If the configuration supports a random theme, and we didn't have a
+        theme provided in the initial state, let's choose one randomly
+        """
         seed()   # Enable non-seeded choice
         self.index = randint(0, self.count - 1)
         self.theme = GlobalConfig.get("themes", str(self.index))

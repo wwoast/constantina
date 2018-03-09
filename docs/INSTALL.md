@@ -10,7 +10,7 @@
 There are a handful of Linux packages needed (Debian/Ubuntu) to support the ones
 installed by Python:
 
- * `apt-get install libjpeg-dev libffi-dev libssl-dev uwsgi uwsgi-plugin-python3`
+ * `apt-get install libjpeg-dev libffi-dev libssl-dev python3-pip uwsgi uwsgi-plugin-python3`
 
 
 ### List of Python dependencies

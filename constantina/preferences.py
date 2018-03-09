@@ -134,9 +134,11 @@ class ConstantinaPreferences:
     def __validate_claims(self):
         """
         Check the domain of values for each claim, and pin to a sensible default
-        if wacky inputs are received. TODO
+        if wacky inputs are received. TODO: throw error, delete bad prefs cookie, and return
+        normal preferences cookie, if we're authenticated.
         """
         # Is theme a number, and not outside the range of configured themes?
+        syslog.syslog("validate theme settings: " + str(self.theme) + " = " + str(self.thm))
         GlobalTheme.set(self.thm)
         self.theme = GlobalTheme.theme
         # Is topic a string? Just check #general for now
@@ -295,6 +297,7 @@ class ConstantinaPreferences:
             "gro": str(self.gro),
             "rev": self.rev
         }
+        syslog.syslog("write_prefs: " + str(jwt_claims))
         jwt_header = {
             "alg": signing_algorithm
         }
@@ -341,7 +344,7 @@ def preferences(env, post, auth):
         # If it wasn't we'll generate a new one.
         prefs.cookie(auth, raw_cookie)
         if prefs.valid is False:
-            # syslog.syslog("brand new prefs cookie")
+            syslog.syslog("brand new prefs cookie")
             prefs.generate(auth)
 
     else:

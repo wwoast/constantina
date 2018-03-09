@@ -9,13 +9,9 @@ TOWRITE: tweaks to make to config
 
 ### 0.5.6
 
-The configuration files related to secrets were reorganized, so that file monitoring tools can more easily
-track changes to secret preferences separately from changes to keys or passwords themselves. Contents from
-`shadow.ini` were split off, with only password hashes remaining in this file. Server keys are now found in
-`keys.ini`, and key algorithms and password length settings moved to `sensitive.ini`.
+The configuration files related to secrets were reorganized, so that file monitoring tools can more easily track changes to secret preferences separately from changes to keys or passwords themselves. Contents from `shadow.ini` were split off, with only password hashes remaining in this file. Server keys are now found in `keys.ini`, and key algorithms and password length settings moved to `sensitive.ini`.
 
-When upgrading, you'll likely need to move your settings to new sections by hand, as follows. Once you finish
-these tasks, only the `[passwords]` section should remain in `shadow.ini`.
+When upgrading, you'll likely need to move your settings to new sections by hand, as follows. Once you finish these tasks, only the `[passwords]` section should remain in `shadow.ini`.
 
  * `shadow.ini [defaults]`:
    * `charset` => `sensitive.ini [accounts]`
