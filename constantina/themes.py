@@ -30,12 +30,13 @@ class ConstantinaTheme:
         self.random = False
         self.count = len(GlobalConfig.items("themes")) - 1
         self.default = GlobalConfig.get("themes", "default")
-        # The index has to be set to something. Otherwise, if the preferences
-        # cookie was malformed, we assume a valid session, and then set an
-        # incorrect preferences cookie theme index.
+        # The index and theme values must be set to something. Otherwise, 
+        # if the preferences cookie was malformed, we assume a valid session, 
+        # and then set an incorrect preferences cookie theme index.
         if self.default == "random":
             self.__random_choice()
         else:
+            self.theme = self.default
             self.__choose_theme()
 
     def set(self, desired_theme=None):
@@ -63,7 +64,10 @@ class ConstantinaTheme:
     def __choose_theme(self, desired_theme=None):
         """
         Given a valid index or "random", properly set the theme value from
-        one of the numbered-index values in constantina.ini
+        one of the numbered-index values in constantina.ini. 
+        
+        If we're using a non-random default-theme, find the proper theme in 
+        the rest of the list and use that as our theme index.
         """
         if desired_theme is None and self.theme == "random":
             self.__random_choice()
