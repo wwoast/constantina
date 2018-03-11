@@ -2,6 +2,8 @@ import os
 from whoosh import index
 from whoosh.fields import Schema, ID, TEXT
 from whoosh.qparser import QueryParser
+import tinysegmenter
+from whooshjp.TinySegmenterTokenizer import TinySegmenterTokenizer
 import re
 from defusedxml.ElementTree import fromstring
 from xml.sax.saxutils import unescape
@@ -82,11 +84,14 @@ class MedusaSearch:
         unsafe_query_terms = state.medusa.search
         unsafe_filter_terms = state.medusa.card_filter
 
+        # Support for Japanese text indexing
+        self.tk = TinySegmenterTokenizer(tinysegmenter.TinySegmenter())
+
         # Define the indexing schema. Include the mtime to track updated
         # content in the backend, ctype so that we can manage the distribution
         # of returned search results similar to the normal pages, and the
         # filename itself as a unique identifier (most filenames are utimes).
-        self.schema = Schema(file=ID(stored=True, unique=True, sortable=True), ctype=ID(stored=True), mtime=ID(stored=True), content=TEXT)
+        self.schema = Schema(file=ID(stored=True, unique=True, sortable=True), ctype=ID(stored=True), mtime=ID(stored=True), content=TEXT(analyzer=self.tk))
 
         # If index doesn't exist, create it
         if index.exists_in(self.index_dir):
