@@ -182,6 +182,9 @@ class MedusaSearch:
             for character in self.ignore_symbols:
                 safe_input = safe_input.replace(character, " ")
 
+        # Index all words as lowercase, to make searching the blog cards simpler
+        safe_input = safe_input.lower()
+
         syslog.syslog("safe input query: " + safe_input)
         # Did we sanitize a query, or a round of content? Infer by what
         # we're setting in the object itself.
