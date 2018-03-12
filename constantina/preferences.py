@@ -124,7 +124,7 @@ class ConstantinaPreferences:
                             GlobalConfig.get('server', 'hostname') + "-" +
                             self.cookie_id)
         self.headers = []
-        syslog.syslog("config: %s   preference_id: %s" % (self.config_file, self.preference_id))
+        # syslog.syslog("config: %s   preference_id: %s" % (self.config_file, self.preference_id))
         # Given a preference_id, create/load the keypair (regen mode)
         self.key = ConstantinaKeypair(self.config_file, self.preference_id)
         self.jwe = None
@@ -138,7 +138,7 @@ class ConstantinaPreferences:
         normal preferences cookie, if we're authenticated.
         """
         # Is theme a number, and not outside the range of configured themes?
-        syslog.syslog("validate theme settings: " + str(self.theme) + " = " + str(self.thm))
+        # syslog.syslog("validate theme settings: " + str(self.theme) + " = " + str(self.thm))
         GlobalTheme.set(self.thm)
         self.theme = GlobalTheme.theme
         # Is topic a string? Just check #general for now
@@ -297,7 +297,7 @@ class ConstantinaPreferences:
             "gro": str(self.gro),
             "rev": self.rev
         }
-        syslog.syslog("write_prefs: " + str(jwt_claims))
+        # syslog.syslog("write_prefs: " + str(jwt_claims))
         jwt_header = {
             "alg": signing_algorithm
         }

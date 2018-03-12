@@ -117,8 +117,9 @@ $(function() {
       $('#searchEntry').blur();   // Make iOS keyboard disappear after submitting
       var query = $('#searchEntry').val().trim();
       // TODO: Remove or escape any search processing characters here like commas
-      // Allow searches using special characters like #
-      query = escape(query);
+      // Allow searches using special characters like #. The escape function doesn't
+      // support unicode, so use encodeURI instead.
+      query = encodeURI(query);
 
       // Load more data
       window.location.assign("/?xs" + query);
@@ -133,7 +134,7 @@ $(function() {
 function searchPlaceholderText() { 
    if (window.location.href.indexOf("?xs") != -1) {
        var placeholder = window.location.href.split("?")[1].slice(2);
-       return unescape("\u27A4" + placeholder);
+       return unescape("\u27A4") + decodeURI(placeholder);
    } else {
        return unescape("Search \u27A4");
    }
