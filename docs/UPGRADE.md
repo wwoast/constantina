@@ -5,7 +5,11 @@
 
 ### 0.6.0
 
-Constantina migrated to Python 3 for internationalization purposes. Be prepared to reinstall all dependencies and regenerate your virtualenv. I've been testing with Python 3.5 found on the latest Debian stable.
+#### Internationalization Support
+
+Constantina migrated to Python 3 for internationalization purposes. Be prepared to reinstall all dependencies and regenerate your virtualenv. I've been testing with Python 3.5 found on the latest Debian stable. To prevent *mojibake* from appearing on your existing Constantina feed, you need the latest version of the Constantina themes, which include HTML meta-tags to force browsers to display UTF-8 content. For existing admins using the default themes, install with the `--upgrade` option rather than just `--scriptonly`.
+
+#### Rebuild Search Indexing
 
 The content hosted on codaworry.com will have both English and Japanese-language content, and as a result I changed the tokenization strategy for the Whoosh search-indexing to support Japanese words and characters. As a result, the indexing process became case-sensitive, and I had to cast all searches to lowercase words to fix this.
 
@@ -17,8 +21,6 @@ rm MAIN* _MAIN*
 ```
 
 On slower servers, the reindexing process may cause HTTP 504 timeouts, as the search indexing does not occur until an initial search request is filed. While indexes are being generated, search requests will return HTTP 502. A future version of Constantina might do index generation at server-start time instead of at request time, to make this less obvious or painful to users.
-
-TOWRITE: Other internationalization snafus on servers
 
 
 ### 0.5.6
