@@ -159,7 +159,7 @@ class MedusaSearch:
         """
         # Make a or-regex of all the words in the wordlist
         if self.ignore_words == '':
-            with open(self.words_file, 'r') as wfile:
+            with open(self.words_file, 'r', encoding='utf-8') as wfile:
                 words = wfile.read().splitlines()
                 remove = '|'.join(words)
                 self.ignore_words = re.compile(r'\b('+remove+r')\b', flags=re.IGNORECASE)
@@ -174,7 +174,7 @@ class MedusaSearch:
         # double-quote characters &ldquo; and &rdquo;, as well as other
         # defusedxml.ElementTree converted &-escaped HTML characters
         if self.ignore_symbols == '':
-            with open(self.symbols_file, 'r') as sfile:
+            with open(self.symbols_file, 'r', encoding='utf-8') as sfile:
                 for character in sfile.read().splitlines():
                     self.ignore_symbols.push(character)
                     safe_input = safe_input.replace(character, " ")
@@ -213,7 +213,7 @@ class MedusaSearch:
         card_root = GlobalConfig.get("paths", "data_root") + "/private"
         card_path = card_root + "/" + self.config.get("paths", ctype)
 
-        with open(card_path + "/" + filename, 'r') as indexfh:
+        with open(card_path + "/" + filename, 'r', encoding='utf-8') as indexfh:
             body = ""
             lines = indexfh.read().splitlines()
             unrolled = unroll_newlines(lines)

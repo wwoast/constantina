@@ -175,7 +175,7 @@ class ZooThreadCardGroup:
             fpath = base_path + "/hidden/" + thisfile
 
         try:
-            with open(fpath, 'r') as tfh:
+            with open(fpath, 'r', encoding='utf-8') as tfh:
                 ftype = magi.from_file(fpath)
                 # TODO: not a great way to read in and validate a JSON file.
                 if ftype == "text/plain":
@@ -337,7 +337,7 @@ class ZooPostCard:
         
         # Read in the post itself
         self.cfile = "TODO"   # Build from the revision and num
-        with open(filepath, 'r') as rfh:
+        with open(filepath, 'r', encoding='utf-8') as rfh:
             self.json = rfh.read()
             self.body = json.loads(self.json)
 

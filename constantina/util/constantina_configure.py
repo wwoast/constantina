@@ -97,7 +97,7 @@ class ConstantinaConfig:
         self.configure(self.settings, "paths", "config_root", self.config_root)
         self.configure(self.settings, "paths", "cgi_bin", self.cgi_bin)
         self.configure(self.settings, "server", "instance_id", opaque_identifier())
-        with open(self.config_root + "/constantina.ini", "w") as cfh:
+        with open(self.config_root + "/constantina.ini", "w", encoding='utf-8') as cfh:
             self.settings.write(cfh)
 
         # Set UWSGI config file settings for this instance too
@@ -107,7 +107,7 @@ class ConstantinaConfig:
         self.configure(self.uwsgi, "uwsgi", "procname", "constantina-" + self.instance)
         if self.hostname is not None:
             self.configure(self.uwsgi, "uwsgi", "socket", self.hostname + ":" + str(self.port))
-        with open(self.config_root + "/uwsgi.ini", "w") as ufh:
+        with open(self.config_root + "/uwsgi.ini", "w", encoding='utf-8') as ufh:
             self.uwsgi.write(ufh)
 
     def update_instance_directory(self, directory, suffix=''):
@@ -185,7 +185,7 @@ class ShadowConfig:
             password = getpass(prompt=prompt)
         pwhash = argon2.hash(password)
         self.settings.set("passwords", username, pwhash)
-        with open(self.config_root + "/shadow.ini", "w") as cfh:
+        with open(self.config_root + "/shadow.ini", "w", encoding='utf-8') as cfh:
             self.settings.write(cfh)
         # Update the detection for whether an admin exists, so we don't
         # get asked to add an admin account more than once
@@ -194,7 +194,7 @@ class ShadowConfig:
     def delete_user(self, username):
         """Remove an account from the shadow file"""
         self.settings.remove_option("passwords", username)
-        with open(self.config_root + "/shadow.ini", "w") as cfh:
+        with open(self.config_root + "/shadow.ini", "w", encoding='utf-8') as cfh:
             self.settings.write(cfh)
         # Don't recreate an admin that we just deleted (no admin update here)
 

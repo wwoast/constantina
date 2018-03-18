@@ -482,7 +482,7 @@ def contents_page(start_response, state):
     # Fresh new HTML, no previous state provided
     if state.fresh_mode() is True:
         page = ConstantinaPage(state)
-        base = open(GlobalTheme.theme + '/contents.html', 'r')
+        base = open(GlobalTheme.theme + '/contents.html', 'r', encoding='utf-8')
         html = base.read()
         html = template_contents(html, state.prefs)
         html = html.replace(substitute, create_page(page))
@@ -492,7 +492,7 @@ def contents_page(start_response, state):
     elif state.permalink_mode() is True:
         syslog.syslog("***** Permalink Mode *****")
         page = ConstantinaPage(state)
-        base = open(GlobalTheme.theme + '/contents.html', 'r')
+        base = open(GlobalTheme.theme + '/contents.html', 'r', encoding='utf-8')
         html = base.read()
         html = template_contents(html, state.prefs)
         html = html.replace(substitute, create_page(page))
@@ -503,7 +503,7 @@ def contents_page(start_response, state):
         syslog.syslog("***** Empty Search / Reshuffle Mode *****")
         state = ConstantinaState(None)
         page = ConstantinaPage(state)
-        base = open(GlobalTheme.theme + '/contents.html', 'r')
+        base = open(GlobalTheme.theme + '/contents.html', 'r', encoding='utf-8')
         html = base.read()
         html = template_contents(html, state.prefs)
         html = html.replace(substitute, create_page(page))
@@ -513,7 +513,7 @@ def contents_page(start_response, state):
     elif state.search_mode() is True and state.page == 0:
         syslog.syslog("***** New Search Page Results *****")
         page = ConstantinaPage(state)
-        base = open(GlobalTheme.theme + '/contents.html', 'r')
+        base = open(GlobalTheme.theme + '/contents.html', 'r', encoding='utf-8')
         html = base.read()
         html = template_contents(html, state.prefs)
         html = html.replace(substitute, create_page(page))

@@ -304,7 +304,7 @@ def authentication_page(start_response, state):
     page. You also get an authentication page when you search for
     a @username in the search bar in "combined" mode.
     """
-    base = open(state.theme + '/authentication.html', 'r')
+    base = open(state.theme + '/authentication.html', 'r', encoding='utf-8')
     html = base.read()
     start_response('200 OK', [('Content-Type', 'text/html')])
     return html
@@ -315,7 +315,7 @@ def logout_page(start_response, state):
     If Constantina is in "forum" mode, you can get a logout
     page by clicking the logout button in the settings menu.
     """
-    base = open(state.theme + '/logout.html', 'r')
+    base = open(state.theme + '/logout.html', 'r', encoding='utf-8')
     html = base.read()
     start_response('200 OK', state.headers)
     return html

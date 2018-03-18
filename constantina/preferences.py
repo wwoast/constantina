@@ -197,7 +197,7 @@ class ConstantinaPreferences:
         if not self.preferences.has_section(username):
             self.preferences.add_section(username)
         self.preferences.set(username, "preference_id", preference_id)
-        with open(self.config_path, 'w') as pfh:
+        with open(self.config_path, 'w', encoding='utf-8') as pfh:
             self.preferences.write(pfh)
 
     def __upload_avatar(self, auth, upload):

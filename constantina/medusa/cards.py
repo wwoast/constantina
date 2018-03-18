@@ -133,7 +133,7 @@ class MedusaCard:
             fpath = base_path + "/hidden/" + thisfile
 
         try:
-            with open(fpath, 'r') as cfile:
+            with open(fpath, 'r', encoding='utf-8') as cfile:
                 ftype = magi.from_file(fpath)
                 # News entries or features are processed the same way
                 if (("text" in ftype) and
