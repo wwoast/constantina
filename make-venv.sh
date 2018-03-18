@@ -16,7 +16,7 @@ DATA_ROOT=html
 
 virtualenv $VENV_PATH &&
 . $VENV_PATH/bin/activate &&
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 
 # HACK so that constantina_configure finds the config path to make edits
 ln -s $VENV_PATH/etc .
