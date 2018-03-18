@@ -24,7 +24,7 @@ class ConstantinaAuth:
             return
 
         self.sensitive_config = configparser.SafeConfigParser(allow_no_value=True)
-        self.sensitive_config.read(GlobalConfig.get('paths', 'config_root') + "/sensitive.ini")
+        self.sensitive_config.read(GlobalConfig.get('paths', 'config_root') + "/sensitive.ini", encoding='utf-8')
 
         self.account = ConstantinaAccount()
         self.cookie_name = ("__Secure-" +
@@ -203,9 +203,9 @@ class ConstantinaAccount:
     """
     def __init__(self):
         self.config = configparser.SafeConfigParser(allow_no_value=True)
-        self.config.read(GlobalConfig.get("paths", "config_root") + "/shadow.ini")
+        self.config.read(GlobalConfig.get("paths", "config_root") + "/shadow.ini", encoding='utf-8')
         self.sensitive_config = configparser.SafeConfigParser(allow_no_value=True)
-        self.sensitive_config.read(GlobalConfig.get("paths", "config_root") + "/sensitive.ini")
+        self.sensitive_config.read(GlobalConfig.get("paths", "config_root") + "/sensitive.ini", encoding='utf-8')
         self.valid = False
         self.username = None
         self.password = None

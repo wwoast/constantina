@@ -20,7 +20,7 @@ class ZooSearch:
     # TODO: No cardtype filtering here. Zoo filter will either apply this search or not
     def __init__(self, page, resultcount, unsafe_query_terms):
         self.config = configparser.SafeConfigParser()
-        self.config.read('zoo.ini')
+        self.config.read('zoo.ini', encoding='utf-8')
 
         # Upper limit on the permitted number of searchable items.
         # Since we use this as an array slice, add one to support N-1 elements

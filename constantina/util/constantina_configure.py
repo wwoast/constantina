@@ -88,7 +88,7 @@ class ConstantinaConfig:
 
     def update_configs(self):
         """Make config changes once the config files are staged"""
-        self.settings.read(self.config_root + "/constantina.ini")
+        self.settings.read(self.config_root + "/constantina.ini", encoding='utf-8')
         self.configure(self.settings, "server", "hostname", self.hostname)
         self.configure(self.settings, "server", "port", self.port)
         self.configure(self.settings, "server", "username", self.username)
@@ -101,7 +101,7 @@ class ConstantinaConfig:
             self.settings.write(cfh)
 
         # Set UWSGI config file settings for this instance too
-        self.uwsgi.read(self.config_root + "/uwsgi.ini")
+        self.uwsgi.read(self.config_root + "/uwsgi.ini", encoding='utf-8')
         self.configure(self.uwsgi, "uwsgi", "chdir", self.data_root)
         self.configure(self.uwsgi, "uwsgi", "env", "INSTANCE=" + self.instance)
         self.configure(self.uwsgi, "uwsgi", "procname", "constantina-" + self.instance)
@@ -157,9 +157,9 @@ class ShadowConfig:
         self.sensitive_config = configparser.SafeConfigParser(allow_no_value=True)
         self.key_config = configparser.SafeConfigParser(allow_no_value=True)
         self.config_root = config_root
-        self.settings.read(self.config_root + "/shadow.ini")
-        self.sensitive_config.read(self.config_root + "/sensitive.ini")
-        self.key_config.read(self.config_root + "/keys.ini")
+        self.settings.read(self.config_root + "/shadow.ini", encoding='utf-8')
+        self.sensitive_config.read(self.config_root + "/sensitive.ini", encoding='utf-8')
+        self.key_config.read(self.config_root + "/keys.ini", encoding='utf-8')
         self.admin_exists = self.settings.has_option("passwords", "admin")
         self.argon2_setup()
 

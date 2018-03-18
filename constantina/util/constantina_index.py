@@ -10,7 +10,7 @@ from constantina.state import ConstantinaState
 from constantina.medusa.search import MedusaSearch
 
 CONFIG = configparser.SafeConfigParser()
-CONFIG.read('constantina.ini')
+CONFIG.read('constantina.ini', encoding='utf-8')
 
 ROOT_DIR = CONFIG.get("paths", "data_root")
 PRIVATE_DIR = ROOT_DIR + "/private"

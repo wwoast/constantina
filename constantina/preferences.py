@@ -80,11 +80,11 @@ class ConstantinaPreferences:
         self.config_root = GlobalConfig.get('paths', 'config_root')
         self.config_path = self.config_root + "/" + self.config_file
         self.zoo = configparser.SafeConfigParser()
-        self.zoo.read(self.config_root + "/zoo.ini")
+        self.zoo.read(self.config_root + "/zoo.ini", encoding='utf-8')
         self.preferences = configparser.SafeConfigParser()
-        self.preferences.read(self.config_path)
+        self.preferences.read(self.config_path, encoding='utf-8')
         self.sensitive_config = configparser.SafeConfigParser()
-        self.sensitive_config.read(self.config_root + "/sensitive.ini")
+        self.sensitive_config.read(self.config_root + "/sensitive.ini", encoding='utf-8')
 
     def __default_preferences(self):
         """

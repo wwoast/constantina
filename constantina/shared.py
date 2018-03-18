@@ -20,7 +20,7 @@ ConfigOptions = [
     "/etc/constantina/" + Instance + "/constantina.ini",
     os.path.expanduser("~") + "/constantina/etc/constantina/default/constantina.ini"
 ]
-GlobalConfig.read(ConfigOptions)
+GlobalConfig.read(ConfigOptions, encoding='utf-8')
 
 # An alphabet used for opaque instance IDs that is BASE62 minus homomorph
 # characters that could easily be mistaken for each other.
@@ -200,7 +200,7 @@ class BaseState:
         """Read the configuration file that will populate the sub-application"""
         self.config_path = GlobalConfig.get('paths', 'config_root') + "/" + config_file
         self.config = configparser.SafeConfigParser()
-        self.config.read(self.config_path)
+        self.config.read(self.config_path, encoding='utf-8')
 
 
     def __set_state_defaults(self):

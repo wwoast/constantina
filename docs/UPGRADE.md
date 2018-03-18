@@ -7,11 +7,14 @@
 
 #### Internationalization Support
 
-Constantina migrated to Python 3 for internationalization purposes. Be prepared to reinstall all dependencies and regenerate your virtualenv. I've been testing with Python 3.5 found on the latest Debian stable. To prevent *mojibake* from appearing on your existing Constantina feed, you need the latest version of the Constantina themes, which include HTML meta-tags to force browsers to display UTF-8 content. For existing admins using the default themes, install with the `--upgrade` option rather than just `--scriptonly`.
+Constantina migrated to Python 3 for internationalization purposes. Be prepared to reinstall all dependencies and/or create a new *virtualenv*. I've been testing with Python 3.5 found on the latest Debian stable. To prevent *mojibake* from appearing on your existing Constantina feed, you need the latest version of the Constantina themes, which include HTML meta-tags to force browsers to display UTF-8 content. For existing admins using the default themes, install with the `--upgrade` option rather than just `--scriptonly`.
+
+If you're creating a new Python 3 *virtualenv* for Constantina, the `make-env.sh` script will fail if there are stale `build/` and `*.egg-info` directories lying around, so delete those.
+
 
 #### Rebuild Search Indexing
 
-The content hosted on codaworry.com will have both English and Japanese-language content, and as a result I changed the tokenization strategy for the Whoosh search-indexing to support Japanese words and characters. As a result, the indexing process became case-sensitive, and I had to cast all searches to lowercase words to fix this.
+The content hosted on codaworry.com will have both English and Japanese-language content, and as a result I changed the tokenization strategy for the Whoosh search-indexing to support Japanese words and characters. As a result, the indexing process became case-sensitive, and I had to translate all searches and indexed content to lowercase words to fix this.
 
 While old indexes will appear to work, there will be errors with searching for content with uppercase letters until you remove the old indexes and let them regenerate. If Constantina is installed in its standard path without a special instance name, removing the indexes looks like:
 
@@ -20,7 +23,7 @@ cd /var/www/constantina/default/private/index
 rm MAIN* _MAIN*
 ```
 
-On slower servers, the reindexing process may cause HTTP 504 timeouts, as the search indexing does not occur until an initial search request is filed. While indexes are being generated, search requests will return HTTP 502. A future version of Constantina might do index generation at server-start time instead of at request time, to make this less obvious or painful to users.
+On slower servers, the reindexing process may cause HTTP 504 timeouts, as the search indexing does not occur until an initial search request is made. While indexes are being generated, search requests will return HTTP 502. A future version of Constantina might do index generation at server-start time instead of at request time, to make this less obvious or painful to users.
 
 
 ### 0.5.6

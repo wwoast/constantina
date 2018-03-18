@@ -46,10 +46,10 @@ class ConstantinaKeypair:
         self.config = configparser.SafeConfigParser(allow_no_value=True)
         self.config_root = GlobalConfig.get('paths', 'config_root')
         self.config_path = self.config_root + "/" + self.config_file
-        self.config.read(self.config_path)
+        self.config.read(self.config_path, encoding='utf-8')
         self.sensitive_config = configparser.SafeConfigParser(allow_no_value=True)
         self.sensitive_config_path = self.config_root + "/sensitive.ini"
-        self.sensitive_config.read(self.sensitive_config_path)
+        self.sensitive_config.read(self.sensitive_config_path, encoding='utf-8')
 
     def __set_defaults(self, key_id, **kwargs):
         """
