@@ -2,7 +2,7 @@
 
 # --------------------------------------------------------------------------- #
 # Change this to whatever your domain is
-CONSTANTINA_HOSTNAME=codaworry.com
+CONSTANTINA_HOSTNAME=example.com
 
 # For virtualenvs, recommend keeping the instance name and path fixed.
 # Otherwise you need to edit shared.py and add new locations that
