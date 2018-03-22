@@ -238,7 +238,9 @@ Programming Language :: Python :: 3 :: Only""".splitlines(),
                 'mutagen',
                 'python-magic',
                 'Pillow',
-                'whoosh'
+                'tinysegmenter',
+                'whoosh',
+                'whoosh-igo'
             ],
             'data_files': []
         }
