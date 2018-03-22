@@ -101,20 +101,23 @@ div.search, div.searchHalo, div.logo, div.logoHalo, div.searchInput, div.header 
 }
 
 div.search {
-   left: 6px;
    top: 5px;
 }
 
-div.searchInput {
-   left: 38px;
-   top: 2px;
-}
-
-img.searchBar {
+div.searchBoxFrame {
    display: inline;
    position: absolute;
-   width: 169px;
+   border-bottom: 2px solid white;
+   margin: 0 0 0 0;
+   padding: 0 0 0 0;
    height: 30px;
+   width: 50vw;
+   max-width: 200px;
+}
+
+div.searchInput {
+   left: 30px;
+   top: 2px;
 }
 
 input#searchEntry, input#searchSubmit {
@@ -139,7 +142,8 @@ input#searchSubmit {
 }
 
 input#searchEntry {
-   width: 139px;
+   width: 47vw;
+   max-width: 170px;
    height: 30px;
    z-index: 2;
    line-height: 1.2;
