@@ -25,19 +25,19 @@ to host my music and technology site, [Codaworry](http://www.codaworry.com).
 
 ## Features
 * Single-page single-column infinite-scroll layout
- * Layout responsive for any screen size or orientation
- * Infinite scroll falls back to a "click to load" for legacy browsers
+  * Layout responsive for any screen size or orientation
+  * Infinite scroll falls back to a "click to load" for legacy browsers
 * Page consists of a series of *cards* 
- * Card content is either short HTML snippets, or raw images/music files
- * Add content to a folder, and it will publish upon the next page load
- * News cards contain Permalinks for external linking
- * Future-dated news only publish after their timestamp
- * Page layout and card types are easily configurable
+  * Card content is either short HTML snippets, or raw images/music files
+  * Add content to a folder, and it will publish upon the next page load
+  * News cards contain Permalinks for external linking
+  * Future-dated news only publish after their timestamp
+  * Page layout and card types are easily configurable
 * Search feature for cards with text emphasis
- * Uses `whoosh` text-search library on the backend
- * Unindexed text cards get indexed any time content is searched
- * Supports keyword searches as well as "#cardtype" searches
- * Supports ''encyclopedia'' cards that only appear in search results 
+  * Uses `whoosh` text-search library on the backend
+  * Unindexed text cards get indexed any time content is searched
+  * Supports keyword searches as well as "#cardtype" searches
+  * Supports ''encyclopedia'' cards that only appear in search results 
 * Six colorful themes, and straightforward HTML/CSS to make new ones
 
 <img src="https://raw.githubusercontent.com/wwoast/constantina/master/docs/desktop2.png" width="720" />

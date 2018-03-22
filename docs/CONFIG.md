@@ -7,27 +7,27 @@
  * `[paths].data_root` is the root of `public` (HTML and themes) and `private` (card) data
  * `[authentication]` should just be set to `blog` for normal use, or `forum` for auth-testing
  * `[themes]` defines where Constantina's themes are located
-  * Any themes you add must be listed by number, aside from the `default` entry
-  * If the default theme is set to `random`, one of the numbered options is used
+   * Any themes you add must be listed by number, aside from the `default` entry
+   * If the default theme is set to `random`, one of the numbered options is used
  * `[special_states]` should only be modified if new Constantina functionality is added
  * `[miscellaneous].max_state_parameters` is the limit on search terms that will be processed.
-  * The default here is 10, so you can't process more than 10 search terms and 10 filter terms
-  * Constantina itself won't process more than 512 characters from any `QUERY_STRING`
+   * The default here is 10, so you can't process more than 10 search terms and 10 filter terms
+   * Constantina itself won't process more than 512 characters from any `QUERY_STRING`
 
 `/etc/constantina/<INSTANCE>/medusa.ini` stores configuration related to Constantina's blog functionality.
 
  * `[paths]` values describe where each type of card is stored
-  * You shouldn't need to change these
+   * You shouldn't need to change these
  * The `[card_counts]` section enforces the number of cards per page, per card-type
  * The `[card_spacing]` section similarly enforces the spacing on the page
  * `[card_filters]` define equivalent "card type" terms for searching
-  * Normally if you want to search for news cards you type *#news*
-  * However, the `[card_filters]` section defines alternatives such as *#updates*
+   * Normally if you want to search for news cards you type *#news*
+   * However, the `[card_filters]` section defines alternatives such as *#updates*
  * `[card_properties]` defines logic for how state functions when cards are present
-  * *This section should not be changed*
+   * *This section should not be changed*
  * `[search]` defines paths and wordlists for Whoosh's search indexing
  * `[special_states]` should only be modified if new card types are added
-  * New blog text-card types should get a new `_permalink` special state
+   * New blog text-card types should get a new `_permalink` special state
 
 
 ## How Cards Work
@@ -119,7 +119,9 @@ adjustable as well.
 
   * `*`  : May index metadata for these in the future
   * `**` : Just header and footer cards on the first and/or last pages
-  * `+`	 : Only returned when using the search bar
+  * `+`	 : Only returned when using the search bar for the *exact name* of the page.
+    * The page contents for *topics* cards are not search-indexed
+    * These pages are intended to be semi-secret, not appearing in the normal feed
 
 
 ## Creating Themes
