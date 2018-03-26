@@ -4,3 +4,4 @@ dist
 *.pyc
 *.egg-info
 __pycache__
+make-*-venv.sh
