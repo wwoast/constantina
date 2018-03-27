@@ -14,7 +14,7 @@ CGI_BIN=cgi-bin
 DATA_ROOT=html
 # --------------------------------------------------------------------------- #
 
-virtualenv $VENV_PATH &&
+virtualenv -p python3 $VENV_PATH &&
 . $VENV_PATH/bin/activate &&
 pip3 install -r requirements.txt
 
