@@ -12,9 +12,12 @@ VENV_PATH=$HOME/constantina
 CONFIG_ROOT=etc/constantina/$CONSTANTINA_INSTANCE
 CGI_BIN=cgi-bin
 DATA_ROOT=html
+
+PY_VER="python3.5"
+
 # --------------------------------------------------------------------------- #
 
-virtualenv -p python3 $VENV_PATH &&
+virtualenv -p $PY_VER --no-site-packages --always-copy --clear $VENV_PATH &&
 . $VENV_PATH/bin/activate &&
 pip3 install -r requirements.txt
 
@@ -33,4 +36,8 @@ python3 setup.py install \
 rm etc
 
 deactivate
+
+# HACK copy wsgiref if you need it
+cp -r /usr/lib/$PY_VER/wsgiref $VENV_PATH/lib/$PY_VER
+
 cd $VENV_PATH/.. && tar czf constantina-venv.tar.gz `basename $VENV_PATH`
