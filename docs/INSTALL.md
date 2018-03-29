@@ -303,8 +303,8 @@ vulnerability).
 Shared hosting environments may require you to bundle a bit of code together to support
 your Python application. The `make-venv.sh` script will create a directory of
 all the Python files and requirements that you need to run Constantina on another site.
-You'll likely want to edit on the `constantina.ini` config paths and other directory paths
-to match the specifics of where your server's Constantina files live.
+Make a copy of this script named `make-yoursite-venv.sh` and modify the configuration
+parameters to match your hosting situation.
 
 **NOTE**: If you diverge from using `~/constantina` and instance name `default` for your 
 virtualenv, you will need to add a configuration lookup path in the top of `shared.py` so 
@@ -312,6 +312,16 @@ that Constantina knows where to find its own `constantina.ini` file. This is a c
 detail in shared hosting environments that don't allow you to specify an `INSTANCE` environment 
 variable in configuration. Rather than fight your hosting provider, just use the default
 virtualenv and instance settings.
+
+Now that Constantina is a Python3 project, it takes a bit more effort to make VirtualEnv
+environments that can be relocated to shared-hosting environments. This is because of 
+dependencies like `pillow` which rely on `libjpeg` and other C libraries to be in specific
+locations on the target server, which live in inconsistent paths on different Linux distributions. 
+In this case, if you can't build the VirtualEnv on your server, I recommend making a Virtual 
+Machine that matches your server's Linux distribution and platform (i686, x86_64). Once you do 
+this, make sure the Python version exactly match the server OS you're working with, and that
+`constantina.ini` and your `make-venv.sh` script has the exact filesystem paths you use on 
+your server.
 
 
 #### Other Notes
