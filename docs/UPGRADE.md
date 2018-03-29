@@ -9,7 +9,7 @@
 
 Constantina migrated to Python 3 for internationalization purposes. Be prepared to reinstall all dependencies and/or create a new *virtualenv*. I've been testing with Python 3.5 found on the latest Debian stable. To prevent *mojibake* from appearing on your existing Constantina feed, you need the latest version of the Constantina themes, which include HTML meta-tags to force browsers to display UTF-8 content. For existing admins using the default themes, install with the `--upgrade` option rather than just `--scriptonly`.
 
-If you're creating a new Python 3 *virtualenv* for Constantina, the `make-env.sh` script will fail if there are stale `build/` and `*.egg-info` directories lying around, so delete those.
+If you're creating a new Python 3 *virtualenv* for Constantina, the `make-env.sh` script may fail if there are stale `build/` and `*.egg-info` directories lying around, so delete those.
 
 
 #### Rebuild Search Indexing
