@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # CGI wrapper to uwsgi constantina app
 
