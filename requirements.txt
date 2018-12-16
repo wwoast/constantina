@@ -14,6 +14,6 @@ passlib==1.7.1
 Pillow==5.0.0
 python-magic==0.4.12
 tinysegmenter==0.3
-urllib3==1.19.1
+urllib3>=1.23
 Whoosh==2.7.4
 whoosh-igo==0.7
