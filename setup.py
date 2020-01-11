@@ -202,7 +202,6 @@ class InstallPyCommand(install):
 if __name__ == '__main__':
     # Install the files, and then run a configure script afterwards
     # if we used the "install" command.
-    global Package
     try:
         Package = {
             'name': "constantina",
