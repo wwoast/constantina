@@ -11,7 +11,7 @@ idna==2.5
 jwcrypto==0.4.0
 mutagen==1.37
 passlib==1.7.1
-Pillow==5.0.0
+Pillow>=6.2.0
 python-magic==0.4.12
 tinysegmenter==0.3
 urllib3==1.19.1
