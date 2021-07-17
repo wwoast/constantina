@@ -594,7 +594,6 @@ def application(env, start_response, instance="default"):
     # an authentication object if auth is unnecessary, track the
     # authentication mode straight from the config.
     state = ConstantinaState(in_state, env)
-    mode = GlobalConfig.get("authentication", "mode")
 
     # Normalize the inbound URI, for purpose of deciding whether to
     # serve dynamic HTML or load a file.
