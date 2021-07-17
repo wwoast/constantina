@@ -10,7 +10,7 @@
 There are a handful of Linux packages needed (Debian/Ubuntu) to support the ones
 installed by Python:
 
- * `apt-get install libjpeg-dev libffi-dev libssl-dev python3-pip uwsgi uwsgi-plugin-python3`
+ * `apt-get install libjpeg-dev python3-pip uwsgi uwsgi-plugin-python3`
 
 
 ### List of Python dependencies
@@ -21,8 +21,6 @@ API than the version in `pip`.
 Install the Python dependencies manually or from `pip`:
 
  * `pip3 install -r requirements.txt`
-   * `argon2_cffi` and `argon2pure` for password hashing
-   * `jwcrypto` for managing JWT and JWE session token formats
    * `defusedxml` for occasions where you need to parse HTML files
    * `mutagen` for MP3 length parsing
    * `passlib` as a wrapper for password hashing
@@ -31,7 +29,7 @@ Install the Python dependencies manually or from `pip`:
    * `whoosh` for reverse-index word searching
    * `wsgiref` if you need to use Apache and `mod_cgi`
  * Second-order dependencies for the above libraries include:
-   * `appdirs`, `pyparsing`, `idna`, `asn1crypto`, and `cryptography` 
+   * `appdirs`, `pyparsing`, `idna`
 
 
 ### Running the Installer
@@ -130,32 +128,15 @@ web folders will look like this:
 
  * `/var/www/constantina/default/`
    * **`public/`** - _The web root folder_
+     * `images/` - _Resources and self-hosted images for your site_
+     * `medusa/`
+       * `news/` - _Blog entries_
+       * `pictures/` - _Randomly inserted pictures into the Blog feed_
+       * __<...>__
      * `constantina.js`
      * `themes/`
        * `winflat.evergreen/`
        * __<...>__
-  * **`private/`** - _Content behind authentication_
-    * `images/` - _Resources and self-hosted images for your site_
-    * `medusa/`
-      * `news/` - _Blog entries_
-      * `pictures/` - _Randomly inserted pictures into the Blog feed_
-      * __<...>__
-    * `zoo/`
-      * __<...>__
-
-Constantina's webserver configuration is oriented around one major principle: As 
-an authenticated user on Constantina, or as a content-writer, _the `public` and 
-`private` directories should appear to be merged_. There are two solutions for 
-doing this.
-
- * **Private/Secure**: Requests for `private/` files get directed through Constantina
-   * Use this if you have a private blog or forum
- * **Public/Open**: The webserver redirects to `private/` files directly
-   * Use this if you have a public site without user accounts or authentication
-
-Regardless of Constantina's application config, either of these solutions will
-work. Be aware that **using the Public/Open config makes your files
-accessible to unauthenticated users, regardless of your Constantina settings**!
 
 
 ### Webserver Configuration Strategies
@@ -163,17 +144,8 @@ accessible to unauthenticated users, regardless of your Constantina settings**!
 #### UWSGI and Nginx on a Private Server
 Constantina strongly recommends using Nginx as the forward-facing web server,
 and UWSGI for the application server. It has the best performance and
-flexibility of all the configuration strategies presented.
-
-
-##### Blog mode (no authentication)
-This setup is shown in the `config/webservers/nginx-uwsgi-blog.conf` file.
-
-If Constantina is a public blog, then chances are you don't want users to
-authenticate. By configuring `images/` to use the private path as its root,
-you "pretend" the private directory exists inside the public one. In
-actuality, the basic public/private split is preserved, should you wish to 
-enable authentication later on.
+flexibility of all the configuration strategies presented. This setup is 
+shown in the `config/webservers/nginx-uwsgi-blog.conf` file.
 
 Constantina itself will only respond to requests without _any_ provided URI
 path (`location = /`). All other requests are assumed to be for static files.
@@ -182,7 +154,7 @@ path (`location = /`). All other requests are assumed to be for static files.
 ```
 server {
 	<...>
-	# Webserver root, for which all locations are underneath
+	      # Webserver root, for which all locations are underneath
         # unless another location specifies a different one!
         root    /var/www/constantina/default/public;
 
@@ -191,60 +163,7 @@ server {
                 uwsgi_param     INSTANCE default;
                 include         uwsgi_params;
         }
-        
-        location ~ ^/(images/.*|medusa/.*|zoo/.*)?$ { 
-                root /var/www/constantina/default/private;
-        }
 	<...>
-```
-
-`uwsgi.constantina.ini`:
-```
-[uwsgi]
-socket       = localhost:9090
-plugin       = python35
-module       = constantina.constantina
-processes    = 3
-procname     = constantina-default
-chdir        = /var/www/constantina/default/public
-max-requests = 5
-master
-```
-
-##### Forum mode (authentication)
-This setup is shown in the `config/webservers/nginx-uwsgi-forum.conf` file.
-
-If a user has authenticated to Constantina, user requests for `images/file.jpg`
-will have an `X-Sendfile` and `X-Accel-Redirect` header as part of their
-response. This header is how Constantina instructs Nginx to fetch 
-`private/images/file.jpg`, in response to the original `images/file.jpg`
-request.
-
-The `/private` location being marked as `internal` guarantees that Nginx will not
-serve files out of this folder, without Constantina's `X-Accel-Redirect` header
-giving it permission to do so.
-
-`/etc/nginx/sites-available/constantina`:
-```
-server {
-	<...>
-	# Webserver root, for which all locations are underneath
-        # unless another location specifies a different one!
-        root    /var/www/constantina/default/public;
-
-	location ~ ^/(images/.*|medusa/.*|zoo/.*)?$ {
-                uwsgi_pass      localhost:9090;
-                uwsgi_param     INSTANCE default;
-                include         uwsgi_params;
-        }
-
-        location /private {
-                internal;
-                # /private is added to the end of this!
-                root /var/www/constantina/default;
-        }
-        <...> 
-}
 ```
 
 `uwsgi.constantina.ini`:
@@ -291,13 +210,6 @@ This strategy is ''extremely slow performing''. CGI applications must run and re
 all Python resources every time someone visits a site, and on embedded servers, this 
 can add many seconds of latency to the initial page load!
 
-Additionally, Apache doesn't support `X-Sendfile` lookup paths as configuration in a
-user-configurable `.htaccess` file. If your hosting provider won't configure the
-proper `X-Sendfile` settings, then effectively **you have no way to protect your private
-files behind authentication**. You can still use Constantina, but your forum's content
-will be vulnerable to filename guessing by an attacker (the _Insecure Direct-Object Reference_
-vulnerability).
-
 
 #### VirtualEnv setup
 Shared hosting environments may require you to bundle a bit of code together to support
@@ -322,9 +234,3 @@ Machine that matches your server's Linux distribution and platform (i686, x86_64
 this, make sure the Python version exactly match the server OS you're working with, and that
 `constantina.ini` and your `make-venv.sh` script has the exact filesystem paths you use on 
 your server.
-
-
-#### Other Notes
-Both the `blog` and `forum` webserver configs have special strategies to show a default
-forum avatar if a user hasn't yet uploaded one. The ordering of paths in the Nginx configs
-is important for that logic to function.

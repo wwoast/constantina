@@ -1,6 +1,6 @@
 # Constantina
 ### A dynamic-content blog platform
-##### Justin Cassidy, March 2018
+##### Justin Cassidy, July 2021
 
 ## Overview
 Constantina is a single-page static site generator designed to randomize 
@@ -13,6 +13,7 @@ to host my music and technology site, [Codaworry](http://www.codaworry.com).
 
 ## Changelog
 
+* **0.7.0** - Sunsetting auth and separate app support for easier blog maintenance
 * **0.6.0** - Migrated to Python 3 for better performance and pervasive Unicode support
 * **0.5.6** - Separated out security-oriented configuration for file monitoring purposes
 * **0.5.5** - Forum settings forms and cookies, `X-Sendfile` trampolining for `private` media
@@ -38,7 +39,7 @@ to host my music and technology site, [Codaworry](http://www.codaworry.com).
   * Unindexed text cards get indexed any time content is searched
   * Supports keyword searches as well as "#cardtype" searches
   * Supports ''encyclopedia'' cards that only appear in search results 
-* Six colorful themes, and straightforward HTML/CSS to make new ones
+* Three colorful themes, and straightforward HTML/CSS to make new ones
 
 <img src="https://raw.githubusercontent.com/wwoast/constantina/master/docs/desktop2.png" width="720" />
 
@@ -71,13 +72,4 @@ of Unix tools (`ssh` or `sftp`, Python, `uwsgi`). If you have basic footing in t
 technologies, try setting up an instance yourself!
  * [Installation](https://github.com/wwoast/constantina/blob/master/docs/INSTALL.md)
  * [Configuration](https://github.com/wwoast/constantina/blob/master/docs/CONFIG.md)
- * [Security Notes](https://github.com/wwoast/constantina/blob/master/docs/SECURITY.md)
 
-While this is currently a blog engine, I intend Constantina to be a platform
-for small online communities. Eventually I'll implement authentication and then
-sub-applictions, including a web forum, a basic CalDAV calendar, and an IMAP 
-webmail client. Version 0.4.5 introduces some of these semantics:
-
- * The Constantina blog features are called _Medusa_
- * Web forum features in development are called _Zoo_
- * Eventual IMAP client features will be called _Dracula_

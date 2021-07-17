@@ -4,23 +4,17 @@ from math import floor
 from random import randint, seed
 import syslog
 
-from constantina.auth import authentication_page, logout_page
-from constantina.shared import GlobalConfig, GlobalTime, BaseFiles, opendir, safe_path, urldecode, process_post
+from constantina.shared import GlobalConfig, GlobalTime, BaseFiles, opendir, safe_path, urldecode
 from constantina.state import ConstantinaState
 from constantina.templates import template_contents
 from constantina.themes import GlobalTheme
 from constantina.medusa.cards import *
 from constantina.medusa.search import MedusaSearch
-# from constantina.zoo.state import ZooState
-# from constantina.zoo.cards import *
-# from constantina.zoo.search import ZooSearch
 
 # Look up Cards by application config name, instead of calling
-# MedusaCard/ZooCard directly
+# MedusaCard/ZooCard directly. Medusa == Blog
 CardClass = {
     'medusa'  : MedusaCard
-#   'zoo'     : ZooCard,
-#   'dracula' : DraculaCard
 }
 
 syslog.openlog(ident='constantina')
@@ -472,8 +466,6 @@ def contents_page(start_response, state):
         One news or feature, footer, link to the main page
     3) Easter eggs
     """
-    # TODO: add cookies as part of the start_response headers
-    # TODO: templating support for both opened pages and the base page
     substitute = '<!-- Contents go here -->'
 
     # Read in headers from authentication if they exist
@@ -484,7 +476,7 @@ def contents_page(start_response, state):
         page = ConstantinaPage(state)
         base = open(GlobalTheme.theme + '/contents.html', 'r', encoding='utf-8')
         html = base.read()
-        html = template_contents(html, state.prefs)
+        html = template_contents(html)
         html = html.replace(substitute, create_page(page))
         start_response('200 OK', state.headers)
 
@@ -494,7 +486,7 @@ def contents_page(start_response, state):
         page = ConstantinaPage(state)
         base = open(GlobalTheme.theme + '/contents.html', 'r', encoding='utf-8')
         html = base.read()
-        html = template_contents(html, state.prefs)
+        html = template_contents(html)
         html = html.replace(substitute, create_page(page))
         start_response('200 OK', state.headers)
 
@@ -505,7 +497,7 @@ def contents_page(start_response, state):
         page = ConstantinaPage(state)
         base = open(GlobalTheme.theme + '/contents.html', 'r', encoding='utf-8')
         html = base.read()
-        html = template_contents(html, state.prefs)
+        html = template_contents(html)
         html = html.replace(substitute, create_page(page))
         start_response('200 OK', state.headers)
 
@@ -515,7 +507,7 @@ def contents_page(start_response, state):
         page = ConstantinaPage(state)
         base = open(GlobalTheme.theme + '/contents.html', 'r', encoding='utf-8')
         html = base.read()
-        html = template_contents(html, state.prefs)
+        html = template_contents(html)
         html = html.replace(substitute, create_page(page))
         start_response('200 OK', state.headers)
 
@@ -523,7 +515,7 @@ def contents_page(start_response, state):
     else:
         page = ConstantinaPage(state)
         html = create_page(page)
-        html = template_contents(html, state.prefs)
+        html = template_contents(html)
         start_response('200 OK', state.headers)
 
     # Load html contents into the page with javascript
@@ -532,12 +524,8 @@ def contents_page(start_response, state):
 
 def get_file(in_uri, start_response, state):
     """
-    Without authentication, if there is a file we can return, do that
-    instead of running any page generation stuff.
-
-    With authentication, check for the file in /public and return if
-    it's found regardless if state.auth.account.valid is True or not. If the
-    auth is True, try and find the file in /private as well.
+    If there is a file we can return, do that instead of running any page
+    generation stuff.
     """
     data_root = GlobalConfig.get("paths", "data_root")
     in_uri = urldecode(in_uri)   # No url-encoded characters
@@ -546,10 +534,6 @@ def get_file(in_uri, start_response, state):
     output_file = "/private" + in_uri
     # syslog.syslog(static_file)
     headers = []   # Don't process any computed headers from state
-
-    if state.auth.mode != "blog":
-        if state.auth is None or state.auth.account.valid is False:
-            return
 
     os.chdir(data_root)
     try:
@@ -575,7 +559,6 @@ def application(env, start_response, instance="default"):
     """
     uwsgi entry point and main Constantina application.
 
-    UPDATE COMMENTS!
     If no previous state is given, assume we're returning
     HTML for a browser to render. Include the first page
     worth of card DIVs, and embed the state into the next-
@@ -606,16 +589,11 @@ def application(env, start_response, instance="default"):
     else:
         in_state = None
 
-    # Get POST values for processing by other tools
-    post = {}
-    if in_method == "POST":
-        post = process_post(env)
-
     # Create a state object, and determine what authentication data
     # has been made available on this page load. Since we don't make
     # an authentication object if auth is unnecessary, track the
     # authentication mode straight from the config.
-    state = ConstantinaState(in_state, env, post)
+    state = ConstantinaState(in_state, env)
     mode = GlobalConfig.get("authentication", "mode")
 
     # Normalize the inbound URI, for purpose of deciding whether to
@@ -636,16 +614,9 @@ def application(env, start_response, instance="default"):
         #   file gets have no state.
         #   file gets are not for /
         return get_file(in_uri, start_response, state)
-    elif (mode == "blog") or (mode == "combined"):
+    else:
         # Load basic blog contents.
         html = contents_page(start_response, state)
-    else:
-        if state.auth.logout is True:
-            html = logout_page(start_response, state)
-        elif state.auth.account.valid is True:
-            html = contents_page(start_response, state)
-        else:
-            html = authentication_page(start_response, state)
 
     return [html.encode('utf8')]
 

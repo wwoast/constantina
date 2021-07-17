@@ -64,10 +64,7 @@ class ConstantinaTheme:
     def __choose_theme(self, desired_theme=None):
         """
         Given a valid index or "random", properly set the theme value from
-        one of the numbered-index values in constantina.ini. 
-        
-        If we're using a non-random default-theme, find the proper theme in 
-        the rest of the list and use that as our theme index.
+        one of the numbered-index values in constantina.ini.
         """
         if desired_theme is None and self.theme == "random":
             self.__random_choice()

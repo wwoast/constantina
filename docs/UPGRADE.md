@@ -3,6 +3,19 @@
 
 ## Upgrade Notes
 
+### 0.7.0
+
+#### Removed All Forum and Authentication Support
+
+I've given up on Python as a web application platform, partly due to the Python `cryptography` library no longer supporting 32-bit platforms as targets, and partly due to excitement that Deno enables a better web development experience due to isomorphic code, libraries, and APIs that can run on both client and server. Everything related to `virtualenv` and building the C shims for Python library dependencies has been a giant headache, and it's time to leave Constantina behind.
+
+As a result I've stripped out all authentication code, all references to *Sub-Applications*,
+and am focusing on just the blog functionality, until I can get a replacement project off the ground.
+
+Since the search forms use `GET` requests and query strings, I also removed all processing of
+HTTP `POST` messages.
+
+
 ### 0.6.0
 
 #### Internationalization Support

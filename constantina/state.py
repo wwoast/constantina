@@ -6,12 +6,9 @@ from urllib.parse import unquote_plus
 import syslog
 import configparser
 
-from constantina.auth import authentication
-from constantina.preferences import preferences
 from constantina.shared import GlobalConfig, BaseFiles, BaseState
 from constantina.themes import GlobalTheme
 from constantina.medusa.state import MedusaState
-from constantina.zoo.state import ZooState
 
 syslog.openlog(ident='constantina.state')
 
@@ -27,55 +24,21 @@ class ConstantinaState(BaseState):
     stored in a single HTTP query parameter, and bundled into any relative
     links to other Constantina pages.
 
-    Constantina authentication state is a function of the GlobalConfig,
-    deciding which authentication mode is in force, and the JWE session
-    token, stored in a cookie.
-
     Aggregate all other states here, and do counting for things like total
     cards, the number of pages, etc. Lots of helper functions for deciding
     things about the Constantina page are tracked here, since these conditions
     depend on properties of the various states
     """
-    def __init__(self, in_state=None, env={}, post={}):
+    def __init__(self, in_state=None, env={}):
         BaseState.__init__(self, in_state, None)
         self.config = GlobalConfig
-
-        # If authentication is enabled, set headers and validate sessions
-        self.__import_authentication_state(env, post)
+        self.headers = []
 
         # Getting defaults from the other states requires us to first import
         # any random seed value. Then, we can finish setting the imported state
         self.__import_random_seed()
         self.__set_application_state_defaults()
         self.__import_state()
-
-
-    def __import_authentication_state(self, env, post):
-        """
-        Prior to displaying any page content, Constantina needs to reason about
-        what authentication mode it's in, and whether any incoming session cookies
-        are valid or not.
-
-        This is the only import function that doesn't process HTTP QueryString
-        parameters.
-        """
-        # Tells other methods whether to look at auth/preferences objects
-        self.valid_session = False
-        self.auth = None
-        self.prefs = None
-
-        if self.config.get("authentication", "mode") != "blog":
-            self.auth = authentication(env, post)
-            self.prefs = preferences(env, post, self.auth)
-            self.valid_session = self.auth.account.valid
-
-        # HTTP response headers start with details relevant to authentication
-        self.headers = []
-        if self.valid_session is True:
-            self.headers += self.auth.headers
-            if self.prefs.valid is True:
-                self.headers += self.prefs.headers
-
 
     def __set_application_state_defaults(self):
         """
@@ -94,32 +57,9 @@ class ConstantinaState(BaseState):
             setattr(self, spcfield, None)       # All state vals are expected to exist
 
         # Subapplication states are held in this object too
-        self.medusa = None
-        self.zoo = None
-        # self.dracula = None
-
-        # Based on modes, enable Medusa/Zoo/other states
-        if self.config.get("authentication", "mode") == "blog":
-            self.medusa = MedusaState(self.in_state)
-            self.max_items += self.medusa.max_items
-            self.filtered += self.medusa.filtered
-
-        if self.config.get("authentication", "mode") == "forum":
-            # TODO: Testing -- No zoo code written yet
-            # This needs to refer to ZooState when done (self.zoo.max_items, self.zoo...)
-            self.medusa = MedusaState(self.in_state)
-            # self.zoo = ZooSate(self.in_state)
-            self.max_items += self.medusa.max_items
-            self.filtered += self.medusa.filtered
-
-        if self.config.get("authentication", "mode") == "combined":
-            self.medusa = MedusaState(self.in_state)
-            self.max_items += self.medusa.max_items
-            self.filtered += self.medusa.filtered
-            self.zoo = ZooState(self.in_state)
-            self.max_items += self.zoo.max_items
-            self.filtered += self.zoo.filtered
-
+        self.medusa = MedusaState(self.in_state)
+        self.max_items += self.medusa.max_items
+        self.filtered += self.medusa.filtered
 
     def get(self, application, value, args=None):
         """
@@ -160,10 +100,6 @@ class ConstantinaState(BaseState):
             return all(items)   # Logical AND across the list
         else:
             return None
-
-
-    # TODO: search aggregation from other applications
-    # TODO: filter aggregation from other applications
 
 
     def __import_page_count_state(self):
@@ -208,28 +144,20 @@ class ConstantinaState(BaseState):
         The appearance value lets us look up which theme we display for the user.
         This theme value is a path fragment to a theme's images and stylesheets.
         """
-        # If a preferences cookie with a theme exists, use what's in that cookie.
-        # TODO: what if the cookie's index/state is none?
-        if self.valid_session is True:
-            self.appearance = BaseState._int_translate(self, str(self.prefs.thm), 1, 0)
-            GlobalTheme.set(self.appearance)
-            self.theme = self.prefs.theme
+        # Look for appearance state in the QUERY_PARAMS
+        appearance_state = BaseState._find_state_variable(self, 'xa')
 
-        # Otherwise, look for appearance state in the QUERY_PARAMS
-        else:
-            appearance_state = BaseState._find_state_variable(self, 'xa')
+        if appearance_state is not None:
+            # Read in single char of theme state value
+            self.appearance = BaseState._int_translate(self, appearance_state, 1, 0)
 
-            if appearance_state is not None:
-                # Read in single char of theme state value
-                self.appearance = BaseState._int_translate(self, appearance_state, 1, 0)
-
-            # If the configuration supports a random theme, and we didn't have a
-            # theme provided in the initial state, let's choose one randomly
-            seed()   # Enable non-seeded choice
-            GlobalTheme.set(self.appearance)
-            if self.seed:   # Re-enable seeded nonrandom choice
-                seed(self.seed)
-            self.theme = GlobalTheme.theme
+        # If the configuration supports a random theme, and we didn't have a
+        # theme provided in the initial state, let's choose one randomly
+        seed()   # Enable non-seeded choice
+        GlobalTheme.set(self.appearance)
+        if self.seed:   # Re-enable seeded nonrandom choice
+            seed(self.seed)
+        self.theme = GlobalTheme.theme
 
 
     def __import_state(self):

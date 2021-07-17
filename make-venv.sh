@@ -13,7 +13,7 @@ CONFIG_ROOT=etc/constantina/$CONSTANTINA_INSTANCE
 CGI_BIN=cgi-bin
 DATA_ROOT=html
 
-PY_VER="python3.5"
+PY_VER="python3.6"
 
 # --------------------------------------------------------------------------- #
 

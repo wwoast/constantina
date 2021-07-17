@@ -1,22 +1,17 @@
 #!/usr/bin/python3
 
-from getpass import getuser, getpass
+from getpass import getuser
 import os
 import sys
 from random import randint
 import argparse
 import configparser
 from socket import getfqdn
-from passlib.hash import argon2
 from pwd import getpwnam
 from grp import getgrnam
 
 
 HelpStrings = {
-    'add_user': "create a Constantina user account",
-    'delete_user': "remove a Constantina user account",
-    'password': "set password for a Constantina user account",
-    'revoke_logins': "delete stored session keys, forcing users to re-login",
     'config_root': "path to the configuration and private data root directory",
     'cgi_bin': "path to the directory containing CGI scripts",
     'instance': "config directory isolation: /etc/constantina/<instance>",
@@ -31,11 +26,7 @@ HelpStrings = {
 
 class ConstantinaDefaults:
     def __init__(self):
-        self.add_user = None
-        self.delete_user = None
-        self.password = None
         self.instance = "default"
-        self.revoke_logins = False
         self.hostname = getfqdn()
         self.port = str(randint(44000, 44500))   # Random local listener port
         self.username = getuser()   # Unix user account the server runs in
@@ -62,10 +53,6 @@ class ConstantinaConfig:
         self.settings = configparser.SafeConfigParser(allow_no_value=True)
         self.uwsgi = configparser.SafeConfigParser(allow_no_value=True)
         self.default = ConstantinaDefaults()
-        self.add_user = self.default.add_user
-        self.delete_user = self.default.delete_user
-        self.password = self.default.password
-        self.revoke_logins = self.default.revoke_logins
         self.instance = self.default.instance
         self.hostname = self.default.hostname
         self.port = self.default.port
@@ -89,14 +76,9 @@ class ConstantinaConfig:
     def update_configs(self):
         """Make config changes once the config files are staged"""
         self.settings.read(self.config_root + "/constantina.ini", encoding='utf-8')
-        self.configure(self.settings, "server", "hostname", self.hostname)
-        self.configure(self.settings, "server", "port", self.port)
-        self.configure(self.settings, "server", "username", self.username)
-        self.configure(self.settings, "server", "groupname", self.username)
         self.configure(self.settings, "paths", "data_root", self.data_root)
         self.configure(self.settings, "paths", "config_root", self.config_root)
         self.configure(self.settings, "paths", "cgi_bin", self.cgi_bin)
-        self.configure(self.settings, "server", "instance_id", opaque_identifier())
         with open(self.config_root + "/constantina.ini", "w", encoding='utf-8') as cfh:
             self.settings.write(cfh)
 
@@ -146,100 +128,6 @@ class ConstantinaConfig:
             os.chown(path, uid, gid)
 
 
-class ShadowConfig:
-    """
-    Configure keys and user accounts through the command line. Pass the
-    configuration directory so we know what instance we're dealing with.
-    """
-    def __init__(self, config_root):
-        """Read in the shadow.ini config file and settings."""
-        self.settings = configparser.SafeConfigParser(allow_no_value=True)
-        self.sensitive_config = configparser.SafeConfigParser(allow_no_value=True)
-        self.key_config = configparser.SafeConfigParser(allow_no_value=True)
-        self.config_root = config_root
-        self.settings.read(self.config_root + "/shadow.ini", encoding='utf-8')
-        self.sensitive_config.read(self.config_root + "/sensitive.ini", encoding='utf-8')
-        self.key_config.read(self.config_root + "/keys.ini", encoding='utf-8')
-        self.admin_exists = self.settings.has_option("passwords", "admin")
-        self.argon2_setup()
-
-    def argon2_setup(self):
-        """
-        Read argon2 algorithm and backend settings from the config file
-        """
-        # TODO: Make these apply regardless of backend?
-        self.v = self.sensitive_config.get("argon2", "v")
-        self.m = self.sensitive_config.get("argon2", "m")
-        self.t = self.sensitive_config.get("argon2", "t")
-        self.p = self.sensitive_config.get("argon2", "p")
-        backend = self.sensitive_config.get("argon2", "backend")
-        argon2.set_backend(backend)
-
-    def add_user(self, username, password=None):
-        """
-        Add a user to the shadow file. If no password is given, prompt for one.
-        """
-        print("Adding new Constantina user %s" % (username))
-        if password == None:
-            prompt = "Password for %s: " % (username)
-            password = getpass(prompt=prompt)
-        pwhash = argon2.hash(password)
-        self.settings.set("passwords", username, pwhash)
-        with open(self.config_root + "/shadow.ini", "w", encoding='utf-8') as cfh:
-            self.settings.write(cfh)
-        # Update the detection for whether an admin exists, so we don't
-        # get asked to add an admin account more than once
-        self.admin_exists = self.settings.has_option("passwords", "admin")
-
-    def delete_user(self, username):
-        """Remove an account from the shadow file"""
-        self.settings.remove_option("passwords", username)
-        with open(self.config_root + "/shadow.ini", "w", encoding='utf-8') as cfh:
-            self.settings.write(cfh)
-        # Don't recreate an admin that we just deleted (no admin update here)
-
-    def __delete_key(self, keyname):
-        """Delete an arbitrary key from the shadow configuration"""
-        for item in self.settings.items(keyname):
-            self.key_config.remove_option(item[0], item[1])
-
-    def delete_keys(self):
-        """
-        Delete all sets of keys. This will guarantee that all users will need
-        to log back in with their current credentials.
-        """
-        self.__delete_key("encrypt_last")
-        self.__delete_key("sign_last")
-        self.__delete_key("encrypt_current")
-        self.__delete_key("sign_current")
-
-
-class AccountPreferencesConfig:
-    """
-    When creating a new account, draft default settings for how various applications
-    appear to users.
-    """
-    def __init__(self):
-        pass
-
-    def new_account_preferences(self, username):
-        """
-        Create the cookie_id and account key
-        """
-        # if config exists, fail.
-        cookie_id = opaque_identifier()
-        pass
-
-    def reset_preferences(self, username):
-        """
-        Reset the key for seeing the settings cookie
-        """
-        # if config doesn't exist, fail.
-        cookie_id = opaque_identifier()
-        # make new keys for this user
-        pass
-
-
 def install_arguments():
     """
     When installing Constantina, aggressively replace values where-ever possible with
@@ -252,9 +140,6 @@ def install_arguments():
     args = argparse.Namespace
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--add-user", nargs='?', help=HelpStrings['add_user'])
-    parser.add_argument("-d", "--delete-user", nargs='?', help=HelpStrings['delete_user'])
-    parser.add_argument("-p", "--password", nargs='?', help=HelpStrings['password'])
     parser.add_argument("-c", "--config-root", nargs='?', help=HelpStrings['config_root'], default=conf.default.config_root)
     parser.add_argument("-b", "--cgi-bin", nargs='?', help=HelpStrings['cgi_bin'], default=conf.default.cgi_bin)
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
@@ -263,7 +148,6 @@ def install_arguments():
     parser.add_argument("-r", "--data-root", nargs='?', help=HelpStrings['data_root'], default=conf.default.data_root)
     parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
     parser.add_argument("-g", "--groupname", nargs='?', help=HelpStrings['groupname'], default=conf.default.groupname)
-    parser.add_argument("-k", "--revoke-logins", help=HelpStrings['revoke_logins'], action='store_true')
     parser.parse_known_args(namespace=args)
 
     conf.import_parsed(args)
@@ -282,9 +166,6 @@ def configure_arguments():
     args = argparse.Namespace
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--add-user", nargs='?', help=HelpStrings['add_user'])
-    parser.add_argument("-d", "--delete-user", nargs='?', help=HelpStrings['delete_user'])
-    parser.add_argument("-p", "--password", nargs='?', help=HelpStrings['password'])
     parser.add_argument("-c", "--config-root", nargs='?', help=HelpStrings['config_root'], default=conf.default.config_root)
     parser.add_argument("-b", "--cgi-bin", nargs='?', help=HelpStrings['cgi_bin'])
     parser.add_argument("-i", "--instance", nargs='?', help=HelpStrings['instance'], default=conf.default.instance)
@@ -293,45 +174,10 @@ def configure_arguments():
     parser.add_argument("-r", "--data-root", nargs='?', help=HelpStrings['data_root'])
     parser.add_argument("-u", "--username", nargs='?', help=HelpStrings['username'], default=conf.default.username)
     parser.add_argument("-g", "--groupname", nargs='?', help=HelpStrings['groupname'], default=conf.default.groupname)
-    parser.add_argument("-k", "--revoke-logins", help=HelpStrings['revoke_logins'], action='store_true')
     parser.parse_known_args(namespace=args)
 
     conf.import_parsed(args)
     return conf
-
-
-def user_management():
-    accounts = ShadowConfig(conf.config_root)
-    if conf.add_user != None:
-        accounts.add_user(conf.add_user, conf.password)
-    if conf.delete_user != None:
-        accounts.delete_user(conf.delete_user)
-    if conf.revoke_logins is True:
-        accounts.delete_keys()
-    # If we didn't make the admin user on first blush, and no admin exists,
-    # create an admin account now as well.
-    if accounts.admin_exists is False:
-        accounts.add_user("admin")
-
-
-def opaque_identifier(random_id=randint(0, 2**32-1)):
-    """
-    Copied from shared.py, since at install time it can't easily be included!
-
-    Create an opaque instance ID. This is used for a couple things:
-    1) So that cookies for multiple Constantina instances on the same domain name,
-       don't squash each other. (instance_id)
-    2) So that each user preference key has a unique identifier that can be merged
-       with the above instance_id.
-    It's a random number, converted to a BASE62 minus similar characters list.
-    """
-    base = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
-    length = len(base)
-    opaque = ''
-    while random_id != 0:
-        opaque = base[int(random_id % length)] + opaque
-        random_id //= length
-    return opaque
 
 
 if __name__ == '__main__':
@@ -342,8 +188,3 @@ if __name__ == '__main__':
     # Change the ownership of any files that were installed
     # TODO: only run in install mode?
     conf.chown_installed_files()
-    # If a username or password was provided, add an account to shadow.ini
-    if (conf.add_user is not None or
-        conf.delete_user is not None or
-        conf.revoke_logins is True):
-           user_management()

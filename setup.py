@@ -151,25 +151,15 @@ class InstallPyCommand(install):
         Package['data_files'].append(
             (Settings.templates,
              ['config/constantina.ini',
-              'config/keys.ini',
               'config/medusa.ini',
-              'config/preferences.ini',
-              'config/sensitive.ini',
-              'config/shadow.ini',
-              'config/uwsgi.ini',
-              'config/zoo.ini']))
+              'config/uwsgi.ini']))
         # Initial config files for your chosen instance
         if self.upgrade is False and self.scriptonly is False:
             Package['data_files'].append(
                 (Settings.config_root,
                  ['config/constantina.ini',
-                  'config/keys.ini',
                   'config/medusa.ini',
-                  'config/preferences.ini',
-                  'config/sensitive.ini',
-                  'config/shadow.ini',
-                  'config/uwsgi.ini',
-                  'config/zoo.ini']))
+                  'config/uwsgi.ini']))
         # The CGI script
         Package['data_files'].append(
             (Settings.cgi_bin,
@@ -205,7 +195,7 @@ if __name__ == '__main__':
     try:
         Package = {
             'name': "constantina",
-            'version': "0.6.0",
+            'version': "0.7.0",
             'description': "a dynamic-content blog platform for \"grazing\"",
             'author': "Justin Cassidy",
             'author_email': 'boil.afraid@gmail.com',
@@ -215,7 +205,6 @@ Programming Language :: Python :: 3 :: Only""".splitlines(),
             'packages': [
                 'constantina',
                 'constantina.medusa',
-                'constantina.zoo',
                 'constantina.util'
             ],
             'cmdclass': {
@@ -226,13 +215,7 @@ Programming Language :: Python :: 3 :: Only""".splitlines(),
                 'constantina/util/constantina_configure.py',
                 'constantina/util/constantina_index.py',
             ],
-            'setup_requires': [
-                'passlib'
-            ],
             'install_requires': [
-                'argon2',
-                'argon2pure',
-                'jwcrypto',
                 'lxml',
                 'mutagen',
                 'python-magic',
