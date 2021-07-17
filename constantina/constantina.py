@@ -576,8 +576,6 @@ def application(env, start_response, instance="default"):
     os.chdir(root_dir)
     in_state = env.get('QUERY_STRING')
     in_uri = env.get('REQUEST_URI')
-    in_method = env.get('REQUEST_METHOD')
-    in_cookie = env.get('HTTP_COOKIE')
     GlobalTime.update()   # Set timer value throughout the request
 
     # Normalize the state and truncate if the query string is
@@ -601,9 +599,6 @@ def application(env, start_response, instance="default"):
         in_uri = None
     elif safe_path(in_uri) is False:
         in_uri = "unsafe"
-    # Normalize the inbound cookie details
-    if in_cookie == '' or mode == "blog":
-        in_cookie = None
 
     # based on configured mode and in_uri, do a thing.
     html = ""
