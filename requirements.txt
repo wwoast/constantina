@@ -2,7 +2,7 @@ pyparsing==2.2.0
 appdirs==1.4.3
 
 ConfigParser==3.5.0
-defusedxml==0.5.0
+defusedxml==0.7.1
 idna==2.5
 jwcrypto==0.4.0
 mutagen==1.37
